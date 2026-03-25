@@ -1,0 +1,32 @@
+import {View, Text} from 'react-native';
+import ButtonScarlet from '@components/ButtonScarlet';
+import styles from '../RegisterIntro/Intro.styles';
+import LogoBlue from '@assets/images/logo_blue_smile.svg';
+
+const Result = ({route}) => {
+  const {
+    to = null,
+    onPress = null,
+    buttonTitle = '시작하기',
+    nickname,
+    role,
+  } = route.params || {};
+
+  return (
+    <View style={styles.signin}>
+      <View style={styles.view}>
+        <View style={styles.logoParent}>
+          <LogoBlue width={168} />
+          <View>
+            <Text style={styles.titleText}>반가워요, {nickname}님!</Text>
+            <Text style={styles.titleText}>
+              workaway와 함께 해주셔서 감사합니다.
+            </Text>
+          </View>
+        </View>
+        <ButtonScarlet title={buttonTitle} to={to} onPress={onPress} />
+      </View>
+    </View>
+  );
+};
+export default Result;
