@@ -1,7 +1,7 @@
 ---
 name: "Feature Issue"
 about: "기능 작업용 이슈 템플릿"
-title: "[FE][APP] "
+title: "[FE][HOST][APP] "
 ---
 
 ## 📌 작업 내용
