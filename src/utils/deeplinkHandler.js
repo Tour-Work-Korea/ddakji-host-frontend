@@ -86,9 +86,6 @@ const DeeplinkHandler = () => {
           return;
         }
 
-        if (parts[0] === 'exDeeplink' && parts[1]) {
-          navigate('EXHome');
-        }
       } catch (e) {
         console.warn('딥링크 파싱 실패', e);
       }

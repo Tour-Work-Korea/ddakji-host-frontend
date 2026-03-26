@@ -74,8 +74,3 @@ export {default as MeetDirections} from './(Host)/Meet/MyMeetAdd/MeetDirections'
 
 // 공용 상세
 export {default as ResumeDetail} from './(Common)/Employ/ResumeDetail';
-
-// 예시 화면들
-export {default as EXDeeplink} from './EXDeeplink';
-export {default as EXHome} from './EXHome';
-export {default as EXHomePage} from './EXHome/EXHomePage';

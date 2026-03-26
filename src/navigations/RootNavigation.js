@@ -66,7 +66,6 @@ const RootNavigation = () => (
       <Stack.Screen name="MainTabs" component={BottomTabs} />
       {/* navigation.navigate('MainTabs', { screen: '홈' }); 이런식으로 사용하면 하단탭 보이게 이동됨 */}
       {/* 화면 이름은 bottomtabs에 index파일 안에 있음 */}
-      {/* <Stack.Screen name="EXHome" component={EXHome} /> */}
       <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="undefined" component={undefinedStack} />
       <Stack.Screen name="Setting" component={Setting} />
