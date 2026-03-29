@@ -1,7 +1,8 @@
 import {useEffect, useRef, useCallback} from 'react';
-import {Linking, Alert} from 'react-native';
-import {navigate, navigationRef} from './navigationService';
+import {Linking} from 'react-native';
+import {navigationRef} from './navigationService';
 import useUserStore from '@stores/userStore';
+import {promptLoginRequired} from '@utils/auth/requireLogin';
 
 const DeeplinkHandler = () => {
   const accessToken = useUserStore(state => state.accessToken);
@@ -30,25 +31,12 @@ const DeeplinkHandler = () => {
       }
 
       promptingRef.current = true;
-      Alert.alert(
-        '로그인이 필요합니다',
+      promptLoginRequired({
         message,
-        [
-          {
-            text: '확인',
-            onPress: () => {
-              navigate('Login');
-              promptingRef.current = false;
-            },
-          },
-        ],
-        {
-          cancelable: true,
-          onDismiss: () => {
-            promptingRef.current = false;
-          },
+        onConfirm: () => {
+          promptingRef.current = false;
         },
-      );
+      });
     },
     [],
   );
