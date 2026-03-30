@@ -5,9 +5,8 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import {COLORS} from '@constants/colors';
 import {FONTS} from '@constants/fonts';
 
+import ChevronLeftIcon from '@assets/images/chevron_left_gray.svg';
 import ChevronDownIcon from '@assets/images/chevron_down_gray.svg';
-import BellIcon from '@assets/images/bell_gray.svg';
-import MenuIcon from '@assets/images/menu_gray.svg';
 
 const tabs = ['게하 정보', '객실 예약', '파티 정보', '파티 예약'];
 
@@ -20,6 +19,12 @@ const StoreRegisterPending = () => {
     <View style={styles.container}>
       <View style={styles.topBar}>
         <View style={styles.topBarLeft}>
+          <TouchableOpacity
+            style={styles.backButton}
+            activeOpacity={0.8}
+            onPress={() => navigation.goBack()}>
+            <ChevronLeftIcon width={24} height={24} />
+          </TouchableOpacity>
           <Text
             style={[FONTS.fs_20_semibold, styles.topBarTitle]}
             numberOfLines={1}>
@@ -28,14 +33,6 @@ const StoreRegisterPending = () => {
           <ChevronDownIcon width={16} height={16} />
         </View>
 
-        <View style={styles.topBarRight}>
-          <TouchableOpacity style={styles.iconButton} activeOpacity={0.8}>
-            <BellIcon width={18} height={18} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton} activeOpacity={0.8}>
-            <MenuIcon width={18} height={18} />
-          </TouchableOpacity>
-        </View>
       </View>
 
       <View style={styles.tabRow}>
@@ -101,6 +98,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flexShrink: 1,
+  },
+  backButton: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 6,
   },
   topBarTitle: {
     color: COLORS.grayscale_800,
