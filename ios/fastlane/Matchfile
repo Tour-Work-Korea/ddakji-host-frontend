@@ -1,4 +1,4 @@
-git_url("https://github.com/Tour-Work-Korea/workaway-certificates.git")
+git_url("git@github.com:Tour-Work-Korea/workaway-certificates.git")
 
 storage_mode("git")
 
