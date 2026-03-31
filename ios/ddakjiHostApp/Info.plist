@@ -27,8 +27,6 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
-	<key>KAKAO_APP_KEY</key>
-    <string>$(KAKAO_NATIVEAPP_KEY)</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -44,16 +42,20 @@
 			</array>
 		</dict>
 		<dict>
-            <key>CFBundleTypeRole</key>
-            <string>Editor</string>
-            <key>CFBundleURLSchemes</key>
-            <array>
-                <string>kakao$(KAKAO_NATIVEAPP_KEY)</string>
-            </array>
-        </dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>kakao$(KAKAO_NATIVEAPP_KEY)</string>
+			</array>
+		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>KAKAO_APP_KEY</key>
+	<string>$(KAKAO_NATIVEAPP_KEY)</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>kftc-bankpay</string>
@@ -96,7 +98,7 @@
 		<string>citimobileapp</string>
 		<string>kakaotalk</string>
 		<string>kakaokompassauth</string>
-        <string>kakaolink</string>
+		<string>kakaolink</string>
 		<string>payco</string>
 		<string>com.wooricard.wcard</string>
 		<string>newsmartpib</string>
@@ -119,20 +121,6 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
-	<!-- <dict>
-		<key>NSExceptionDomains</key>
-		<dict>
-			<key>workaway.kr</key>
-			<dict>
-				<key>NSIncludesSubdomains</key>
-				<true/>
-				<key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
-				<false/>
-				<key>NSTemporaryExceptionMinimumTLSVersion</key>
-				<string>TLSv1.2</string>
-			</dict>
-		</dict>
-	</dict> -->
 	<key>NSCameraUsageDescription</key>
 	<string>Ddakji Host needs camera access for photo upload.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
@@ -166,8 +154,6 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
-	<false/>
-	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 </dict>
 </plist>
