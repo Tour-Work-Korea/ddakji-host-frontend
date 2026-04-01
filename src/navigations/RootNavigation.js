@@ -57,6 +57,8 @@ import {
   RoomGuideMessageEditor,
   HostProfilePage,
   HostEditProfile,
+  NoticeList,
+  NoticeDetail,
 } from '@screens';
 
 const Stack = createNativeStackNavigator();
@@ -69,6 +71,8 @@ const RootNavigation = () => (
       <Stack.Screen name="undefined" component={undefinedStack} />
       <Stack.Screen name="Setting" component={Setting} />
       <Stack.Screen name="Terms" component={Terms} />
+      <Stack.Screen name="NoticeList" component={NoticeList} />
+      <Stack.Screen name="NoticeDetail" component={NoticeDetail} />
       <Stack.Screen name="StoreRegisterList" component={StoreRegisterList} />
       {/* 공고 하단바 없는 화면 */}
       <Stack.Screen name="EmployDetail" component={EmployDetail} />

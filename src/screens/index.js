@@ -20,6 +20,8 @@ export {default as Result} from './auth/Register/Result';
 
 export {default as HostHome} from './home/Home';
 export {default as HostHomeMenu} from './home/Menu';
+export {default as NoticeList} from './notice/NoticeList';
+export {default as NoticeDetail} from './notice/NoticeDetail';
 
 export {default as Setting} from './settings/Setting';
 export {default as Terms} from './settings/Setting/Terms';

@@ -20,23 +20,9 @@ import MenuIcon from '@assets/images/menu_gray.svg';
 import RightArrowIcon from '@assets/images/chevron_right_gray.svg';
 import HomeBannerBg from '@assets/images/home/home_banner_bg.png';
 import InstaEventImg from '@assets/images/home/insta_event_img.png';
+import {notices} from '@data/notices';
 
 import styles from './HostHome.styles';
-
-const notices = [
-  {
-    key: 'operation',
-    badge: '운영',
-    title: '게딱지 사장님 전용 서비스 오픈안내',
-    tone: 'blue',
-  },
-  {
-    key: 'marketing',
-    badge: '마케팅',
-    title: '게스트하우스 홍보용 인스타 피드 제작 지원',
-    tone: 'pink',
-  },
-];
 
 const businessInfo = [
   {label: '대표자', value: '이하늘, 정재원'},
@@ -219,7 +205,10 @@ const HostHome = () => {
         )}
 
         <View style={styles.noticeSection}>
-          <TouchableOpacity style={styles.sectionTitleRow} activeOpacity={0.8}>
+          <TouchableOpacity
+            style={styles.sectionTitleRow}
+            activeOpacity={0.8}
+            onPress={() => navigateWithLoginGuard('NoticeList')}>
             <Text style={[FONTS.fs_18_bold, styles.sectionTitle]}>
               공지사항
             </Text>
@@ -227,11 +216,12 @@ const HostHome = () => {
           </TouchableOpacity>
 
           <View style={styles.noticeList}>
-            {notices.map(notice => (
+            {notices.slice(0, 2).map(notice => (
               <TouchableOpacity
                 key={notice.key}
                 style={styles.noticeCard}
-                activeOpacity={0.85}>
+                activeOpacity={0.85}
+                onPress={() => navigateWithLoginGuard('NoticeList')}>
                 <View
                   style={[
                     styles.noticeBadge,
@@ -246,7 +236,7 @@ const HostHome = () => {
                         ? styles.noticeBadgeBlueText
                         : styles.noticeBadgePinkText,
                     ]}>
-                    {notice.badge}
+                    {notice.category}
                   </Text>
                 </View>
                 <Text style={[FONTS.fs_14_medium, styles.noticeText]}>

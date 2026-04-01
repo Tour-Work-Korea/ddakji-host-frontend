@@ -38,6 +38,7 @@ const menuSections = [
     key: 'notice',
     label: '공지사항',
     icon: NoticeIcon,
+    routeName: 'NoticeList',
   },
   {
     key: 'contract',
@@ -106,7 +107,9 @@ const HostHomeMenu = () => {
   };
 
   const handleWithdrawal = async () => {
-    if (isWithdrawing) return;
+    if (isWithdrawing) {
+      return;
+    }
 
     setIsWithdrawing(true);
     setModalVisible(false);
