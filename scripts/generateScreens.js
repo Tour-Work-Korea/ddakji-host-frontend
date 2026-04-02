@@ -82,15 +82,17 @@ function generateScreensIndex(exportableFolders) {
   console.log('✅ screens/index.js 생성 완료');
 }
 
-// (Common)/BottomTabs 스택 분리
+// app/MainStack 내부 스택 분리
 function groupByStack(exportableFolders) {
   const groupMap = {};
 
   for (const folder of exportableFolders) {
     const parts = folder.split(path.sep);
-    if (parts[0] === '(Common)' && parts[1] === 'BottomTabs') {
+    if (parts[0] === 'app' && parts[1] === 'MainStack') {
       const groupName = parts[2];
-      if (!groupMap[groupName]) groupMap[groupName] = [];
+      if (!groupMap[groupName]) {
+        groupMap[groupName] = [];
+      }
       const screenName = path.basename(folder);
       groupMap[groupName].push({ name: screenName, path: folder.replace(/\\/g, '/') });
     }

@@ -1,25 +1,23 @@
 import 'react-native-reanimated';
 import React, {useState, useEffect} from 'react';
-import {Platform, StatusBar, StyleSheet, View} from 'react-native';
+import {StatusBar, StyleSheet, View} from 'react-native';
 import 'react-native-gesture-handler';
 
 import RootNavigation from '@navigations/RootNavigation';
 import Toast from 'react-native-toast-message';
 import BasicToast from '@components/toasts/BasicToast';
 import ErrorToast from '@components/toasts/ErrorToast';
+import AlertModal from '@components/modals/AlertModal';
 import DeeplinkHandler from '@utils/deeplinkHandler';
 import {COLORS} from '@constants/colors';
 import {tryAutoLogin} from '@utils/auth/login';
+import {subscribe} from '@utils/loginModalHub';
 import LottieView from 'lottie-react-native';
 import {navigationRef} from '@utils/navigationService';
 import {
   SafeAreaView,
   SafeAreaProvider,
-  useSafeAreaInsets,
 } from 'react-native-safe-area-context';
-import LoginErrorModal from '@components/LoginErrorModal';
-
-
 
 const toastConfig = {
   success: props => <BasicToast {...props} />,
@@ -51,7 +49,15 @@ const waitForNavReady = async () => {
 
 function AppContent() {
   const [appLoaded, setAppLoaded] = useState(false);
-  const insets = useSafeAreaInsets();
+  const [loginModal, setLoginModal] = useState({
+    visible: false,
+    title: '',
+    message: '',
+    buttonText: '확인',
+    buttonText2: null,
+    onPress: null,
+    onPress2: null,
+  });
 
   useEffect(() => {
     console.log('🚨 API_BASE_URL (runtime):', process.env.API_BASE_URL);
@@ -68,14 +74,29 @@ function AppContent() {
     bootstrap();
   }, []);
 
+  useEffect(() => {
+    const unsub = subscribe(updater => setLoginModal(updater));
+    return unsub;
+  }, []);
+
+  const closeLoginModal = () =>
+    setLoginModal(prev => ({...prev, visible: false}));
+
+  const handleLoginModalConfirm = () => {
+    const cb = loginModal.onPress;
+    closeLoginModal();
+    requestAnimationFrame(() => cb?.());
+  };
+
+  const handleLoginModalCancel = () => {
+    const cb = loginModal.onPress2;
+    closeLoginModal();
+    requestAnimationFrame(() => cb?.());
+  };
+
   return (
     <>
-      <SafeAreaView
-        edges={['top']}
-        style={[
-          styles.container,
-          Platform.OS === 'android' && {paddingBottom: insets.bottom},
-        ]}>
+      <SafeAreaView edges={['top', 'bottom']} style={styles.container}>
         <StatusBar
           translucent={false}
           backgroundColor={COLORS.grayscale_100}
@@ -94,8 +115,15 @@ function AppContent() {
         />
       )}
       <Toast config={toastConfig} />
-
-      <LoginErrorModal />
+      <AlertModal
+        visible={loginModal.visible}
+        title={loginModal.title}
+        message={loginModal.message}
+        buttonText={loginModal.buttonText || '확인'}
+        buttonText2={loginModal.buttonText2}
+        onPress={handleLoginModalConfirm}
+        onPress2={handleLoginModalCancel}
+      />
     </>
   );
 }
@@ -111,7 +139,7 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.grayscale_100,
+    backgroundColor: COLORS.grayscale_0,
   },
   splashOverlay: {
     ...StyleSheet.absoluteFillObject,

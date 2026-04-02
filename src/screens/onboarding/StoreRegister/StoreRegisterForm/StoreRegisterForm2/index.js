@@ -18,7 +18,7 @@ import {
   validateStoreForm2,
 } from '@utils/validation/storeRegisterValidation';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
-import {CommonActions, useNavigation} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import AlertModal from '@components/modals/AlertModal';
 import AddressSearchModal from '@components/modals/AddressSearchModal';
 import {hostStorRegisterAgrees} from '@data/agree';
@@ -189,21 +189,8 @@ const StoreRegisterForm2 = ({route}) => {
 
     try {
       await hostGuesthouseApi.postHostApplication(form);
-      setErrorModal({
-        visible: true,
-        title: '성공적으로 입점신청이 완료되었습니다',
-        onPress: () => {
-          setErrorModal(prev => ({...prev, visible: false}));
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 1,
-              routes: [
-                {name: 'MainTabs', params: {screen: '마이'}},
-                {name: 'StoreRegisterList'},
-              ],
-            }),
-          );
-        },
+      navigation.replace('StoreRegisterComplete', {
+        businessName: fullForm.name,
       });
     } catch (error) {
       console.warn('입점신청서 등록 실패:', error);

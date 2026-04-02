@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Ddakji Host</string>
+	<string>게딱지 파트너센터</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIconName</key>
@@ -105,7 +105,6 @@
 		<string>NewSmartPib</string>
 		<string>supertoss</string>
 		<string>naversearchthirdlogin</string>
-		<string>kakaobank</string>
 		<string>v3mobileplusweb</string>
 		<string>line</string>
 		<string>alipays</string>

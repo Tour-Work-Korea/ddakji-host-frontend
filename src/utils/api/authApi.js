@@ -102,14 +102,6 @@ const authApi = {
     }
   },
 
-  //카카오 로그인
-  loginKakao: accessToken =>
-    api.post(
-      '/auth/user/social-login',
-      {provider: 'KAKAO', accessToken},
-      {withAuth: false},
-    ),
-    
   //닉네임 중복 확인
   checkNickname: nickname =>
     api.get('/auth/user/nickname/check', {

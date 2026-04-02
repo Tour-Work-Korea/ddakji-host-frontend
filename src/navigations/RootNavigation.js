@@ -5,7 +5,7 @@ import {navigationRef} from '@utils/navigationService';
 
 import undefinedStack from './undefinedStack';
 
-import BottomTabs from '@screens/(Common)/BottomTabs'; // 탭 전체 포함
+import MainStack from '@screens/app/MainStack';
 
 import {
   EmployDetail,
@@ -36,6 +36,8 @@ import {
   MyRoomDetail,
   StoreRegisterForm1,
   StoreRegisterForm2,
+  StoreRegisterComplete,
+  StoreRegisterPending,
   MyMeetList,
   MyMeetDetail,
   MyMeetAdd,
@@ -55,6 +57,8 @@ import {
   RoomGuideMessageEditor,
   HostProfilePage,
   HostEditProfile,
+  NoticeList,
+  NoticeDetail,
 } from '@screens';
 
 const Stack = createNativeStackNavigator();
@@ -62,14 +66,13 @@ const Stack = createNativeStackNavigator();
 const RootNavigation = () => (
   <NavigationContainer ref={navigationRef}>
     <Stack.Navigator screenOptions={{headerShown: false}}>
-      {/* 하단탭 보여하 하는 곳으로 이동할 때 사용 */}
-      <Stack.Screen name="MainTabs" component={BottomTabs} />
-      {/* navigation.navigate('MainTabs', { screen: '홈' }); 이런식으로 사용하면 하단탭 보이게 이동됨 */}
-      {/* 화면 이름은 bottomtabs에 index파일 안에 있음 */}
+      <Stack.Screen name="MainTabs" component={MainStack} />
       <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="undefined" component={undefinedStack} />
       <Stack.Screen name="Setting" component={Setting} />
       <Stack.Screen name="Terms" component={Terms} />
+      <Stack.Screen name="NoticeList" component={NoticeList} />
+      <Stack.Screen name="NoticeDetail" component={NoticeDetail} />
       <Stack.Screen name="StoreRegisterList" component={StoreRegisterList} />
       {/* 공고 하단바 없는 화면 */}
       <Stack.Screen name="EmployDetail" component={EmployDetail} />
@@ -90,6 +93,14 @@ const RootNavigation = () => (
       <Stack.Screen name="HostEditProfile" component={HostEditProfile} />
       <Stack.Screen name="StoreRegisterForm1" component={StoreRegisterForm1} />
       <Stack.Screen name="StoreRegisterForm2" component={StoreRegisterForm2} />
+      <Stack.Screen
+        name="StoreRegisterComplete"
+        component={StoreRegisterComplete}
+      />
+      <Stack.Screen
+        name="StoreRegisterPending"
+        component={StoreRegisterPending}
+      />
       <Stack.Screen name="MyGuesthouseList" component={MyGuesthouseList} />
       <Stack.Screen name="MyGuesthouseAdd" component={MyGuesthouseAdd} />
       <Stack.Screen name="MyGuesthouseEdit" component={MyGuesthouseEdit} />
