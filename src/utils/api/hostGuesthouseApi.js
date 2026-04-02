@@ -3,7 +3,6 @@ import api from './axiosInstance';
 const hostGuesthouseApi = {
   // 사장님 전체 게스트하우스 조회
   getMyGuesthouses: () => api.get('/host/guesthouses'),
-  
   // 사장님 전체 게스트하우스 조회 (룸 포함)
   getMyGuesthousesWithRooms: () => api.get('/host/guesthouses/with-rooms'),
 
@@ -119,6 +118,10 @@ const hostGuesthouseApi = {
       },
     }),
 
+  // 입점 신청서 기반 임시 게스트하우스 생성
+  tempCreateGuesthouse: payload =>
+    api.post('/host/guesthouses/tempCreate', payload),
+
   // 게하 예약 검색
   searchGuesthouseReservations: (formData) =>
     api.get('/order/host/reservation/search', { params: formData }),
@@ -186,7 +189,7 @@ const hostGuesthouseApi = {
   // 게하 예약 취소
   cancelGuesthouseReservation: (reservationId) =>
     api.delete(`/order/reservation/${reservationId}`, {
-      data: { type: "GUESTHOUSE" },
+      data: {type: 'GUESTHOUSE'},
     }),
 };
 

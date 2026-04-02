@@ -39,7 +39,7 @@ const StoreRegisterList = () => {
       ]}
       activeOpacity={0.8}
       onPress={() =>
-        navigation.navigate('StoreRegisterPending', {
+        navigation.navigate('GuesthouseManagement', {
           businessName: item.businessName,
           storeRegisterId: item.id,
         })

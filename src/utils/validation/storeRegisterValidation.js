@@ -18,16 +18,21 @@ export const isValidImageUri = uri => typeof uri === 'string' && uri.length > 0;
 export const validateStoreForm1 = form => {
   const errors = [];
 
-  if (!isValidName(form.name))
+  if (!isValidName(form.name)) {
     errors.push('상호명 또는 법인명을 입력해주세요.');
-  if (!isValidBusinessType(form.businessType))
+  }
+  if (!isValidBusinessType(form.businessType)) {
     errors.push('사업장 유형을 입력해주세요.');
-  if (!isValidEmployeeCount(form.employeeCount))
-    errors.push('직원 수를 정확히 입력해주세요.');
-  if (!isValidEmail(form.managerEmail))
-    errors.push('담당자 이메일 형식이 올바르지 않습니다.');
-  if (!isValidName(form.managerName))
-    errors.push('담당자 이름을 입력해주세요.');
+  }
+  if (!isValidPhone(form.businessPhone)) {
+    errors.push('전화번호 형식을 확인해주세요.');
+  }
+  if (!isValidAddress(form.address)) {
+    errors.push('주소를 입력해주세요.');
+  }
+  if (!isValidImageUri(form.img?.uri)) {
+    errors.push('사업자 등록증 이미지를 첨부해주세요.');
+  }
 
   return errors;
 };
@@ -35,13 +40,12 @@ export const validateStoreForm1 = form => {
 export const validateStoreForm2 = form => {
   const errors = [];
 
-  if (!isValidAddress(form.address)) errors.push('주소를 입력해주세요.');
-  // if (!isValidBusinessNumber(form.businessRegistrationNumber))
-  //   errors.push('10자리 숫자 사업자등록번호를 입력해주세요.');
-  if (!isValidImageUri(form.img.uri))
-    errors.push('사업자 등록증 이미지를 첨부해주세요.');
-  if (!isValidPhone(form.businessPhone))
-    errors.push('전화번호 형식을 확인해주세요.');
+  if (!isValidName(form.guesthouseName)) {
+    errors.push('게스트하우스 이름을 입력해주세요.');
+  }
+  if (!isValidImageUri(form.profileImg)) {
+    errors.push('게스트하우스 프로필 이미지를 첨부해주세요.');
+  }
 
   return errors;
 };
@@ -49,23 +53,27 @@ export const validateStoreForm2 = form => {
 export const validateStoreForm = form => {
   const errors = [];
 
-  if (!isValidName(form.name))
+  if (!isValidName(form.name)) {
     errors.push('상호명 또는 법인명을 입력해주세요.');
-  if (!isValidBusinessType(form.businessType))
+  }
+  if (!isValidBusinessType(form.businessType)) {
     errors.push('사업장 유형을 입력해주세요.');
-  if (!isValidEmployeeCount(form.employeeCount))
-    errors.push('직원 수를 정확히 입력해주세요.');
-  if (!isValidPhone(form.businessPhone))
+  }
+  if (!isValidPhone(form.businessPhone)) {
     errors.push('전화번호 형식을 확인해주세요.');
-  if (!isValidEmail(form.managerEmail))
-    errors.push('담당자 이메일 형식이 올바르지 않습니다.');
-  if (!isValidName(form.managerName))
-    errors.push('담당자 이름을 입력해주세요.');
-  if (!isValidAddress(form.address)) errors.push('주소를 입력해주세요.');
-  // if (!isValidBusinessNumber(form.businessRegistrationNumber))
-  //   errors.push('10자리 숫자 사업자등록번호를 입력해주세요.');
-  if (!isValidImageUri(form.img.uri))
+  }
+  if (!isValidAddress(form.address)) {
+    errors.push('주소를 입력해주세요.');
+  }
+  if (!isValidImageUri(form.img?.uri)) {
     errors.push('사업자 등록증 이미지를 첨부해주세요.');
+  }
+  if (!isValidName(form.guesthouseName)) {
+    errors.push('게스트하우스 이름을 입력해주세요.');
+  }
+  if (!isValidImageUri(form.profileImg)) {
+    errors.push('게스트하우스 프로필 이미지를 첨부해주세요.');
+  }
 
   return errors;
 };

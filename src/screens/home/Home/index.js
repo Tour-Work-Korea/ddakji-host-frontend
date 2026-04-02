@@ -1,4 +1,4 @@
-import React, {useMemo} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   Image,
   Linking,
@@ -12,7 +12,9 @@ import {
 import {FONTS} from '@constants/fonts';
 import Avatar from '@components/Avatar';
 import useUserStore from '@stores/userStore';
+import adminApi from '@utils/api/adminApi';
 import {navigateWithLoginGuard} from '@utils/auth/requireLogin';
+import {navigate} from '@utils/navigationService';
 
 import LogoIcon from '@assets/images/logo_orange.svg';
 import BellIcon from '@assets/images/bell_gray.svg';
@@ -20,7 +22,6 @@ import MenuIcon from '@assets/images/menu_gray.svg';
 import RightArrowIcon from '@assets/images/chevron_right_gray.svg';
 import HomeBannerBg from '@assets/images/home/home_banner_bg.png';
 import InstaEventImg from '@assets/images/home/insta_event_img.png';
-import {notices} from '@data/notices';
 
 import styles from './HostHome.styles';
 
@@ -35,28 +36,77 @@ const businessInfo = [
 const INSTAGRAM_URL =
   'https://www.instagram.com/guesthouse_ddakji?igsh=ZGFmdHVmbDV3eHM0';
 
+const formatNoticeDate = value => {
+  if (!value) {
+    return '';
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}.${month}.${day}`;
+};
+
+const mapNoticeSummary = item => ({
+  id: item?.id,
+  key: String(item?.id ?? ''),
+  categoryCode: item?.category || '',
+  category: item?.categoryLabel || item?.category || '',
+  title: item?.title || '',
+  date: formatNoticeDate(item?.publishedAt || item?.updatedAt),
+  summary: item?.summary || '',
+  exposeOnHome: Boolean(item?.exposeOnHome),
+  pinned: Boolean(item?.pinned),
+});
+
 const HostHome = () => {
   const {width: screenWidth} = useWindowDimensions();
   const heroBackgroundHeight = 436;
   const hostProfile = useUserStore(state => state.hostProfile);
-  const selectedProfileId = useUserStore(
-    state => state.selectedHostGuesthouseId,
-  );
-
-  const selectedGuesthouse = useMemo(() => {
-    const guesthouseProfiles = hostProfile?.guesthouseProfiles ?? [];
-
-    return (
-      guesthouseProfiles.find(
-        item => String(item.guesthouseId) === selectedProfileId,
-      ) || guesthouseProfiles[0]
-    );
-  }, [hostProfile?.guesthouseProfiles, selectedProfileId]);
+  const [homeNotices, setHomeNotices] = useState([]);
 
   const guesthouseProfiles = hostProfile?.guesthouseProfiles ?? [];
   const hasGuesthouseProfiles = guesthouseProfiles.length > 0;
-  const guesthouseName = selectedGuesthouse?.guesthouseName || '게딱지';
-  const guesthouseImage = selectedGuesthouse?.profileImageUrl || null;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchHomeNotices = async () => {
+      try {
+        const {data} = await adminApi.getHomeNotices();
+        const items = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.items)
+            ? data.items
+            : [];
+        const mappedItems = items.map(mapNoticeSummary).slice(0, 2);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setHomeNotices(mappedItems);
+      } catch (error) {
+        console.warn('[HostHome] failed to fetch notices:', error?.message);
+
+        if (isMounted) {
+          setHomeNotices([]);
+        }
+      }
+    };
+
+    fetchHomeNotices();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handlePressInstagramLink = async () => {
     try {
@@ -64,6 +114,17 @@ const HostHome = () => {
     } catch (error) {
       console.warn('[HostHome] failed to open instagram url:', error?.message);
     }
+  };
+
+  const handlePressNoticeList = () => {
+    navigate('NoticeList');
+  };
+
+  const handlePressNoticeDetail = notice => {
+    navigate('NoticeDetail', {
+      noticeId: notice?.id,
+      noticeKey: notice?.key,
+    });
   };
 
   return (
@@ -142,30 +203,40 @@ const HostHome = () => {
                 <RightArrowIcon width={24} height={24} />
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.myBusinessCard}
-                activeOpacity={0.85}
-                onPress={() => navigateWithLoginGuard('HostMyPage')}>
-                <View style={styles.myBusinessCardLeft}>
-                  <Avatar
-                    uri={guesthouseImage}
-                    size={60}
-                    borderRadius={10}
-                    iconSize={24}
-                  />
-                  <Text
-                    style={[FONTS.fs_18_semibold, styles.myBusinessName]}
-                    numberOfLines={1}>
-                    {guesthouseName}
-                  </Text>
-                </View>
+              <View style={styles.myBusinessList}>
+                {guesthouseProfiles.map((guesthouse, index) => (
+                  <TouchableOpacity
+                    key={String(guesthouse?.guesthouseId ?? `guesthouse-${index}`)}
+                    style={styles.myBusinessCard}
+                    activeOpacity={0.85}
+                    onPress={() =>
+                      navigateWithLoginGuard('GuesthouseManagement', {
+                        businessName: guesthouse?.guesthouseName || '게스트하우스',
+                        guesthouseId: guesthouse?.guesthouseId ?? null,
+                      })
+                    }>
+                    <View style={styles.myBusinessCardLeft}>
+                      <Avatar
+                        uri={guesthouse?.profileImageUrl || null}
+                        size={60}
+                        borderRadius={10}
+                        iconSize={24}
+                      />
+                      <Text
+                        style={[FONTS.fs_18_semibold, styles.myBusinessName]}
+                        numberOfLines={1}>
+                        {guesthouse?.guesthouseName || '게스트하우스'}
+                      </Text>
+                    </View>
 
-                <View style={styles.myBusinessBadge}>
-                  <Text style={[FONTS.fs_14_semibold, styles.myBusinessBadgeText]}>
-                    운영자
-                  </Text>
-                </View>
-              </TouchableOpacity>
+                    <View style={styles.myBusinessBadge}>
+                      <Text style={[FONTS.fs_14_semibold, styles.myBusinessBadgeText]}>
+                        운영자
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
           </View>
         ) : (
@@ -208,7 +279,7 @@ const HostHome = () => {
           <TouchableOpacity
             style={styles.sectionTitleRow}
             activeOpacity={0.8}
-            onPress={() => navigateWithLoginGuard('NoticeList')}>
+            onPress={handlePressNoticeList}>
             <Text style={[FONTS.fs_18_bold, styles.sectionTitle]}>
               공지사항
             </Text>
@@ -216,25 +287,23 @@ const HostHome = () => {
           </TouchableOpacity>
 
           <View style={styles.noticeList}>
-            {notices.slice(0, 2).map(notice => (
+            {homeNotices.map(notice => (
               <TouchableOpacity
                 key={notice.key}
                 style={styles.noticeCard}
                 activeOpacity={0.85}
-                onPress={() => navigateWithLoginGuard('NoticeList')}>
+                onPress={() => handlePressNoticeDetail(notice)}>
                 <View
                   style={[
                     styles.noticeBadge,
-                    notice.tone === 'blue'
-                      ? styles.noticeBadgeBlue
-                      : styles.noticeBadgePink,
+                    styles.noticeBadgeVariants[notice.categoryCode] ||
+                      styles.noticeBadgeBlue,
                   ]}>
                   <Text
                     style={[
                       FONTS.fs_14_semibold,
-                      notice.tone === 'blue'
-                        ? styles.noticeBadgeBlueText
-                        : styles.noticeBadgePinkText,
+                      styles.noticeBadgeTextVariants[notice.categoryCode] ||
+                        styles.noticeBadgeBlueText,
                     ]}>
                     {notice.category}
                   </Text>

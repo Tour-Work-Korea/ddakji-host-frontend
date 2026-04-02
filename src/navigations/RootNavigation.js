@@ -37,7 +37,7 @@ import {
   StoreRegisterForm1,
   StoreRegisterForm2,
   StoreRegisterComplete,
-  StoreRegisterPending,
+  GuesthouseManagement,
   MyMeetList,
   MyMeetDetail,
   MyMeetAdd,
@@ -98,8 +98,8 @@ const RootNavigation = () => (
         component={StoreRegisterComplete}
       />
       <Stack.Screen
-        name="StoreRegisterPending"
-        component={StoreRegisterPending}
+        name="GuesthouseManagement"
+        component={GuesthouseManagement}
       />
       <Stack.Screen name="MyGuesthouseList" component={MyGuesthouseList} />
       <Stack.Screen name="MyGuesthouseAdd" component={MyGuesthouseAdd} />

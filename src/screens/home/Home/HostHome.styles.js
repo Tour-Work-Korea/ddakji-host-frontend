@@ -136,6 +136,9 @@ export default StyleSheet.create({
     marginTop: 28,
     marginBottom: 12,
   },
+  myBusinessList: {
+    gap: 10,
+  },
   myBusinessCount: {
     color: COLORS.primary_blue,
   },
@@ -215,10 +218,38 @@ export default StyleSheet.create({
     color: COLORS.semantic_blue,
   },
   noticeBadgePink: {
-    backgroundColor: COLORS.secondary_red,
+    backgroundColor: COLORS.secondary_pink,
   },
   noticeBadgePinkText: {
-    color: COLORS.semantic_red,
+    color: COLORS.semantic_pink,
+  },
+  noticeBadgeVariants: {
+    OPERATIONS: {
+      backgroundColor: COLORS.secondary_blue,
+    },
+    MARKETING: {
+      backgroundColor: COLORS.secondary_pink,
+    },
+    POLICY: {
+      backgroundColor: COLORS.secondary_yellow,
+    },
+    EVENT: {
+      backgroundColor: COLORS.secondary_green,
+    },
+  },
+  noticeBadgeTextVariants: {
+    OPERATIONS: {
+      color: COLORS.semantic_blue,
+    },
+    MARKETING: {
+      color: COLORS.semantic_pink,
+    },
+    POLICY: {
+      color: COLORS.semantic_yellow,
+    },
+    EVENT: {
+      color: COLORS.semantic_green,
+    },
   },
   noticeText: {
     flex: 1,
