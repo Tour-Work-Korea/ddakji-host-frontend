@@ -51,9 +51,6 @@ const styles = StyleSheet.create({
   mailButton: {
     backgroundColor: '#eaebed',
   },
-  kakaoButton: {
-    backgroundColor: '#fee500',
-  },
   buttonParent: {
     gap: 8,
     alignSelf: 'stretch',

@@ -6,38 +6,8 @@ import useUserStore from '@stores/userStore';
 import hostMyApi from '@utils/api/hostMyApi';
 import {log, mask} from '@utils/logger';
 import {navigate} from '@utils/navigationService';
-import { login as kakaoLogin } from '@react-native-seoul/kakao-login';
 
 const REFRESH_KEY = 'refresh-token';
-
-export const tryKakaoLoginNative = async (userRole) => {
-  log.info('tryKakaoLoginNative: role=', userRole);
-  try {
-    // 1. 카카오 네이티브 SDK 실행 (앱 유무 파악 및 앱/웹 자동 전환)
-    const kakaoToken = await kakaoLogin();
-    log.info('카카오 SDK 로그인 성공, Access Token 획득');
-
-    // 2. 획득한 accessToken을 백엔드로 전달
-    const res = await authApi.loginKakao(kakaoToken.accessToken);
-    
-    // 3. 백엔드에서 응답받은 우리 서비스의 토큰을 저장
-    await storeLoginInfo(res, userRole);
-    
-    return {
-      success: true, 
-      isNewUser: res.data.isNewUser, 
-      externalId: res.data.externalId
-    };
-  } catch (err) {
-    log.warn('❌ tryKakaoLoginNative failed:', err?.message);
-    useUserStore.getState().clearUser();
-    
-    return {
-      success: false, 
-      message: err?.message
-    };
-  }
-};
 
 export const tryAutoLogin = async () => {
   log.info('🚪 tryAutoLogin: start');
@@ -121,23 +91,6 @@ export const tryLogin = async (email, password, userRole) => {
 
     useUserStore.getState().clearUser();
     throw err;
-  }
-};
-
-export const tryKakaoLogin = async (accessCode, userRole) => {
-  log.info('🟨 tryKakaoLogin: role=', userRole);
-  try {
-    const res = await authApi.loginKakao(accessCode);
-    await storeLoginInfo(res, userRole);
-    return {success: true, isNewUser: res.data.isNewUser};
-  } catch (err) {
-    log.warn('❌ tryKakaoLogin failed:', err?.message);
-    useUserStore.getState().clearUser();
-    await EncryptedStorage.removeItem(REFRESH_KEY);
-    const check = await EncryptedStorage.getItem(REFRESH_KEY);
-    log.info('🧹 removed refresh?', !check);
-
-    return {success: false};
   }
 };
 
