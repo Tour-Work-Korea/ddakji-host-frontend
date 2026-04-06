@@ -132,12 +132,4 @@ export default StyleSheet.create({
     // height: 0.8,
     // backgroundColor: COLORS.grayscale_200,
   },
-
-  // 프로필 선택 모달
-  profileListOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 20,
-  },
-  profileListWrap: {
-  },
 });

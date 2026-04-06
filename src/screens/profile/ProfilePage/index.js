@@ -168,7 +168,7 @@ const HostProfilePage = ({route}) => {
     const guesthouseId = Number(effectiveGuesthouseId);
     if (!Number.isFinite(guesthouseId) || guesthouseId <= 0) return;
 
-    navigation.navigate('MyGuesthouseDetail', {
+    navigation.navigate('MyGuesthousePreview', {
       id: guesthouseId,
     });
   };

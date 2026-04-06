@@ -7,6 +7,7 @@ export const COLORS = {
     secondary_red: '#FEE9E8',
     secondary_yellow: '#FDF6E7',
     secondary_green: '#DBFFED',
+    secondary_pink: '#FAE5EE',
 
     neutral_black: '#121212',
     neutral_gray: '#FAFAFC',
@@ -17,7 +18,7 @@ export const COLORS = {
     semantic_yellow: '#FFAB00',
     semantic_red: '#FF3030',
     semantic_purple: '#6554C0',
-    semantic_pink: '#FF7EB6',
+    semantic_pink: '#FB1F7E',
     semantic_brown: '#8B572A',
 
     grayscale_900: '#000000',

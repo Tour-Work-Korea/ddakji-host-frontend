@@ -18,6 +18,7 @@ import ContractIcon from '@assets/images/menu_contract.svg';
 import AlarmIcon from '@assets/images/menu_alarm.svg';
 import PolicyIcon from '@assets/images/menu_policy.svg';
 import VersionIcon from '@assets/images/menu_version.svg';
+import SettingIcon from '@assets/images/settings_gray.svg';
 import RightArrowIcon from '@assets/images/chevron_right_gray.svg';
 
 import styles from './HostHomeMenu.styles';
@@ -51,6 +52,12 @@ const menuSections = [
     label: '알림 설정',
     icon: AlarmIcon,
     routeName: 'CustomerNotificationSettings',
+  },
+  {
+    key: 'setting',
+    label: '설정',
+    icon: SettingIcon,
+    routeName: 'Setting',
   },
   {
     key: 'policy',

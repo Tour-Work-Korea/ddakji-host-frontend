@@ -14,9 +14,9 @@ import ImageResizer from 'react-native-image-resizer';
  */
 
 //비민감 이미지 URL 받기
-const getPresignedUrl = async filename => {
-  const response = await commonApi.getPresignedUrl(filename);
-  return response.data;
+const getPresignedUrl = async (filename, contentType) => {
+  const response = await commonApi.getPresignedUrl(filename, contentType);
+  return response.data?.presignedUrl;
 };
 
 // ⬇️ 압축 유틸 (JPEG로 리사이즈/재인코딩)
@@ -43,7 +43,7 @@ export const uploadImageToS3 = async (presignedUrl, fileUri, fileType) => {
 
   await fetch(presignedUrl, {
     method: 'PUT',
-    headers: {'Content-Type': 'image/*'}, // 기존 로직 유지
+    headers: {'Content-Type': fileType},
     body: blob,
   });
 
@@ -57,7 +57,9 @@ export const uploadSingleImage = async () => {
     launchImageLibrary({mediaType: 'photo'}, response => resolve(response)),
   );
 
-  if (result.didCancel || result.errorCode || !result.assets) return null;
+  if (result.didCancel || result.errorCode || !result.assets) {
+    return null;
+  }
 
   const asset = result.assets[0];
   const originalUri = asset.uri;
@@ -81,7 +83,7 @@ export const uploadSingleImage = async () => {
   const fileType = 'image/jpeg';
   const filename = generateUniqueFilename('jpg');
 
-  const presignedUrl = await getPresignedUrl(filename);
+  const presignedUrl = await getPresignedUrl(filename, fileType);
   const uploadedUrl = await uploadImageToS3(presignedUrl, fileUri, fileType);
 
   return uploadedUrl;
@@ -99,7 +101,9 @@ export const uploadMultiImage = async (limit = 10) => {
     ),
   );
 
-  if (result.didCancel || result.errorCode || !result.assets) return [];
+  if (result.didCancel || result.errorCode || !result.assets) {
+    return [];
+  }
 
   const uploadedUrls = [];
 
@@ -124,7 +128,7 @@ export const uploadMultiImage = async (limit = 10) => {
     const fileType = 'image/jpeg';
     const filename = generateUniqueFilename('jpg');
 
-    const presignedUrl = await getPresignedUrl(filename);
+    const presignedUrl = await getPresignedUrl(filename, fileType);
     const uploadedUrl = await uploadImageToS3(presignedUrl, fileUri, fileType);
 
     uploadedUrls.push(uploadedUrl);
@@ -142,7 +146,9 @@ export const uploadSensitiveImage = async () => {
   const result = await new Promise(resolve =>
     launchImageLibrary({mediaType: 'photo'}, response => resolve(response)),
   );
-  if (result.didCancel || result.errorCode || !result.assets) return null;
+  if (result.didCancel || result.errorCode || !result.assets) {
+    return null;
+  }
 
   const asset = result.assets[0];
   const originalUri = asset.uri;
@@ -217,7 +223,9 @@ export const adaptiveCompressToJPEG = async (
     )
   ).uri;
   let size = await getFileSize(outUri);
-  if (size <= targetBytes) return outUri;
+  if (size <= targetBytes) {
+    return outUri;
+  }
 
   // 반복 압축
   while (quality > minQuality || maxEdge > minMax) {
@@ -239,7 +247,9 @@ export const adaptiveCompressToJPEG = async (
       )
     ).uri;
     size = await getFileSize(outUri);
-    if (size <= targetBytes) break;
+    if (size <= targetBytes) {
+      break;
+    }
   }
   return outUri;
 };

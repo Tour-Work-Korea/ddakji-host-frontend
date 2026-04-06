@@ -21,7 +21,8 @@ import ServiceInfoModal from '@components/modals/Guesthouse/ServiceInfoModal';
 import ImageModal from '@components/modals/ImageModal';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
 import Loading from '@components/Loading';
-import { publicFacilities, roomFacilities, services } from '@constants/guesthouseOptions';
+import useGuesthouseMetaStore from '@stores/guesthouseMetaStore';
+import {getAmenitySectionLabel} from '@utils/guesthouseMeta';
 
 import EmptyHeart from '@assets/images/heart_empty.svg';
 import LeftArrow from '@assets/images/chevron_left_white.svg';
@@ -66,22 +67,15 @@ const normalizeAmenityToken = (v) => {
 
 const TAB_OPTIONS = ['객실', '소개', '이용규칙', '리뷰'];
 
-const CATEGORY = {
-  PUBLIC: '숙소 공용시설',
-  ROOM: '객실 내 시설',
-  SERVICE: '기타 시설 및 서비스',
-};
-
-const inList = (list, name) => list.some(x => x.name === name);
-const getCategoryByName = (name) => {
-  if (inList(publicFacilities, name)) return CATEGORY.PUBLIC;
-  if (inList(roomFacilities, name)) return CATEGORY.ROOM;
-  if (inList(services, name)) return CATEGORY.SERVICE;
-  return '';
-};
-
-const MyGuesthouseDetail = ({ route }) => {
+const MyGuesthousePreview = ({ route }) => {
   const navigation = useNavigation();
+  const guesthouseAmenities = useGuesthouseMetaStore(
+    state => state.guesthouseAmenities,
+  );
+  const amenityNameMap = useMemo(
+    () => new Map(guesthouseAmenities.map(amenity => [amenity.name, amenity])),
+    [guesthouseAmenities],
+  );
   // 사진
   const { width: SCREEN_W } = Dimensions.get('window');
   const IMAGE_H = 280;
@@ -95,7 +89,7 @@ const MyGuesthouseDetail = ({ route }) => {
     setImageIndex(thumbnailIndex);
   }, [thumbnailIndex]);
 
-  const { id, isPreview = false, previewData = null } = route.params || {};
+  const {id, previewData = null, hideEditButton = false} = route.params || {};
 
   const [activeTab, setActiveTab] = useState('객실');
   const [detail, setDetail] = useState(null);
@@ -111,11 +105,19 @@ const MyGuesthouseDetail = ({ route }) => {
   const checkOutDateStr = tomorrow.format('YYYY-MM-DD');
 
   const formatTime = (timeStr) => timeStr ? timeStr.slice(0, 5) : '';
+  const dormitoryGenderMap = {
+    MIXED: '혼숙',
+    FEMALE_ONLY: '여성전용',
+    MALE_ONLY: '남성전용',
+  };
 
   // 게하 상세 정보 불러오기
   const fetchDetail = useCallback(async () => {
-    if (isPreview && previewData) {
+    if (previewData) {
       setDetail(previewData);
+    }
+
+    if (previewData) {
       return;
     }
     try {
@@ -124,7 +126,7 @@ const MyGuesthouseDetail = ({ route }) => {
     } catch (e) {
       // 에러 처리 필요시 추가
     }
-  }, [id, isPreview, previewData]);
+  }, [id, previewData]);
 
   useFocusEffect(
     useCallback(() => {
@@ -193,10 +195,8 @@ const MyGuesthouseDetail = ({ route }) => {
       roomType: r.roomType,
     })),
 
-    // amenityType(한글 라벨)만 넘김
-    amenities: (d.amenities || [])
-      .map(a => a.amenityType)
-      .filter(Boolean),
+    amenities: d.amenities || [],
+    refundPolicies: d.refundPolicies || [],
 
     // 해시태그 (이름만 넘김)
     hashtags: (d.hashtags || []).map(h => h.hashtag),
@@ -206,17 +206,25 @@ const MyGuesthouseDetail = ({ route }) => {
 
   const selectedAmenitiesForModal = useMemo(() => {
     const am = detail?.amenities ?? [];
-    if (!isPreview) return am;
+    if (!previewData) return am;
     if (am.length && typeof am[0] !== 'string') return am;
 
-    return am.map((name, idx) => ({
-      id: idx + 1,
-      amenityName: normalizeAmenityToken(name), // WIFI 등
-      amenityType: name,                        // 한글 라벨
-      category: getCategoryByName(name),
-      count: 1,
-    }));
-  }, [detail?.amenities, isPreview]);
+    return am.map((name, idx) => {
+      const amenity =
+        amenityNameMap.get(name) ||
+        Array.from(amenityNameMap.values()).find(
+          item => item.amenityType === name,
+        ) || {id: idx + 1, name};
+
+      return {
+        ...amenity,
+        amenityName: normalizeAmenityToken(amenity.amenityType || name),
+        amenityType: amenity.amenityType || name,
+        category: getAmenitySectionLabel(amenity),
+        count: 1,
+      };
+    });
+  }, [amenityNameMap, detail?.amenities, previewData]);
 
   if (!detail) {
     return <Loading title="게스트하우스를 불러오고 있어요" />;
@@ -264,11 +272,7 @@ const MyGuesthouseDetail = ({ route }) => {
           <LeftArrow width={28} height={28}/>
         </TouchableOpacity>
 
-        {isPreview ? (
-          <View style={styles.previewBox}>
-            <Text style={[FONTS.fs_14_medium, styles.previewText]}>임시화면</Text>
-          </View>
-        ) : (
+        {!hideEditButton ? (
           <TouchableOpacity
             style={styles.editButton}
             onPress={() => {
@@ -281,7 +285,7 @@ const MyGuesthouseDetail = ({ route }) => {
           >
             <EditIcon width={18} height={18}/>
           </TouchableOpacity>
-        )}
+        ) : null}
 
         {/* 해시태그 */}
         <View style={styles.tagContainer}>
@@ -319,6 +323,24 @@ const MyGuesthouseDetail = ({ route }) => {
         <Text style={[FONTS.fs_14_regular, styles.address]}>
           {detail.guesthouseAddress} {detail.guesthouseDetailAddress}
         </Text>
+
+        {detail.guesthousePhone ? (
+          <Text style={[FONTS.fs_14_regular, styles.phone]}>
+            숙소 문의 : {detail.guesthousePhone}
+          </Text>
+        ) : null}
+
+        <View style={styles.reviewRow}>
+          <View style={styles.reviewBox}>
+            <Text style={[FONTS.fs_12_medium, styles.rating]}>
+              {detail.averageRating?.toFixed?.(1) ?? '0.0'}
+            </Text>
+            <Text style={styles.ratingDevide}>·</Text>
+            <Text style={[FONTS.fs_12_medium, styles.reviewCount]}>
+              {detail.reviewCount ?? 0} 리뷰
+            </Text>
+          </View>
+        </View>
 
         <View style={styles.shortIntroContainer}>
           <Text style={[FONTS.fs_14_regular, styles.shortIntroText]}>
@@ -408,76 +430,201 @@ const MyGuesthouseDetail = ({ route }) => {
         <View style={styles.roomContentWrapper}>
           <Text style={[FONTS.fs_18_semibold, styles.tabTitle]}>객실</Text>
           {detail.roomInfos?.map(room => {
-          const roomTypeMap = {
-            MIXED: '혼숙',
-            FEMALE_ONLY: '여성전용',
-            MALE_ONLY: '남성전용',
-          };
+          const isDormitory = room.roomType === 'DORMITORY';
+          const genderText = dormitoryGenderMap[room.dormitoryGenderType] || '';
+          const thumbnailImage =
+            room.roomImages?.find(img => img.isThumbnail)?.roomImageUrl ||
+            room.roomImages?.[0]?.roomImageUrl;
 
           return (
             <View key={room.id}>
-              <TouchableOpacity
-                onPress={() => {
-                  navigation.navigate('MyRoomDetail', {
-                    roomId: room.id,
-                    roomName: room.roomName,
-                    roomPrice: room.roomPrice,
-                    roomDesc: room.roomDesc,
-                    roomCapacity: room.roomCapacity,
-                    roomType: room.roomType,
-                    checkIn: `${checkInDateStr}T${detail.checkIn}`,
-                    checkOut: `${checkOutDateStr}T${detail.checkOut}`,
-                    roomImages: room.roomImages || [],
-                  });
-                }}
-              >
-                <View style={styles.roomCard}>
-                  {(() => {
-                    const thumbnailImage =
-                      room.roomImages?.find(img => img.isThumbnail)?.roomImageUrl ||
-                      room.roomImages?.[0]?.roomImageUrl;
+              <View style={styles.roomCard}>
+                {thumbnailImage ? (
+                  <Image
+                    source={{ uri: thumbnailImage }}
+                    style={styles.roomImage}
+                  />
+                ) : (
+                  <View
+                    style={[
+                      styles.roomImage,
+                      { backgroundColor: COLORS.grayscale_0 },
+                    ]}
+                  />
+                )}
 
-                    return thumbnailImage ? (
-                      <Image
-                        source={{ uri: thumbnailImage }}
-                        style={styles.roomImage}
-                      />
-                    ) : (
-                      <View
-                        style={[
-                          styles.roomImage,
-                          { backgroundColor: COLORS.grayscale_0 },
-                        ]}
-                      />
-                    );
-                  })()}
-                  <View style={styles.roomInfo}>
-                    <View style={styles.roomNameDescContainer}>
-                      <Text 
-                        style={[FONTS.fs_16_semibold, styles.roomType]}
-                        numberOfLines={1}
-                        ellipsizeMode="tail"
-                      >
-                        {room.roomName}
-                      </Text>
-                      <Text style={[FONTS.fs_14_medium, styles.roomType]}>
-                        {room.roomCapacity}인실 {roomTypeMap[room.roomType] || ''}
-                      </Text>
-                      <View style={styles.checkTimeContainer}>
-                        <Text style={[FONTS.fs_12_medium, styles.checkin]}>
-                          입실 {formatTime(detail.checkIn)}
-                        </Text>
-                        <Text style={[FONTS.fs_12_medium, styles.checkin]}>
-                          퇴실 {formatTime(detail.checkOut)}
+                <View style={styles.roomInfo}>
+                  <View style={styles.roomNameDescContainer}>
+                    <View style={[styles.roomInfoRow, {gap: 4}]}>
+                      <View style={styles.roomNameTextWrapper}>
+                        <Text
+                          style={[FONTS.fs_16_semibold, styles.roomType]}
+                          numberOfLines={1}
+                          ellipsizeMode="tail">
+                          {room.roomName}
                         </Text>
                       </View>
+                      <Text style={[FONTS.fs_18_semibold, styles.roomPrice]}>
+                        {room.roomPrice?.toLocaleString()}원
+                      </Text>
                     </View>
-                    <Text style={[FONTS.fs_18_semibold, styles.roomPrice]}>
-                      {room.roomPrice?.toLocaleString()}원
-                    </Text>
+
+                    {isDormitory ? (
+                      <>
+                        <View style={styles.roomInfoRow}>
+                          <View style={styles.roomMetaInline}>
+                            <Text
+                              style={[
+                                FONTS.fs_14_medium,
+                                styles.roomMetaText,
+                              ]}>
+                              [{room.roomCapacity}인 도미토리]
+                            </Text>
+                            {room.dormitoryGenderType !== 'MIXED' && !!genderText ? (
+                              <Text
+                                style={[
+                                  FONTS.fs_14_medium,
+                                  styles.roomMetaText,
+                                ]}>
+                                , {genderText}
+                              </Text>
+                            ) : null}
+                          </View>
+                          <Text
+                            style={[
+                              FONTS.fs_14_medium,
+                              styles.roomMetaText,
+                            ]}>
+                            1베드 당
+                          </Text>
+                        </View>
+
+                        <View style={styles.checkTimeContainer}>
+                          <Text style={[FONTS.fs_12_medium, styles.checkin]}>
+                            입실 {formatTime(detail.checkIn)}
+                          </Text>
+                          <Text style={[FONTS.fs_12_medium, styles.checkin]}>
+                            퇴실 {formatTime(detail.checkOut)}
+                          </Text>
+                        </View>
+
+                        <TouchableOpacity
+                          style={styles.roomDetailBtn}
+                          onPress={() => {
+                            navigation.navigate('MyRoomDetail', {
+                              roomId: room.id,
+                              roomName: room.roomName,
+                              roomPrice: room.roomPrice,
+                              roomDesc: room.roomDesc,
+                              roomCapacity: room.roomCapacity,
+                              roomType: room.roomType,
+                              dormitoryGenderType: room.dormitoryGenderType,
+                              roomMaxCapacity: room.roomMaxCapacity,
+                              femaleOnly: room.femaleOnly,
+                              checkIn: `${checkInDateStr}T${detail.checkIn}`,
+                              checkOut: `${checkOutDateStr}T${detail.checkOut}`,
+                              checkInTime: detail.checkIn,
+                              checkOutTime: detail.checkOut,
+                              guestCount: 1,
+                              roomImages: room.roomImages || [],
+                            });
+                          }}>
+                          <Text
+                            style={[
+                              FONTS.fs_14_medium,
+                              styles.roomDetailBtnText,
+                            ]}>
+                            상세보기
+                          </Text>
+                          <RightChevron width={16} height={16} />
+                        </TouchableOpacity>
+                      </>
+                    ) : (
+                      <>
+                        <View style={styles.roomInfoRow}>
+                          <Text
+                            style={[
+                              FONTS.fs_14_medium,
+                              styles.roomMetaText,
+                            ]}>
+                            [일반객실]
+                          </Text>
+                          <Text
+                            style={[
+                              FONTS.fs_14_medium,
+                              styles.roomMetaText,
+                            ]}>
+                            1객실 당
+                          </Text>
+                        </View>
+
+                        <View style={styles.checkTimeContainer}>
+                          <Text style={[FONTS.fs_12_medium, styles.checkin]}>
+                            입실 {formatTime(detail.checkIn)}
+                          </Text>
+                          <Text style={[FONTS.fs_12_medium, styles.checkin]}>
+                            퇴실 {formatTime(detail.checkOut)}
+                          </Text>
+                        </View>
+
+                        <TouchableOpacity
+                          style={styles.roomDetailBtn}
+                          onPress={() => {
+                            navigation.navigate('MyRoomDetail', {
+                              roomId: room.id,
+                              roomName: room.roomName,
+                              roomPrice: room.roomPrice,
+                              roomDesc: room.roomDesc,
+                              roomCapacity: room.roomCapacity,
+                              roomType: room.roomType,
+                              dormitoryGenderType: room.dormitoryGenderType,
+                              roomMaxCapacity: room.roomMaxCapacity,
+                              femaleOnly: room.femaleOnly,
+                              checkIn: `${checkInDateStr}T${detail.checkIn}`,
+                              checkOut: `${checkOutDateStr}T${detail.checkOut}`,
+                              checkInTime: detail.checkIn,
+                              checkOutTime: detail.checkOut,
+                              guestCount: 1,
+                              roomImages: room.roomImages || [],
+                            });
+                          }}>
+                          <Text
+                            style={[
+                              FONTS.fs_14_medium,
+                              styles.roomDetailBtnText,
+                            ]}>
+                            상세보기
+                          </Text>
+                          <RightChevron width={16} height={16} />
+                        </TouchableOpacity>
+
+                        <View
+                          style={[
+                            styles.roomInfoRow,
+                            styles.roomInfoBottomRow,
+                          ]}>
+                          <View style={styles.roomMetaInline}>
+                            <Text
+                              style={[
+                                FONTS.fs_14_medium,
+                                styles.roomType,
+                              ]}>
+                              {room.roomCapacity}인 기준(최대 {room.roomMaxCapacity}인)
+                            </Text>
+                            <Text
+                              style={[
+                                FONTS.fs_14_medium,
+                                styles.roomType,
+                              ]}>
+                              {room.femaleOnly ? ', 여성전용' : ''}
+                            </Text>
+                          </View>
+                        </View>
+                      </>
+                    )}
                   </View>
                 </View>
-              </TouchableOpacity>
+              </View>
             </View>
           );
         })}
@@ -510,7 +657,20 @@ const MyGuesthouseDetail = ({ route }) => {
 
       {activeTab === '리뷰' && (
         <View style={styles.introductionContainer}>
-          <Text style={[FONTS.fs_18_semibold, styles.tabTitle]}>리뷰</Text>
+          <View style={styles.reviewRowContainer}>
+            <Text style={[FONTS.fs_18_semibold, styles.tabTitle]}>리뷰</Text>
+            <View style={styles.reviewRow}>
+              <View style={styles.reviewBoxBlue}>
+                <Text style={[FONTS.fs_12_medium, styles.rating]}>
+                  {detail.averageRating?.toFixed?.(1) ?? '0.0'}
+                </Text>
+                <Text style={styles.ratingDevide}>·</Text>
+                <Text style={[FONTS.fs_12_medium, styles.reviewCount]}>
+                  {detail.reviewCount ?? 0} 리뷰
+                </Text>
+              </View>
+            </View>
+          </View>
           <View style={styles.reviewContainer}>
             <ReviewIcon width={100} height={60}/>
             <Text style={[FONTS.fs_14_medium, styles.reviewText]}>리뷰란 입니다.</Text>
@@ -540,4 +700,4 @@ const MyGuesthouseDetail = ({ route }) => {
   );
 };
 
-export default MyGuesthouseDetail;
+export default MyGuesthousePreview;

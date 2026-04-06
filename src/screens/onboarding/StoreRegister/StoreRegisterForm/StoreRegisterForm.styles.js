@@ -22,7 +22,7 @@ export default StyleSheet.create({
     paddingHorizontal: 20,
     justifyContent: 'space-between',
   },
-  buttonLayout: {alignItems: 'flex-end'},
+  buttonLayout: {alignItems: 'flex-end', marginTop: 24},
   groupParent: {
     paddingVertical: 0,
     gap: 12,
@@ -34,7 +34,6 @@ export default StyleSheet.create({
     color: COLORS.grayscale_900,
   },
   inputGroup: {
-    marginTop: 40,
     gap: 20,
   },
   inputContainer: {
@@ -111,7 +110,6 @@ export default StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 100,
   },
-  addButtonLocation: {width: 83},
   addButtonText: {
     color: COLORS.grayscale_0,
     marginRight: 10,
@@ -131,6 +129,15 @@ export default StyleSheet.create({
     borderColor: COLORS.grayscale_200,
     borderRadius: 4,
     backgroundColor: COLORS.grayscale_100,
+  },
+  profileImageUploadBox: {
+    paddingHorizontal: 0,
+    overflow: 'hidden',
+  },
+  imageUploadHint: {
+    ...FONTS.fs_14_medium,
+    color: COLORS.grayscale_500,
+    lineHeight: 20,
   },
   //약관동의
   agreeGap: {gap: 12},

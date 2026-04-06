@@ -40,8 +40,26 @@ const styles = StyleSheet.create({
   roomType: {
     color: COLORS.grayscale_800,
   },
-  description: {
+  roomMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     marginTop: 4,
+  },
+  roomMetaText: {
+    color: COLORS.grayscale_500,
+  },
+  description: {
+    marginTop: 8,
+  },
+  priceRow: {
+    alignSelf: 'flex-end',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    marginVertical: 20,
+    gap: 2,
+  },
+  priceInfoText: {
     color: COLORS.grayscale_500,
   },
   price: {
@@ -80,6 +98,12 @@ const styles = StyleSheet.create({
   },
   dateText: {
     color: COLORS.grayscale_700,
+  },
+  guestCountRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 20,
   },
   button: {
     paddingHorizontal: 20,

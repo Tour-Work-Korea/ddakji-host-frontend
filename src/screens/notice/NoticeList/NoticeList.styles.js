@@ -11,14 +11,19 @@ export default StyleSheet.create({
     flex: 1,
   },
   contentContainer: {
-    paddingTop: 4,
-    paddingBottom: 32,
     paddingHorizontal: 16,
+    paddingTop: 4,
+  },
+  listContentContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 32,
   },
 
   // 검색
   searchRow: {
+    paddingHorizontal: 16,
     marginBottom: 12,
+    zIndex: 20,
   },
   searchBox: {
     borderWidth: 1,
@@ -26,6 +31,7 @@ export default StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 8,
+    zIndex: 20,
   },
   searchFieldRow: {
     flexDirection: 'row',
@@ -34,7 +40,7 @@ export default StyleSheet.create({
   searchTypeWrap: {
     position: 'relative',
     marginRight: 20,
-    zIndex: 10,
+    zIndex: 30,
   },
   searchTypeButton: {
     flexDirection: 'row',
@@ -48,12 +54,13 @@ export default StyleSheet.create({
     position: 'absolute',
     top: 36,
     left: 0,
-    width: 72,
+    width: 84,
     backgroundColor: COLORS.grayscale_0,
     borderWidth: 1,
     borderColor: COLORS.grayscale_200,
     borderRadius: 8,
     paddingVertical: 4,
+    zIndex: 40,
   },
   optionItem: {
     paddingHorizontal: 12,
@@ -99,13 +106,53 @@ export default StyleSheet.create({
     backgroundColor: COLORS.secondary_blue,
   },
   badgePink: {
-    backgroundColor: COLORS.secondary_red,
+    backgroundColor: COLORS.secondary_pink,
   },
   badgeBlueText: {
     color: COLORS.semantic_blue,
   },
   badgePinkText: {
-    color: COLORS.semantic_red,
+    color: COLORS.semantic_pink,
+  },
+  badgeYellow: {
+    backgroundColor: COLORS.secondary_yellow,
+  },
+  badgeYellowText: {
+    color: COLORS.semantic_yellow,
+  },
+  badgeGreen: {
+    backgroundColor: COLORS.secondary_green,
+  },
+  badgeGreenText: {
+    color: COLORS.semantic_green,
+  },
+  badgeVariants: {
+    OPERATIONS: {
+      backgroundColor: COLORS.secondary_blue,
+    },
+    MARKETING: {
+      backgroundColor: COLORS.secondary_pink,
+    },
+    POLICY: {
+      backgroundColor: COLORS.secondary_yellow,
+    },
+    EVENT: {
+      backgroundColor: COLORS.secondary_green,
+    },
+  },
+  badgeTextVariants: {
+    OPERATIONS: {
+      color: COLORS.semantic_blue,
+    },
+    MARKETING: {
+      color: COLORS.semantic_pink,
+    },
+    POLICY: {
+      color: COLORS.semantic_yellow,
+    },
+    EVENT: {
+      color: COLORS.semantic_green,
+    },
   },
   noticeTitle: {
     marginBottom: 4,
@@ -121,5 +168,8 @@ export default StyleSheet.create({
   },
   emptyText: {
     color: COLORS.grayscale_500,
+  },
+  footerLoader: {
+    paddingVertical: 20,
   },
 });

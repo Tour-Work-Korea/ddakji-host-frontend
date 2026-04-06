@@ -4,7 +4,6 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  Pressable,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 
@@ -256,27 +255,20 @@ const HostMyPage = () => {
         </View>
       </ScrollView>
 
-      {isGuesthouseListVisible ? (
-        <Pressable
-          style={styles.profileListOverlay}
-          onPress={() => setIsGuesthouseListVisible(false)}>
-          <Pressable
-            style={styles.profileListWrap}
-            onPress={event => event.stopPropagation()}>
-            <GuesthouseProfileList
-              items={guesthouseProfiles}
-              selectedId={selectedProfileId}
-              onSelect={item => {
-                setSelectedProfileId(item.id);
-                setIsGuesthouseListVisible(false);
-              }}
-              onAdd={() => {
-                setIsGuesthouseListVisible(false);
-              }}
-            />
-          </Pressable>
-        </Pressable>
-      ) : null}
+      <GuesthouseProfileList
+        visible={isGuesthouseListVisible}
+        onClose={() => setIsGuesthouseListVisible(false)}
+        items={guesthouseProfiles}
+        selectedId={selectedProfileId}
+        onSelect={item => {
+          setSelectedProfileId(item.id);
+          setIsGuesthouseListVisible(false);
+        }}
+        onAdd={() => {
+          setIsGuesthouseListVisible(false);
+          navigation.navigate('StoreRegisterForm1');
+        }}
+      />
     </View>
   );
 };

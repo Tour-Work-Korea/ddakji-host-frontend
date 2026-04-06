@@ -36,12 +36,12 @@ export {default as StoreRegisterForm1} from './onboarding/StoreRegister/StoreReg
 export {default as StoreRegisterForm2} from './onboarding/StoreRegister/StoreRegisterForm/StoreRegisterForm2';
 export {default as StoreRegisterList} from './onboarding/StoreRegister/StoreRegisterList';
 export {default as StoreRegisterComplete} from './onboarding/StoreRegister/StoreRegisterComplete';
-export {default as StoreRegisterPending} from './onboarding/StoreRegister/StoreRegisterPending';
+export {default as GuesthouseManagement} from './guesthouse/GuesthouseManagement';
 
 export {default as GuesthousePost} from './guesthouse/GuesthousePost';
 export {default as MyGuesthouseIntroList} from './guesthouse/IntroList';
 export {default as MyGuesthouseIntroForm} from './guesthouse/IntroForm';
-export {default as MyGuesthouseDetail} from './guesthouse/MyGuesthouseDetail';
+export {default as MyGuesthousePreview} from './guesthouse/MyGuesthouseDetail';
 export {default as MyRoomDetail} from './guesthouse/MyRoomDetail';
 export {default as MyGuesthouseList} from './guesthouse/MyGuesthouseList';
 export {default as MyGuesthouseEdit} from './guesthouse/MyGuesthouseEdit';

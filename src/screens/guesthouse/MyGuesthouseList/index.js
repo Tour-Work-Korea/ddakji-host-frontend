@@ -88,7 +88,7 @@ const MyGuesthouseList = () => {
             <ShowIcon width={24} height={24}/>
           </TouchableOpacity> */}
           <TouchableOpacity
-            onPress={() => navigation.navigate('MyGuesthouseDetail', {
+            onPress={() => navigation.navigate('MyGuesthousePreview', {
               id: item.id,
             })}
           >

@@ -85,7 +85,48 @@ const styles = StyleSheet.create({
   },
   
   address: {
-    marginBottom: 20,
+    marginBottom: 4,
+  },
+  phone: {
+    marginBottom: 16,
+  },
+  reviewRow: {
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  reviewBox: {
+    backgroundColor: COLORS.grayscale_800,
+    flexDirection: 'row',
+    paddingHorizontal: 10,
+    paddingVertical: 2,
+    alignContent: 'center',
+    justifyContent: 'center',
+    borderRadius: 100,
+  },
+  rating: {
+    color: COLORS.grayscale_0,
+  },
+  ratingDevide: {
+    color: COLORS.grayscale_0,
+    marginHorizontal: 2,
+  },
+  reviewCount: {
+    color: COLORS.grayscale_0,
+  },
+  reviewBoxBlue: {
+    backgroundColor: COLORS.primary_blue,
+    flexDirection: 'row',
+    paddingHorizontal: 10,
+    paddingVertical: 2,
+    alignContent: 'center',
+    justifyContent: 'center',
+    borderRadius: 100,
+    marginTop: 28,
+  },
+  reviewRowContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
 
   // 간단 소개글
@@ -209,20 +250,33 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   roomInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     marginTop: 12,
     marginBottom: 8,
   },
+  roomInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   roomNameDescContainer: {
-    flex: 1,       // 왼쪽 블럭이 남는 공간을 사용
-    minWidth: 0,   // 텍스트가 ellipsis 되도록 필요한 트릭
-    paddingRight: 8,
+    flex: 1,
+    minWidth: 0,
+  },
+  roomNameTextWrapper: {
+    flex: 1,
+    minWidth: 0,
   },
   roomType: {
-    marginBottom: 4,
     color: COLORS.grayscale_800,
+  },
+  roomMetaInline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  roomMetaText: {
+    color: COLORS.grayscale_500,
   },
   checkTimeContainer: {
     flexDirection: 'row',
@@ -234,6 +288,19 @@ const styles = StyleSheet.create({
   roomPrice: {
     color: COLORS.grayscale_800,
     flexShrink: 0,
+  },
+  roomDetailBtn: {
+    marginTop: 12,
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  roomDetailBtnText: {
+    color: COLORS.semantic_blue,
+  },
+  roomInfoBottomRow: {
+    marginBottom: 0,
+    marginTop: 24,
   },
   
   // 긴 소개

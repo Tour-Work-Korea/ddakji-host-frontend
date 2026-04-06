@@ -14,8 +14,9 @@ import Toast from 'react-native-toast-message';
 import { FONTS } from '@constants/fonts';
 import { COLORS } from '@constants/colors';
 import ButtonScarlet from '@components/ButtonScarlet';
-import { publicFacilities, roomFacilities, services } from '@constants/guesthouseOptions';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
+import useGuesthouseMetaStore from '@stores/guesthouseMetaStore';
+import {groupAmenitiesBySection} from '@utils/guesthouseMeta';
 
 import XBtn from '@assets/images/x_gray.svg';
 
@@ -30,6 +31,10 @@ const GuesthouseAmenitiesModal = ({
   defaultSelected = [],
   guesthouseId,
 }) => {
+  const guesthouseAmenities = useGuesthouseMetaStore(
+    state => state.guesthouseAmenities,
+  );
+  const amenitySections = groupAmenitiesBySection(guesthouseAmenities);
   // 현재 선택된 amenity id 집합
   const [selectedIds, setSelectedIds] = useState(new Set());
 
@@ -160,9 +165,9 @@ const GuesthouseAmenitiesModal = ({
               </Text>
 
               <View style={styles.amenitiesContainer}>
-                {renderGroup('숙소 공용시설', publicFacilities)}
-                {renderGroup('객실 내 시설', roomFacilities)}
-                {renderGroup('기타시설 및 서비스', services)}
+                {amenitySections.map(section =>
+                  renderGroup(section.title, section.items),
+                )}
               </View>
               
             </View>
