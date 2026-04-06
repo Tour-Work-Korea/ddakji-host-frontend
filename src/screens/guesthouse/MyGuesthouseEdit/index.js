@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
   Alert,
   TouchableOpacity,
+  ScrollView,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -15,45 +16,44 @@ import { COLORS } from '@constants/colors';
 import GuesthouseInfoModal from '@components/modals/HostMy/Guesthouse/EditGuesthouse/GuesthouseInfoModal';
 import GuesthouseIntroSummaryModal from '@components/modals/HostMy/Guesthouse/EditGuesthouse/GuesthouseIntroSummaryModal';
 import GuesthouseRoomModal from '@components/modals/HostMy/Guesthouse/EditGuesthouse/GuesthouseRoom/GuesthouseRoomModal';
+import GuesthouseRefundPolicyModal from '@components/modals/HostMy/Guesthouse/EditGuesthouse/GuesthouseRefundPolicyModal';
 import GuesthouseDetailInfoModal from '@components/modals/HostMy/Guesthouse/EditGuesthouse/GuesthouseDetailInfoModal';
 import GuesthouseRulesModal from '@components/modals/HostMy/Guesthouse/EditGuesthouse/GuesthouseRulesModal';
 import GuesthouseAmenitiesModal from '@components/modals/HostMy/Guesthouse/EditGuesthouse/GuesthouseAmenitiesModal';
-import { guesthouseTags } from '@constants/guesthouseTags';
-import { publicFacilities, roomFacilities, services } from '@constants/guesthouseOptions';
+import useGuesthouseMetaStore from '@stores/guesthouseMetaStore';
 
 import ChevronRight from '@assets/images/chevron_right_black.svg';
 import CheckWhite from '@assets/images/check_white.svg';
 
-// 해시태그 맵핑
-const nameToId = (name) => guesthouseTags.find(t => t.hashtag === name)?.id ?? null;
-const idToName = (id) => guesthouseTags.find(t => t.id === id)?.hashtag ?? null;
-const toTagObjectByName = (name) => {
-  const found = guesthouseTags.find(t => t.hashtag === name);
-  return found ? { id: found.id, hashtag: found.hashtag } : { id: null, hashtag: name };
-};
-
-// 어매너티 이름→id 매핑
-const AMENITY_NAME_TO_ID = [
-  ...publicFacilities,
-  ...roomFacilities,
-  ...services,
-].reduce((acc, cur) => {
-  acc[cur.name] = cur.id;
-  return acc;
-}, {});
-// 어매너티 id→이름 매핑
-const AMENITY_ID_TO_NAME = [
-  ...publicFacilities,
-  ...roomFacilities,
-  ...services,
-].reduce((acc, cur) => {
-  acc[cur.id] = cur.name;
-  return acc;
-}, {});
-
 const MyGuesthouseEdit = () => {
   const navigation = useNavigation();
   const route = useRoute();
+  const guesthouseHashtags = useGuesthouseMetaStore(
+    state => state.guesthouseHashtags,
+  );
+  const guesthouseAmenities = useGuesthouseMetaStore(
+    state => state.guesthouseAmenities,
+  );
+  const hashtagNameToId = useMemo(
+    () => Object.fromEntries(guesthouseHashtags.map(tag => [tag.hashtag, tag.id])),
+    [guesthouseHashtags],
+  );
+  const hashtagIdToName = useMemo(
+    () => Object.fromEntries(guesthouseHashtags.map(tag => [tag.id, tag.hashtag])),
+    [guesthouseHashtags],
+  );
+  const amenityNameToId = useMemo(
+    () => Object.fromEntries(guesthouseAmenities.map(amenity => [amenity.name, amenity.id])),
+    [guesthouseAmenities],
+  );
+  const amenityTypeToId = useMemo(
+    () => Object.fromEntries(guesthouseAmenities.map(amenity => [amenity.amenityType, amenity.id])),
+    [guesthouseAmenities],
+  );
+  const amenityIdToMeta = useMemo(
+    () => Object.fromEntries(guesthouseAmenities.map(amenity => [amenity.id, amenity])),
+    [guesthouseAmenities],
+  );
 
   const [guesthouse, setGuesthouse] = useState({
     guesthouseName: '',
@@ -65,6 +65,7 @@ const MyGuesthouseEdit = () => {
     checkOut: '11:00:00',
     guesthouseImages: [],
     roomInfos: [],
+    refundPolicies: [],
     amenities: [],
     hashtags: [],
     rules: '',
@@ -81,17 +82,19 @@ const MyGuesthouseEdit = () => {
 
     // 해시태그 처리
     const hashtagNames = Array.isArray(initial.hashtags) ? initial.hashtags : [];
-    const hashtagIds = hashtagNames.map(nameToId).filter(v => v !== null);
+    const hashtagIds = hashtagNames
+      .map(name => hashtagNameToId[name])
+      .filter(v => v !== null && v !== undefined);
 
     // 어매너티 문자열(amenityType 라벨) | { amenityId } | (상세의) { amenityType } 모두 대응
     const initAmenities = initial.amenities || [];
     let selectedIds = [];
 
     if (initAmenities.length > 0) {
-      const first = initAmenities[0];
+        const first = initAmenities[0];
       if (typeof first === 'string') {
         selectedIds = initAmenities
-          .map(name => AMENITY_NAME_TO_ID[name])
+          .map(name => amenityNameToId[name])
           .filter(Boolean);
       } else if (first && typeof first === 'object') {
         if ('amenityId' in first) {
@@ -100,7 +103,12 @@ const MyGuesthouseEdit = () => {
             .filter(v => v != null);
         } else if ('amenityType' in first) {
           selectedIds = initAmenities
-            .map(a => AMENITY_NAME_TO_ID[a.amenityType])
+            .map(
+              a =>
+                amenityTypeToId[a.amenityType] ||
+                amenityNameToId[a.name] ||
+                amenityNameToId[a.amenityType],
+            )
             .filter(Boolean);
         }
       }
@@ -115,7 +123,7 @@ const MyGuesthouseEdit = () => {
       amenities: selectedIds.map(id => ({ amenityId: id, count: 1 })),
     }));
     setSelectedAmenities(selectedIds);
-  }, [route.params]);
+  }, [amenityNameToId, amenityTypeToId, hashtagNameToId, route.params]);
 
   // 게스트하우스 정보 모달
   const [infoModalVisible, setInfoModalVisible] = useState(false);
@@ -126,6 +134,9 @@ const MyGuesthouseEdit = () => {
   // 객실 모달
   const [roomModalVisible, setRoomModalVisible] = useState(false);
   const [roomModalReset, setRoomModalReset] = useState(true);
+  // 취소 및 환불규정 모달
+  const [refundModalVisible, setRefundModalVisible] = useState(false);
+  const [refundModalReset, setRefundModalReset] = useState(true);
   // 상세정보 모달
   const [detailInfoModalVisible, setDetailInfoModalVisible] = useState(false);
   const [detailInfoModalReset, setDetailInfoModalReset] = useState(true);
@@ -139,7 +150,7 @@ const MyGuesthouseEdit = () => {
   // 게스트하우스 정보 모달에서 "적용" 눌렀을 때
   const handleInfoSelect = (data) => {
     const namesFromIds = (data.tagIds || [])
-    .map(idToName)
+    .map(id => hashtagIdToName[id])
     .filter(Boolean);
 
     setGuesthouse(prev => ({
@@ -176,6 +187,15 @@ const MyGuesthouseEdit = () => {
     }));
     setRoomModalReset(false); // 닫아도 유지
     setRoomModalVisible(false);
+  };
+
+  const handleRefundPolicySelect = refundPolicies => {
+    setGuesthouse(prev => ({
+      ...prev,
+      refundPolicies,
+    }));
+    setRefundModalReset(false);
+    setRefundModalVisible(false);
   };
 
   // 상세정보 모달에서 "적용" 눌렀을 때
@@ -216,69 +236,61 @@ const MyGuesthouseEdit = () => {
     navigation.goBack()
   };
 
+  const renderSectionRow = (title, onPress) => (
+    <TouchableOpacity
+      style={styles.section}
+      onPress={onPress}
+      activeOpacity={0.8}>
+      <Text
+        style={[
+          FONTS.fs_16_medium,
+          styles.sectionTitle,
+          styles.sectionTitlePending,
+        ]}>
+        {title}
+      </Text>
+      <View style={styles.sectionIconWrap}>
+        <ChevronRight width={24} height={24} />
+      </View>
+    </TouchableOpacity>
+  );
+
   return (
     <View style={styles.container}>
-      <Header title="게스트하우스 게시물 수정" />
+      <Header title="게스트하우스 정보 수정" />
 
-      <View style={styles.bodyContainer}>
-        {/* 게스트하우스 정보 */}
-        <TouchableOpacity 
-          style={styles.section}
-          onPress={() => setInfoModalVisible(true)}
-        >
-          <Text style={[FONTS.fs_14_medium, styles.title]}>게스트하우스 정보 수정</Text>
-          <ChevronRight width={24} height={24}/>
-        </TouchableOpacity>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}>
+        <View style={styles.bodyContainer}>
+          {renderSectionRow('게스트하우스 정보', () =>
+            setInfoModalVisible(true),
+          )}
+          {renderSectionRow('게스트하우스 소개요약', () =>
+            setIntroModalVisible(true),
+          )}
+          {renderSectionRow('객실', () =>
+            setRoomModalVisible(true),
+          )}
+          {renderSectionRow('취소 및 환불규정', () =>
+            setRefundModalVisible(true),
+          )}
+          {renderSectionRow('상세정보', () =>
+            setDetailInfoModalVisible(true),
+          )}
+          {renderSectionRow('이용규칙', () =>
+            setRulesModalVisible(true),
+          )}
+          {renderSectionRow('편의시설 및 서비스', () =>
+            setAmenitiesModalVisible(true),
+          )}
 
-        {/* 게스트하우스 소개요약 */}
-        <TouchableOpacity
-          style={styles.section}
-          onPress={() => setIntroModalVisible(true)}
-        >
-          <Text style={[FONTS.fs_14_medium, styles.title]}>게스트하우스 소개요약 수정</Text>
-          <ChevronRight width={24} height={24}/>
-        </TouchableOpacity>
-
-        {/* 객실 */}
-        <TouchableOpacity
-          style={styles.section}
-          onPress={() => setRoomModalVisible(true)}
-        >
-          <Text style={[FONTS.fs_14_medium, styles.title]}>객실 수정</Text>
-          <ChevronRight width={24} height={24}/>
-        </TouchableOpacity>
-
-        {/* 상세정보 */}
-        <TouchableOpacity
-          style={styles.section}
-          onPress={() => setDetailInfoModalVisible(true)}
-        >
-          <Text style={[FONTS.fs_14_medium, styles.title]}>상세정보 수정</Text>
-          <ChevronRight width={24} height={24}/>
-        </TouchableOpacity>
-
-        {/* 이용규칙 */}
-        <TouchableOpacity
-          style={styles.section}
-          onPress={() => setRulesModalVisible(true)}
-        >
-          <Text style={[FONTS.fs_14_medium, styles.title]}>이용규칙 수정</Text>
-          <ChevronRight width={24} height={24}/>
-        </TouchableOpacity>
-
-        {/* 편의시설 및 서비스 */}
-        <TouchableOpacity
-          style={styles.section}
-          onPress={() => setAmenitiesModalVisible(true)}
-        >
-          <Text style={[FONTS.fs_14_medium, styles.title]}>편의시설 및 서비스 수정</Text>
-          <ChevronRight width={24} height={24}/>
-        </TouchableOpacity>
-
-        <Text style={[FONTS.fs_12_medium, styles.explainText]}>
-          각 섹션마다 수정사항이 바로 적용됩니다.
-        </Text>
-      </View>
+          <Text style={[FONTS.fs_12_medium, styles.explainText]}>
+            각 섹션마다 수정사항이 바로 적용됩니다.
+          </Text>
+        </View>
+      </ScrollView>
 
       <View style={styles.bottomContainer}>
         <TouchableOpacity 
@@ -286,17 +298,30 @@ const MyGuesthouseEdit = () => {
           onPress={() => {
             // 해시태그: 이름 -> {id, hashtag}
             const previewHashtags = (guesthouse?.hashtags || [])
-              .map(toTagObjectByName)
+              .map(name => {
+                const id = hashtagNameToId[name];
+                return id ? {id, hashtag: name} : {id: null, hashtag: name};
+              })
               .filter(t => t.id !== null);
 
-            // 어매니티: 상태가 어떤 형태든 "이름" 배열로 통일
+            // 어매니티: 상태가 어떤 형태든 메타 객체 기준으로 통일
             const previewAmenities = (guesthouse?.amenities || [])
               .map(a => {
-                if (typeof a === 'string') return a;                  // 이미 이름
-                if (typeof a === 'number') return AMENITY_ID_TO_NAME[a]; // id 값
+                if (typeof a === 'string') {
+                  const amenityId =
+                    amenityTypeToId[a] || amenityNameToId[a];
+                  return amenityId ? amenityIdToMeta[amenityId] : null;
+                }
+                if (typeof a === 'number') return amenityIdToMeta[a];
                 if (a && typeof a === 'object') {
-                  if ('amenityType' in a) return a.amenityType;      
-                  if ('amenityId' in a) return AMENITY_ID_TO_NAME[a.amenityId];
+                  if ('amenityId' in a) return amenityIdToMeta[a.amenityId];
+                  if ('amenityType' in a) {
+                    const amenityId =
+                      amenityTypeToId[a.amenityType] ||
+                      amenityNameToId[a.name] ||
+                      amenityNameToId[a.amenityType];
+                    return amenityId ? amenityIdToMeta[amenityId] : a;
+                  }
                 }
                 return null;
               })
@@ -305,21 +330,21 @@ const MyGuesthouseEdit = () => {
             const previewData = {
               ...guesthouse,
               hashtags: previewHashtags,
-              amenities: previewAmenities, // 이름 배열로 전달
+              amenities: previewAmenities,
             };
 
-            navigation.navigate('MyGuesthouseDetail', {
-              isPreview: true,
+            navigation.navigate('MyGuesthousePreview', {
+              hideEditButton: true,
               previewData,
             });
           }}
         >
-          <Text style={[FONTS.fs_14_medium, styles.previewText]}>미리보기</Text>
+          <Text style={[FONTS.fs_14_medium, styles.previewButtonText]}>
+            미리보기
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity 
-          style={[
-            styles.submitButton,
-          ]}
+          style={styles.submitButton}
           onPress={handleSubmit}
         >
           <Text 
@@ -348,7 +373,7 @@ const MyGuesthouseEdit = () => {
         defaultCheckOut={guesthouse?.checkOut || '11:00:00'}
         defaultHashtags={
           (guesthouse?.hashtags || [])
-            .map((name) => guesthouseTags.find(t => t.hashtag === name))
+            .map(name => guesthouseHashtags.find(t => t.hashtag === name))
             .filter(Boolean)
         }
         onSelect={handleInfoSelect}
@@ -373,6 +398,15 @@ const MyGuesthouseEdit = () => {
         defaultRooms={guesthouse?.roomInfos || []}
         guesthouseId={route.params?.guesthouseId || route.params?.initialGuesthouse?.id || guesthouse?.id}
         onSelect={handleRoomSelect}
+      />
+
+      <GuesthouseRefundPolicyModal
+        visible={refundModalVisible}
+        shouldResetOnClose={refundModalReset}
+        onClose={() => setRefundModalVisible(false)}
+        defaultPolicies={guesthouse?.refundPolicies || []}
+        guesthouseId={route.params?.guesthouseId || route.params?.initialGuesthouse?.id || guesthouse?.id}
+        onSelect={handleRefundPolicySelect}
       />
 
       {/* 상세정보 모달 */}

@@ -7,46 +7,41 @@ export default StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.grayscale_0,
   },
-  topBar: {
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingTop: 18,
+    paddingHorizontal: 20,
+    paddingBottom: 18,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerIconButton: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
+  },
+  topBar: {
     paddingHorizontal: 16,
     paddingBottom: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  topBarLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexShrink: 1,
+    justifyContent: 'flex-start',
   },
   guesthouseSelectorButton: {
     flexDirection: 'row',
     alignItems: 'center',
     flexShrink: 1,
   },
-  backButton: {
-    width: 28,
-    height: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 6,
-  },
   topBarTitle: {
     color: COLORS.grayscale_800,
     marginRight: 4,
     maxWidth: 220,
-  },
-  topBarRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconButton: {
-    width: 28,
-    height: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 8,
   },
   tabRow: {
     flexDirection: 'row',
@@ -92,6 +87,67 @@ export default StyleSheet.create({
   chipTextActive: {
     color: COLORS.grayscale_0,
   },
+  reviewContainer: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+  },
+
+  // 게하 카드
+  contentContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 28,
+  },
+  guesthouseCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  cardImage: {
+    width: 112,
+    height: 112,
+    borderRadius: 4,
+    backgroundColor: COLORS.grayscale_100,
+  },
+  cardImagePlaceholder: {
+    borderWidth: 1,
+    borderColor: COLORS.grayscale_200,
+  },
+  cardTextWrap: {
+    flex: 1,
+    marginLeft: 16,
+    paddingTop: 4,
+  },
+  cardTitle: {
+    color: COLORS.grayscale_900,
+    marginBottom: 4,
+  },
+  cardAddress: {
+    color: COLORS.grayscale_500,
+  },
+  actionButtonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 24,
+    justifyContent: 'flex-end',
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.grayscale_100,
+    borderRadius: 100,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  actionButtonSpacer: {
+    width: 12,
+  },
+  actionButtonText: {
+    color: COLORS.grayscale_800,
+    marginRight: 8,
+  },
+
+  // 게하 없을 때
   emptyState: {
     flex: 1,
     alignItems: 'center',
@@ -103,7 +159,7 @@ export default StyleSheet.create({
     color: COLORS.grayscale_700,
     textAlign: 'center',
     lineHeight: 34,
-    marginBottom: 40,
+    marginBottom: 20,
   },
   primaryButton: {
     borderWidth: 1,
@@ -112,6 +168,7 @@ export default StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 10,
     backgroundColor: COLORS.grayscale_0,
+    marginTop: 24,
   },
   primaryButtonText: {
     color: COLORS.grayscale_700,

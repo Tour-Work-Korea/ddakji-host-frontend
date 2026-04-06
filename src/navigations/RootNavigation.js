@@ -1,7 +1,10 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {NavigationContainer} from '@react-navigation/native';
 import {navigationRef} from '@utils/navigationService';
+import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
+import useUserStore from '@stores/userStore';
+import useGuesthouseMetaStore from '@stores/guesthouseMetaStore';
 
 import undefinedStack from './undefinedStack';
 
@@ -21,7 +24,7 @@ import {
   Result,
   MyGuesthouseAdd,
   MyGuesthouseEdit,
-  MyGuesthouseDetail,
+  MyGuesthousePreview,
   MyRecruitmentList,
   RecruitmentForm,
   HostEditInfo,
@@ -63,9 +66,57 @@ import {
 
 const Stack = createNativeStackNavigator();
 
-const RootNavigation = () => (
-  <NavigationContainer ref={navigationRef}>
-    <Stack.Navigator screenOptions={{headerShown: false}}>
+const RootNavigation = () => {
+  const accessToken = useUserStore(state => state.accessToken);
+  const userRole = useUserStore(state => state.userRole);
+  const hasLoadedGuesthouseMeta = useGuesthouseMetaStore(
+    state => state.hasLoadedGuesthouseMeta,
+  );
+  const setGuesthouseMeta = useGuesthouseMetaStore(
+    state => state.setGuesthouseMeta,
+  );
+
+  useEffect(() => {
+    if (!accessToken || userRole !== 'HOST' || hasLoadedGuesthouseMeta) {
+      return;
+    }
+
+    let isMounted = true;
+
+    const loadGuesthouseMeta = async () => {
+      try {
+        const [hashtagsResponse, amenitiesResponse] = await Promise.all([
+          hostGuesthouseApi.getGuesthouseHashtags(),
+          hostGuesthouseApi.getGuesthouseAmenities(),
+        ]);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setGuesthouseMeta({
+          hashtags: Array.isArray(hashtagsResponse?.data)
+            ? hashtagsResponse.data
+            : [],
+          amenities: Array.isArray(amenitiesResponse?.data)
+            ? amenitiesResponse.data
+            : [],
+        });
+      } catch (error) {
+        console.warn('게스트하우스 메타데이터 로드 실패:', error);
+      }
+    };
+
+    loadGuesthouseMeta();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [accessToken, hasLoadedGuesthouseMeta, setGuesthouseMeta, userRole]);
+
+  return (
+    <NavigationContainer ref={navigationRef}>
+      <Stack.Navigator screenOptions={{headerShown: false}}>
       <Stack.Screen name="MainTabs" component={MainStack} />
       <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="undefined" component={undefinedStack} />
@@ -104,7 +155,7 @@ const RootNavigation = () => (
       <Stack.Screen name="MyGuesthouseList" component={MyGuesthouseList} />
       <Stack.Screen name="MyGuesthouseAdd" component={MyGuesthouseAdd} />
       <Stack.Screen name="MyGuesthouseEdit" component={MyGuesthouseEdit} />
-      <Stack.Screen name="MyGuesthouseDetail" component={MyGuesthouseDetail} />
+      <Stack.Screen name="MyGuesthousePreview" component={MyGuesthousePreview} />
       <Stack.Screen name="MyRoomDetail" component={MyRoomDetail} />
       <Stack.Screen name="MyGuesthouseReview" component={MyGuesthouseReview} />
       <Stack.Screen name="MyGuesthouseReservation" component={MyGuesthouseReservation} />
@@ -144,8 +195,9 @@ const RootNavigation = () => (
         name="MyGuesthouseIntroForm"
         component={MyGuesthouseIntroForm}
       />
-    </Stack.Navigator>
-  </NavigationContainer>
-);
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+};
 
 export default RootNavigation;

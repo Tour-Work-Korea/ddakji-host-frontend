@@ -140,11 +140,22 @@ const MyGuesthouseReviewList = ({ guesthouseId }) => {
     const isLast = index === reviews.length - 1;
     const images = Array.isArray(item.imgUrls) ? item.imgUrls : [];
     const hasReplies = (item.replies || []).length > 0;
+    const hasUserImage = !!item.userImgUrl;
 
     return (
       <View style={styles.card}>
-        {/* <Text style={[FONTS.fs_16_medium, styles.roomText]}>방이름 (0인실 성별)</Text> */}
-        <Text style={[FONTS.fs_16_medium, styles.roomText]}>{item.nickname}</Text>
+        <View style={styles.userRow}>
+          {hasUserImage ? (
+            <Image
+              source={{ uri: item.userImgUrl }}
+              style={styles.userImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={styles.userImagePlaceholder} />
+          )}
+          <Text style={[FONTS.fs_16_medium, styles.roomText]}>{item.nickname}</Text>
+        </View>
         <View style={styles.ratingDeleteRow}>
             <View style={styles.ratingBox}>
               <StarIcon width={14} height={14}/>
@@ -282,14 +293,31 @@ const styles = StyleSheet.create({
   card: {
     marginTop: 12,
   },
+  userRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  userImage: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.grayscale_100,
+  },
+  userImagePlaceholder: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.grayscale_200,
+  },
   ratingDeleteRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginTop: 8,
   },
   // 별점
   ratingBox: {
-    marginTop: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
