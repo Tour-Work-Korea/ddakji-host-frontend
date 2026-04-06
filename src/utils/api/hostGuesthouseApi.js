@@ -16,7 +16,7 @@ const hostGuesthouseApi = {
 
   // 게스트하우스 최종 등록
   finalizeGuesthouse: (guesthouseId, dto) =>
-    api.post(`/host/guesthouses/${guesthouseId}/finalize`, {dto}),
+    api.post(`/host/guesthouses/${guesthouseId}/finalize`, dto),
 
   // 게스트하우스 수정
 
