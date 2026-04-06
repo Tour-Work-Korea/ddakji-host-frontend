@@ -1,55 +1,55 @@
 {
   "images" : [
     {
-      "filename" : "40_icon.png",
+      "filename" : "App Store.jpg",
       "idiom" : "iphone",
       "scale" : "2x",
       "size" : "20x20"
     },
     {
-      "filename" : "60_icon.png",
+      "filename" : "App Store-1.jpg",
       "idiom" : "iphone",
       "scale" : "3x",
       "size" : "20x20"
     },
     {
-      "filename" : "58_icon.png",
+      "filename" : "App Store-2.jpg",
       "idiom" : "iphone",
       "scale" : "2x",
       "size" : "29x29"
     },
     {
-      "filename" : "87_icon.png",
+      "filename" : "App Store-3 1.jpg",
       "idiom" : "iphone",
       "scale" : "3x",
       "size" : "29x29"
     },
     {
-      "filename" : "80_icon.png",
+      "filename" : "App Store-4.jpg",
       "idiom" : "iphone",
       "scale" : "2x",
       "size" : "40x40"
     },
     {
-      "filename" : "120_icon 1.png",
+      "filename" : "App Store-6 1.jpg",
       "idiom" : "iphone",
       "scale" : "3x",
       "size" : "40x40"
     },
     {
-      "filename" : "120_icon.png",
+      "filename" : "App Store-6.jpg",
       "idiom" : "iphone",
       "scale" : "2x",
       "size" : "60x60"
     },
     {
-      "filename" : "180_icon.png",
+      "filename" : "App Store-7.jpg",
       "idiom" : "iphone",
       "scale" : "3x",
       "size" : "60x60"
     },
     {
-      "filename" : "1024_icon.png",
+      "filename" : "App Store_1024.jpg",
       "idiom" : "ios-marketing",
       "scale" : "1x",
       "size" : "1024x1024"
