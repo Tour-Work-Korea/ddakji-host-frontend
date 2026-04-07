@@ -21,19 +21,23 @@ jobs:
         with:
           fetch-depth: 0
 
+      # --------------------------------
+      # 1. AWS OIDC (브랜치별 Role 분기)
+      # --------------------------------
       - name: Configure AWS credentials (DEV)
         if: github.ref == 'refs/heads/develop'
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::590052531747:role/github-actions-workaway-android-dev
+          role-to-assume: arn:aws:iam::590052531747:role/github-actions-workaway-ios-dev
           aws-region: ap-northeast-2
 
       - name: Configure AWS credentials (PROD)
         if: github.ref == 'refs/heads/main'
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::590052531747:role/github-actions-workaway-android-prod
+          role-to-assume: arn:aws:iam::590052531747:role/github-actions-workaway-ios-prod
           aws-region: ap-northeast-2
+      
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
