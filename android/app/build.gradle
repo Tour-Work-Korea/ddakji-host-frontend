@@ -89,10 +89,10 @@ android {
     signingConfigs {
         release {
             if (envKeystorePath && envKeystorePassword && envKeyAlias && envKeyPassword) {
-                storeFile file(envKeystorePath)
-                storePassword envKeystorePassword
-                keyAlias envKeyAlias
-                keyPassword envKeyPassword
+                storeFile = file(envKeystorePath)
+                storePassword = envKeystorePassword
+                keyAlias = envKeyAlias
+                keyPassword = envKeyPassword
             }
         }
     }
