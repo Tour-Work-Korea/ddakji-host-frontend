@@ -25,13 +25,11 @@
       <package android:name="nh.smart.card" />
       <package android:name="nh.smart.nhallonepay" />
       <package android:name="kr.co.citibank.citimobile" />
-      <package android:name="com.kakao.talk" />
       <package android:name="com.nhnent.payapp" />
       <package android:name="com.wooricard.smartapp" />
       <package android:name="com.wooribank.smart.npib" />
       <package android:name="viva.republica.toss" />
       <package android:name="com.nhn.android.search" />
-      <package android:name="com.kakaobank.channel" />
       <package android:name="com.ahnlab.v3mobileplus" />
       <package android:name="com.samsung.android.spay" />
       <package android:name="jp.naver.line.android" />
@@ -58,15 +56,6 @@
       android:theme="@style/AppTheme"
       android:supportsRtl="true"
       android:requestLegacyExternalStorage="true">
-      <!-- 구글 맵 api -->
-      <meta-data
-        android:name="com.google.android.geo.API_KEY"
-        android:value="@string/google_maps_api_key" />
-
-      <meta-data
-        android:name="com.kakao.sdk.AppKey"
-        android:value="@string/KAKAO_NATIVEAPP_KEY" />
-
       <activity
         android:name=".MainActivity"
         android:label="@string/app_name"
@@ -79,18 +68,6 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
-
-        <!-- KAKAO -->
-        <activity
-            android:name="com.kakao.sdk.auth.AuthCodeHandlerActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="kakao${KAKAO_NATIVE_APP_KEY}" android:host="oauth" />
-            </intent-filter>
-        </activity>
 
         <!-- Portone -->
         <intent-filter>

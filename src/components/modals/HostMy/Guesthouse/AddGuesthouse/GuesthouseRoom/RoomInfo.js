@@ -50,8 +50,14 @@ const RoomInfo = ({ data, setData, onNext }) => {
 
   const handleAddImage = async () => {
     try {
-      const selectedImages = await uploadMultiImage(); // 다중 이미지 선택
-      if (!selectedImages) return;
+      if (data.roomImages.length >= 10) {
+        return;
+      }
+
+      const selectedImages = await uploadMultiImage(
+        10 - data.roomImages.length,
+      );
+      if (!selectedImages.length) return;
 
       const hasThumb = data.roomImages.some((img) => img.isThumbnail);
       const formatted = selectedImages.map((url, idx) => ({

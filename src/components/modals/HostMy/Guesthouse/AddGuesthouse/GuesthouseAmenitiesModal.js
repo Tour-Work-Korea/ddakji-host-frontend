@@ -13,13 +13,18 @@ import {
 import { FONTS } from '@constants/fonts';
 import { COLORS } from '@constants/colors';
 import ButtonScarlet from '@components/ButtonScarlet';
-import { publicFacilities, roomFacilities, services } from '@constants/guesthouseOptions';
+import useGuesthouseMetaStore from '@stores/guesthouseMetaStore';
+import {groupAmenitiesBySection} from '@utils/guesthouseMeta';
 
 import XBtn from '@assets/images/x_gray.svg';
 
 const MODAL_HEIGHT = Math.round(Dimensions.get('window').height * 0.9);
 
 const GuesthouseAmenitiesModal = ({ visible, onClose, onSelect, shouldResetOnClose }) => {
+  const guesthouseAmenities = useGuesthouseMetaStore(
+    state => state.guesthouseAmenities,
+  );
+  const amenitySections = groupAmenitiesBySection(guesthouseAmenities);
   // 현재 선택된 amenity id 집합
   const [selectedIds, setSelectedIds] = useState(new Set());
 
@@ -137,9 +142,9 @@ const GuesthouseAmenitiesModal = ({ visible, onClose, onSelect, shouldResetOnClo
               </Text>
 
               <View style={styles.amenitiesContainer}>
-                {renderGroup('숙소 공용시설', publicFacilities)}
-                {renderGroup('객실 내 시설', roomFacilities)}
-                {renderGroup('기타시설 및 서비스', services)}
+                {amenitySections.map(section =>
+                  renderGroup(section.title, section.items),
+                )}
               </View>
               
             </View>

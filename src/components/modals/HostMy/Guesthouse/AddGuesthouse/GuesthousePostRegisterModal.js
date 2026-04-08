@@ -23,7 +23,13 @@ import EmptyIcon from '@assets/images/wa_blue_apply.svg';
 
 const MODAL_HEIGHT = Math.round(Dimensions.get('window').height * 0.8);
 
-const GuesthousePostRegisterModal = ({ visible, onClose, onSelect, shouldResetOnClose }) => {
+const GuesthousePostRegisterModal = ({
+  visible,
+  onClose,
+  onSelect,
+  shouldResetOnClose,
+  initialSelectedId = null,
+}) => {
   // 입점신청서 리스트 상태
   const [applicationList, setApplicationList] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
@@ -33,11 +39,13 @@ const GuesthousePostRegisterModal = ({ visible, onClose, onSelect, shouldResetOn
   React.useEffect(() => {
     if (visible) {
       fetchApplications();
-      if (appliedId) {
+      if (initialSelectedId) {
+        setSelectedId(initialSelectedId);
+      } else if (appliedId) {
         setSelectedId(appliedId);
       }
     }
-  }, [visible]);
+  }, [appliedId, initialSelectedId, visible]);
 
   // 입점신청서 조회
   const fetchApplications = async () => {
@@ -51,6 +59,7 @@ const GuesthousePostRegisterModal = ({ visible, onClose, onSelect, shouldResetOn
         )
         .map((app) => ({
           id: app.id,
+          guesthouseId: app.guesthouseId ?? null,
           businessName: app.businessName,
           address: app.address,
           detailAddress: app.detailAddress,
@@ -74,7 +83,7 @@ const GuesthousePostRegisterModal = ({ visible, onClose, onSelect, shouldResetOn
   const handleModalClose = () => {
     if (shouldResetOnClose) {
       // 적용 후 다시 열고 바꾸고 그냥 닫으면 기존 적용값으로 복원
-      setSelectedId(appliedId);
+      setSelectedId(initialSelectedId || appliedId);
     }
     onClose();
   };

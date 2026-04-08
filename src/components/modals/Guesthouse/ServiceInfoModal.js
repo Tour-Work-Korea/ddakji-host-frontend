@@ -9,13 +9,23 @@ import {
 } from 'react-native';
 import { FONTS } from '@constants/fonts';
 import { COLORS } from '@constants/colors';
-import { publicFacilities, roomFacilities, services } from '@constants/guesthouseOptions';
+import useGuesthouseMetaStore from '@stores/guesthouseMetaStore';
+import {groupAmenitiesBySection} from '@utils/guesthouseMeta';
 
 import XBtn from '@assets/images/x_gray.svg';
 
 const ServiceInfoModal = ({ visible, onClose, selectedAmenities = [] }) => {
+  const guesthouseAmenities = useGuesthouseMetaStore(
+    state => state.guesthouseAmenities,
+  );
+  const amenitySections = groupAmenitiesBySection(guesthouseAmenities);
   // 선택된 항목의 이름만 뽑아냄
-  const selectedNames = selectedAmenities.map(a => a.amenityType);
+  const selectedNames = selectedAmenities
+    .map(a => {
+      if (typeof a === 'string') return a;
+      return a?.amenityType || a?.name || a?.amenityName;
+    })
+    .filter(Boolean);
 
   const renderSection = (title, items) => (
     <View key={title}>
@@ -24,7 +34,7 @@ const ServiceInfoModal = ({ visible, onClose, selectedAmenities = [] }) => {
         {items.map((item) => {
           const isSelected = selectedNames.includes(item.name);
           return (
-            <View key={item} style={styles.tag}>
+            <View key={item.id} style={styles.tag}>
               <Text
                 style={[
                   FONTS.fs_14_medium,
@@ -54,9 +64,9 @@ const ServiceInfoModal = ({ visible, onClose, selectedAmenities = [] }) => {
             </TouchableOpacity>
           </View>
           <ScrollView>
-            {renderSection('숙소 공용시설', publicFacilities)}
-            {renderSection('객실 내 시설', roomFacilities)}
-            {renderSection('기타시설 및 서비스', services)}
+            {amenitySections.map(section =>
+              renderSection(section.title, section.items),
+            )}
           </ScrollView>
         </View>
       </View>

@@ -3,17 +3,20 @@ import api from './axiosInstance';
 const hostGuesthouseApi = {
   // 사장님 전체 게스트하우스 조회
   getMyGuesthouses: () => api.get('/host/guesthouses'),
-  
   // 사장님 전체 게스트하우스 조회 (룸 포함)
   getMyGuesthousesWithRooms: () => api.get('/host/guesthouses/with-rooms'),
+  getGuesthouseHashtags: () => api.get('/host/guesthouses/hashtags'),
+  getGuesthouseAmenities: () => api.get('/host/guesthouses/amenities'),
 
   // 특정 게스트하우스 상세 조회
   getGuesthouseDetail: guesthouseId =>
     api.get(`/host/guesthouses/${guesthouseId}`),
+  getGuesthouseRefundPolicies: guesthouseId =>
+    api.get(`/host/guesthouses/${guesthouseId}/refund-policies`),
 
-  // 게스트하우스 등록
-  registerGuesthouse: guesthouseData =>
-    api.post('/host/guesthouses', guesthouseData),
+  // 게스트하우스 최종 등록
+  finalizeGuesthouse: (guesthouseId, dto) =>
+    api.post(`/host/guesthouses/${guesthouseId}/finalize`, dto),
 
   // 게스트하우스 수정
 
@@ -47,6 +50,8 @@ const hostGuesthouseApi = {
    */
   updateGuesthouseAmenities: (guesthouseId, amenities) =>
     api.put(`/host/guesthouses/${guesthouseId}/amenities`, amenities),
+  updateGuesthouseRefundPolicies: (guesthouseId, policies) =>
+    api.put(`/host/guesthouses/${guesthouseId}/refund-policies`, {policies}),
 
   /** 객실 기본 정보 수정
    * body {
@@ -119,6 +124,10 @@ const hostGuesthouseApi = {
       },
     }),
 
+  // 입점 신청서 기반 임시 게스트하우스 생성
+  tempCreateGuesthouse: payload =>
+    api.post('/host/guesthouses/tempCreate', payload),
+
   // 게하 예약 검색
   searchGuesthouseReservations: (formData) =>
     api.get('/order/host/reservation/search', { params: formData }),
@@ -186,7 +195,7 @@ const hostGuesthouseApi = {
   // 게하 예약 취소
   cancelGuesthouseReservation: (reservationId) =>
     api.delete(`/order/reservation/${reservationId}`, {
-      data: { type: "GUESTHOUSE" },
+      data: {type: 'GUESTHOUSE'},
     }),
 };
 

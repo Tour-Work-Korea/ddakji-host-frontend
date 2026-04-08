@@ -14,10 +14,10 @@ import MultiSlider from '@ptomasroos/react-native-multi-slider';
 
 import { COLORS } from "@constants/colors";
 import { FONTS } from "@constants/fonts";
-import { guesthouseTags } from '@constants/guesthouseTags';
-import { roomTypes, filterServices } from '@constants/guesthouseOptions';
+import { roomTypes } from '@constants/guesthouseOptions';
 import ButtonScarlet from '@components/ButtonScarlet';
 import ButtonWhite from '@components/ButtonWhite';
+import useGuesthouseMetaStore from '@stores/guesthouseMetaStore';
 
 import UnChecked from '@assets/images/check_gray.svg';
 import Checked from '@assets/images/check_orange.svg';
@@ -33,25 +33,36 @@ const tabList = [
 ];
 
 const GuesthouseFilterModal = ({ visible, onClose, initialFilters, onApply }) => {
+  const guesthouseHashtags = useGuesthouseMetaStore(
+    state => state.guesthouseHashtags,
+  );
+  const guesthouseAmenities = useGuesthouseMetaStore(
+    state => state.guesthouseAmenities,
+  );
   const [sectionPositions, setSectionPositions] = useState({});
   const [activeTab, setActiveTab] = useState("price");
 
   const [priceRange, setPriceRange] = useState([10000, 10000000]);
   const [selectedRoomType, setSelectedRoomType] = useState([]);
-  const [selectedFacilityNames, setSelectedFacilityNames] = useState([]);
-  const [selectedType, setSelectedType] = useState(guesthouseTags); 
+  const [selectedFacilityIds, setSelectedFacilityIds] = useState([]);
+  const [selectedType, setSelectedType] = useState(guesthouseHashtags);
   const [onlyAvailable, setOnlyAvailable] = useState(false);
 
   useEffect(() => {
     if (visible && initialFilters) {
       setPriceRange([initialFilters.minPrice, initialFilters.maxPrice]);
       setSelectedRoomType(initialFilters.roomType || []);
-      setSelectedFacilityNames(initialFilters.facility || []);
-      setSelectedType(initialFilters.tags || guesthouseTags);
+      setSelectedFacilityIds(initialFilters.facility || []);
+      setSelectedType(initialFilters.tags || guesthouseHashtags);
       setOnlyAvailable(initialFilters.onlyAvailable || false);
       setIsDirty(false);
     }
-  }, [visible, initialFilters]);
+  }, [visible, initialFilters, guesthouseHashtags]);
+
+  useEffect(() => {
+    if (!visible || initialFilters) return;
+    setSelectedType(guesthouseHashtags);
+  }, [guesthouseHashtags, initialFilters, visible]);
 
   useEffect(() => {
     const checkDirty = () => {
@@ -59,19 +70,16 @@ const GuesthouseFilterModal = ({ visible, onClose, initialFilters, onApply }) =>
         setIsDirty(isDirtyNow);
     };
     checkDirty();
-  }, [priceRange, selectedRoomType, selectedFacilityNames, selectedType, onlyAvailable]);
+  }, [priceRange, selectedRoomType, selectedFacilityIds, selectedType, onlyAvailable]);
 
   // 초기화 버튼 활성화 여부
   const isEqualToInitialState = (next = {}) => {
     const selectedTypeIds = (next.selectedType ?? selectedType)
       .map(tag => tag.id)
       .sort((a, b) => a - b);
-    const initialTagIds = guesthouseTags
+    const initialTagIds = guesthouseHashtags
       .map(tag => tag.id)
       .sort((a, b) => a - b);
-
-    const selectedFacilityNamesSet = new Set(next.selectedFacilityNames ?? selectedFacilityNames);
-    const initialFacilityNamesSet = new Set();
 
     return (
       (next.priceRange ?? priceRange)[0] === 10000 &&
@@ -79,7 +87,7 @@ const GuesthouseFilterModal = ({ visible, onClose, initialFilters, onApply }) =>
       (next.selectedRoomType ?? selectedRoomType).length === 0 &&
       (next.onlyAvailable ?? onlyAvailable) === false &&
       JSON.stringify(selectedTypeIds) === JSON.stringify(initialTagIds) &&
-      JSON.stringify([...selectedFacilityNamesSet]) === JSON.stringify([...initialFacilityNamesSet])
+      (next.selectedFacilityIds ?? selectedFacilityIds).length === 0
     );
   };
 
@@ -129,8 +137,8 @@ const GuesthouseFilterModal = ({ visible, onClose, initialFilters, onApply }) =>
   const handleReset = () => {
     setPriceRange([10000, 10000000]);
     setSelectedRoomType([]); 
-    setSelectedFacilityNames([]);
-    setSelectedType(guesthouseTags);
+    setSelectedFacilityIds([]);
+    setSelectedType(guesthouseHashtags);
     setOnlyAvailable(false);
     setIsDirty(false);
   };
@@ -233,7 +241,7 @@ const GuesthouseFilterModal = ({ visible, onClose, initialFilters, onApply }) =>
             >
                 <Text style={[FONTS.fs_16_medium, styles.sectionTitle]}>숙소 유형</Text>
                 <View style={styles.tagSelectRow}>
-                  {guesthouseTags.map((tag) => {
+                  {guesthouseHashtags.map((tag) => {
                     const isSelected = selectedType.some(t => t.id === tag.id);
                     return (
                         <TouchableOpacity
@@ -323,16 +331,18 @@ const GuesthouseFilterModal = ({ visible, onClose, initialFilters, onApply }) =>
             >
               <Text style={[FONTS.fs_16_medium, styles.sectionTitle]}>시설/서비스</Text>
               <View style={styles.tagSelectRow}>
-                {filterServices.map((facility) => {
-                const isSelected = selectedFacilityNames.includes(facility.name);
+                {guesthouseAmenities.map((facility) => {
+                const isSelected = selectedFacilityIds.includes(facility.id);
                 return (
                     <TouchableOpacity
-                      key={facility.name}
+                      key={facility.id}
                       onPress={() => {
                           if (isSelected) {
-                            setSelectedFacilityNames(prev => prev.filter(name => name !== facility.name));
+                            setSelectedFacilityIds(prev =>
+                              prev.filter(id => id !== facility.id),
+                            );
                           } else {
-                            setSelectedFacilityNames(prev => [...prev, facility.name]);
+                            setSelectedFacilityIds(prev => [...prev, facility.id]);
                           }
                           setIsDirty(true);
                       }}
@@ -387,15 +397,12 @@ const GuesthouseFilterModal = ({ visible, onClose, initialFilters, onApply }) =>
               <ButtonScarlet 
                 title="게스트하우스 보기"
                 onPress={() => {
-                    const amenityIds = filterServices
-                      .filter(f => selectedFacilityNames.includes(f.name))
-                      .flatMap(f => f.id);
                     onApply({
                     tags: selectedType,
                     minPrice: priceRange[0],
                     maxPrice: priceRange[1],
                     roomType: selectedRoomType, // 아직 api로 보내지는 않음
-                    facility: amenityIds,
+                    facility: selectedFacilityIds,
                     onlyAvailable,
                     });
                 }}

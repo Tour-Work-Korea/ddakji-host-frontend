@@ -18,11 +18,11 @@ import Toast from 'react-native-toast-message';
 import { FONTS } from '@constants/fonts';
 import { COLORS } from '@constants/colors';
 import ButtonScarlet from '@components/ButtonScarlet';
-import { guesthouseTags } from '@constants/guesthouseTags';
 import AddressSearchModal from '@components/modals/AddressSearchModal';
 import TimePickerModal from '@components/modals/TimePickerModal';
 import { formatLocalTimeToKorean12Hour } from '@utils/formatDate';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
+import useGuesthouseMetaStore from '@stores/guesthouseMetaStore';
 
 import XBtn from '@assets/images/x_gray.svg';
 import ClockIcon from '@assets/images/clock_gray.svg';
@@ -45,6 +45,9 @@ const GuesthouseInfoModal = ({
   defaultCheckOut = '11:00:00',
   defaultHashtags = [],
 }) => {
+  const guesthouseHashtags = useGuesthouseMetaStore(
+    state => state.guesthouseHashtags,
+  );
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [baseline, setBaseline] = useState(null);
   const [baselineTags, setBaselineTags] = useState([]);
@@ -106,8 +109,10 @@ const GuesthouseInfoModal = ({
       setCheckOut(defaultCheckOut || '11:00:00');
 
       // 태그 프리셋 (최대 3개)
-      const preset = guesthouseTags.filter(t =>
-        (defaultHashtags || []).some(h => h.hashtag === t.hashtag)
+      const preset = guesthouseHashtags.filter(t =>
+        (defaultHashtags || []).some(
+          h => h?.hashtag === t.hashtag || h === t.hashtag,
+        )
       ).slice(0, 3);
       setSelectedTags(preset);
       setBaselineTags(preset.map(t => t.id));
@@ -132,6 +137,7 @@ const GuesthouseInfoModal = ({
     defaultCheckIn,
     defaultCheckOut,
     defaultHashtags,
+    guesthouseHashtags,
   ]);
 
   // 필수값 유효성
@@ -386,7 +392,7 @@ const GuesthouseInfoModal = ({
             </Text>
             <Text style={[FONTS.fs_12_medium, styles.subText]}>최대 3개 선택가능</Text>
             <View style={styles.tagsContainer}>
-              {guesthouseTags.map((tag) => {
+              {guesthouseHashtags.map((tag) => {
                 const isSelected = selectedTags.some((t) => t.id === tag.id);
                 return (
                   <TouchableOpacity

@@ -1,5 +1,4 @@
 PODS:
-  - Alamofire (5.9.1)
   - boost (1.84.0)
   - BVLinearGradient (2.8.3):
     - React-Core
@@ -11,22 +10,6 @@ PODS:
   - hermes-engine (0.79.1):
     - hermes-engine/Pre-built (= 0.79.1)
   - hermes-engine/Pre-built (0.79.1)
-  - kakao-login (5.4.1):
-    - KakaoSDKAuth (= 2.22.0)
-    - KakaoSDKCommon (= 2.22.0)
-    - KakaoSDKUser (= 2.22.0)
-    - React
-  - KakaoSDKAuth (2.22.0):
-    - KakaoSDKCommon (= 2.22.0)
-  - KakaoSDKCommon (2.22.0):
-    - KakaoSDKCommon/Common (= 2.22.0)
-    - KakaoSDKCommon/Network (= 2.22.0)
-  - KakaoSDKCommon/Common (2.22.0)
-  - KakaoSDKCommon/Network (2.22.0):
-    - Alamofire (~> 5.9.0)
-    - KakaoSDKCommon/Common (= 2.22.0)
-  - KakaoSDKUser (2.22.0):
-    - KakaoSDKAuth (= 2.22.0)
   - lottie-ios (4.5.0)
   - lottie-react-native (7.2.4):
     - DoubleConversion
@@ -2263,7 +2246,6 @@ DEPENDENCIES:
   - fmt (from `../node_modules/react-native/third-party-podspecs/fmt.podspec`)
   - glog (from `../node_modules/react-native/third-party-podspecs/glog.podspec`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
-  - "kakao-login (from `../node_modules/@react-native-seoul/kakao-login`)"
   - lottie-react-native (from `../node_modules/lottie-react-native`)
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCT-Folly/Fabric (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
@@ -2350,10 +2332,6 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
-    - Alamofire
-    - KakaoSDKAuth
-    - KakaoSDKCommon
-    - KakaoSDKUser
     - lottie-ios
     - SocketRocket
 
@@ -2375,8 +2353,6 @@ EXTERNAL SOURCES:
   hermes-engine:
     :podspec: "../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec"
     :tag: hermes-2025-03-03-RNv0.79.0-bc17d964d03743424823d7dd1a9f37633459c5c5
-  kakao-login:
-    :path: "../node_modules/@react-native-seoul/kakao-login"
   lottie-react-native:
     :path: "../node_modules/lottie-react-native"
   RCT-Folly:
@@ -2541,7 +2517,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
-  Alamofire: f36a35757af4587d8e4f4bfa223ad10be2422b8c
   boost: 7e761d76ca2ce687f7cc98e698152abd03a18f90
   BVLinearGradient: 880f91a7854faff2df62518f0281afb1c60d49a3
   DoubleConversion: cb417026b2400c8f53ae97020b2be961b59470cb
@@ -2550,10 +2525,6 @@ SPEC CHECKSUMS:
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
   glog: 5683914934d5b6e4240e497e0f4a3b42d1854183
   hermes-engine: c32f2e405098bc1ebe30630a051ddce6f21d3c2e
-  kakao-login: 6f7a39583ae9e1a4e76240e66ae3ec575d461d1e
-  KakaoSDKAuth: 569b377eda622d93d4575240b8031cd658163eef
-  KakaoSDKCommon: d57127c339fc79e73aa8b236a4c77211c29924f1
-  KakaoSDKUser: 043bcd7e91454ebf3bf64f150c430e6f65f0a08d
   lottie-ios: a881093fab623c467d3bce374367755c272bdd59
   lottie-react-native: 9076d7f8e9059606483795e535cef7a38d209f76
   RCT-Folly: 36fe2295e44b10d831836cc0d1daec5f8abcf809

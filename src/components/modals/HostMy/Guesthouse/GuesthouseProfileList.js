@@ -1,5 +1,12 @@
 import React from 'react';
-import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import {
+  Modal,
+  Pressable,
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
 import {COLORS} from '@constants/colors';
 import {FONTS} from '@constants/fonts';
 import Avatar from '@components/Avatar';
@@ -7,6 +14,8 @@ import CheckIcon from '@assets/images/check_white.svg';
 import PlusIcon from '@assets/images/plus_black.svg';
 
 const GuesthouseProfileList = ({
+  visible = false,
+  onClose = () => {},
   items = [],
   selectedId = null,
   onSelect = () => {},
@@ -15,75 +24,86 @@ const GuesthouseProfileList = ({
   style,
 }) => {
   return (
-    <View style={[styles.container, style]}>
-      <View style={[styles.rowBorder]}>
-        {items.map((item, index) => {
-          const isSelected = selectedId === item.id;
-          const noticeCount = Number(item.noticeCount ?? 0);
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}>
+      <Pressable style={styles.overlay} onPress={onClose}>
+        <Pressable style={[styles.container, style]} onPress={() => {}}>
+          <View style={styles.rowBorder}>
+            {items.map((item, index) => {
+              const isSelected = selectedId === item.id;
+              const noticeCount = Number(item.noticeCount ?? 0);
 
-          return (
-            <React.Fragment key={item.id ?? `guesthouse-${index}`}>
-              <TouchableOpacity
-                style={styles.row}
-                onPress={() => onSelect(item)}
-                activeOpacity={0.8}>
-                <View style={styles.leftSection}>
-                  <View style={styles.avatarWrap}>
-                    <Avatar
-                      uri={item.photoUrl}
-                      size={36}
-                      iconSize={20}
-                      style={styles.avatarImage}
-                    />
-                  </View>
+              return (
+                <React.Fragment key={item.id ?? `guesthouse-${index}`}>
+                  <TouchableOpacity
+                    style={styles.row}
+                    onPress={() => onSelect(item)}
+                    activeOpacity={0.8}>
+                    <View style={styles.leftSection}>
+                      <View style={styles.avatarWrap}>
+                        <Avatar
+                          uri={item.photoUrl}
+                          size={36}
+                          iconSize={20}
+                          style={styles.avatarImage}
+                        />
+                      </View>
 
-                  <View style={styles.textWrap}>
-                    <Text
-                      style={[FONTS.fs_14_semibold, styles.nameText]}
-                      numberOfLines={1}
-                      ellipsizeMode="tail">
-                      {item.name}
-                    </Text>
+                      <View style={styles.textWrap}>
+                        <Text
+                          style={[FONTS.fs_14_semibold, styles.nameText]}
+                          numberOfLines={1}
+                          ellipsizeMode="tail">
+                          {item.name}
+                        </Text>
 
-                    <View style={styles.noticeRow}>
-                      <View style={styles.noticeDot} />
-                      <Text style={[FONTS.fs_12_medium, styles.noticeText]}>
-                        알림 {noticeCount}개
-                      </Text>
+                        <View style={styles.noticeRow}>
+                          <View style={styles.noticeDot} />
+                          <Text style={[FONTS.fs_12_medium, styles.noticeText]}>
+                            알림 {noticeCount}개
+                          </Text>
+                        </View>
+                      </View>
                     </View>
-                  </View>
-                </View>
 
-                {isSelected ? (
-                  <View style={styles.selectedBadge}>
-                    <CheckIcon width={16} height={16} />
-                  </View>
-                ) : null}
-              </TouchableOpacity>
+                    {isSelected ? (
+                      <View style={styles.selectedBadge}>
+                        <CheckIcon width={16} height={16} />
+                      </View>
+                    ) : null}
+                  </TouchableOpacity>
 
-              {index < items.length - 1 ? <View style={styles.divider} /> : null}
-            </React.Fragment>
-          );
-        })}
+                  {index < items.length - 1 ? <View style={styles.divider} /> : null}
+                </React.Fragment>
+              );
+            })}
 
-        {/* 임시: 게하 프로필 추가 비활성화 */}
-        {/* {items.length > 0 ? <View style={styles.divider} /> : null}
+            {items.length > 0 ? <View style={styles.divider} /> : null}
 
-        <TouchableOpacity
-          style={styles.addRow}
-          onPress={onAdd}
-          activeOpacity={0.8}>
-          <View style={styles.addIconWrap}>
-            <PlusIcon width={20} height={20} />
+            <TouchableOpacity
+              style={styles.addRow}
+              onPress={onAdd}
+              activeOpacity={0.8}>
+              <View style={styles.addIconWrap}>
+                <PlusIcon width={20} height={20} />
+              </View>
+              <Text style={[FONTS.fs_14_semibold, styles.addText]}>{addLabel}</Text>
+            </TouchableOpacity>
           </View>
-          <Text style={[FONTS.fs_14_semibold, styles.addText]}>{addLabel}</Text>
-        </TouchableOpacity> */}
-      </View>
-    </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
   );
 };
 
 const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
   container: {
     backgroundColor: COLORS.grayscale_0,
     borderRadius: 16,
@@ -92,7 +112,7 @@ const styles = StyleSheet.create({
     shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.08,
     shadowRadius: 12,
-    elevation: 6,
+    elevation: 4,
   },
 
   rowBorder: {

@@ -1,81 +1,70 @@
-// 🩷(Common)
-// 탭
-export {default as BottomTabs} from './(Common)/BottomTabs';
-export {default as EmployDetail} from './(Common)/Employ/EmployDetail';
-// 게스트하우스 포스트
-export {default as GuesthousePost} from './(Common)/GuesthousePost';
-// 마이페이지
-export {default as My} from './(Common)/BottomTabs/My';
-export {default as Setting} from './(Common)/Setting';
-export {default as Terms} from './(Common)/Setting/Terms';
+export {default as MainStack} from './app/MainStack';
+export {default as BottomTabs} from './app/MainStack';
+export {default as My} from './app/MainStack/My';
 
-//로그인, 회원가입
-export {default as Register} from './(Common)/Register';
-export {default as AgreeDetail} from './(Common)/Register/AgreeDetail';
-export {default as EmailCertificate} from './(Common)/Register/EmailCertificate';
-export {default as PhoneCertificate} from './(Common)/Register/PhoneCertificate';
-export {default as RegisterAgree} from './(Common)/Register/RegisterAgree';
-export {default as RegisterIntro} from './(Common)/Register/RegisterIntro';
-export {default as Result} from './(Common)/Register/Result';
-export {default as Login} from './(Common)/Login';
-export {default as LoginIntro} from './(Common)/Login/LoginIntro';
-export {default as LoginByEmail} from './(Common)/Login/LoginByEmail';
-export {default as VerifyPhone} from './(Common)/Login/VerifyPhone';
-export {default as FindIntro} from './(Common)/Login/FindIntro';
-export {default as FindId} from './(Common)/Login/FindId';
-export {default as FindPassword} from './(Common)/Login/FindPassword';
+export {default as Login} from './auth/Login';
+export {default as LoginIntro} from './auth/Login/LoginIntro';
+export {default as LoginByEmail} from './auth/Login/LoginByEmail';
+export {default as VerifyPhone} from './auth/Login/VerifyPhone';
+export {default as FindIntro} from './auth/Login/FindIntro';
+export {default as FindId} from './auth/Login/FindId';
+export {default as FindPassword} from './auth/Login/FindPassword';
 
-// 🩷(Host)
+export {default as Register} from './auth/Register';
+export {default as AgreeDetail} from './auth/Register/AgreeDetail';
+export {default as EmailCertificate} from './auth/Register/EmailCertificate';
+export {default as PhoneCertificate} from './auth/Register/PhoneCertificate';
+export {default as RegisterAgree} from './auth/Register/RegisterAgree';
+export {default as RegisterIntro} from './auth/Register/RegisterIntro';
+export {default as Result} from './auth/Register/Result';
 
-// 마이 페이지
-export {default as HostMyPage} from './(Host)/HostMyPage';
-// 프로필
-export {default as HostEditInfo} from './(Host)/HostMyPage/HostEditInfo';
-export {default as HostRegisterInfo} from './(Host)/HostRegisterInfo';
-export {default as HostProfilePage} from './(Host)/HostProfilePage';
-export {default as HostEditProfile} from './(Host)/HostEditProfile';
-// 게하 포스트 목록 & 수정 & 등록
-export {default as MyGuesthouseIntroList} from './(Host)/MyGuesthouseIntroList';
-export {default as MyGuesthouseIntroForm} from './(Host)/MyGuesthouseIntroForm';
-// 게하 목록 & 수정 & 등록
-export {default as MyGuesthouseDetail} from './(Host)/Guesthouse/MyGuesthouseDetail';
-export {default as MyRoomDetail} from './(Host)/Guesthouse/MyRoomDetail';
-export {default as MyGuesthouseList} from './(Host)/Guesthouse/MyGuesthouseList';
-export {default as MyGuesthouseEdit} from './(Host)/Guesthouse/MyGuesthouseEdit';
-export {default as MyGuesthouseAdd} from './(Host)/Guesthouse/MyGuesthouseAdd';
-export {default as MyRoomManage} from './(Host)/Guesthouse/MyRoomManage';
-// 게하 숙박 리뷰
-export {default as MyGuesthouseReview} from './(Host)/Guesthouse/MyGuesthouseReview';
-// 게하 예약 내역
-export {default as MyGuesthouseReservation} from './(Host)/Guesthouse/MyGuesthouseReservation';
-export {default as MyGuesthouseReservationDetail} from './(Host)/Guesthouse/MyGuesthouseReservationDetail';
-export {default as MyGuesthouseReservationCalendar} from './(Host)/Guesthouse/MyGuesthouseReservationCalendar';
-// 고객 알림 설정
-export {default as CustomerNotificationSettings} from './(Host)/Guesthouse/CustomerNotificationSettings';
-export {default as CheckInGuide} from './(Host)/Guesthouse/CustomerNotificationSettings/CheckInGuide';
-export {default as RoomGuideMessageEditor} from './(Host)/Guesthouse/CustomerNotificationSettings/CheckInGuide/RoomGuideMessageEditor';
-//
-export {default as MyRecruitmentList} from './(Host)/MyRecruitmentList';
-export {default as RecruitmentForm} from './(Host)/RecruitmentForm';
-export {default as ApplicantList} from './(Host)/ApplicantList';
-export {default as ApplicantListByRecruit} from './(Host)/ApplicantListByRecruit';
+export {default as HostHome} from './home/Home';
+export {default as HostHomeMenu} from './home/Menu';
+export {default as NoticeList} from './notice/NoticeList';
+export {default as NoticeDetail} from './notice/NoticeDetail';
 
-//
-export {default as StoreRegisterForm1} from './(Host)/StoreRegister/StoreRegisterForm/StoreRegisterForm1';
-export {default as StoreRegisterForm2} from './(Host)/StoreRegister/StoreRegisterForm/StoreRegisterForm2';
-export {default as StoreRegisterList} from './(Host)/StoreRegister/StoreRegisterList';
-// 이벤트
-export {default as MyMeetList} from './(Host)/Meet/MyMeetList';
-export {default as MyMeetDetail} from './(Host)/Meet/MyMeetDetail';
-export {default as MyMeetAdd} from './(Host)/Meet/MyMeetAdd';
-export {default as MeetBasics} from './(Host)/Meet/MyMeetAdd/MeetBasics';
-export {default as MeetDetails} from './(Host)/Meet/MyMeetAdd/MeetDetails';
-export {default as MeetDirections} from './(Host)/Meet/MyMeetAdd/MeetDirections';
+export {default as Setting} from './settings/Setting';
+export {default as Terms} from './settings/Setting/Terms';
 
-// 공용 상세
-export {default as ResumeDetail} from './(Common)/Employ/ResumeDetail';
+export {default as HostMyPage} from './profile/MyPage';
+export {default as HostEditInfo} from './profile/MyPage/HostEditInfo';
+export {default as HostProfilePage} from './profile/ProfilePage';
+export {default as HostEditProfile} from './profile/EditProfile';
 
-// 예시 화면들
-export {default as EXDeeplink} from './EXDeeplink';
-export {default as EXHome} from './EXHome';
-export {default as EXHomePage} from './EXHome/EXHomePage';
+export {default as HostRegisterInfo} from './onboarding/HostRegisterInfo';
+export {default as StoreRegisterForm1} from './onboarding/StoreRegister/StoreRegisterForm/StoreRegisterForm1';
+export {default as StoreRegisterForm2} from './onboarding/StoreRegister/StoreRegisterForm/StoreRegisterForm2';
+export {default as StoreRegisterList} from './onboarding/StoreRegister/StoreRegisterList';
+export {default as StoreRegisterComplete} from './onboarding/StoreRegister/StoreRegisterComplete';
+export {default as GuesthouseManagement} from './guesthouse/GuesthouseManagement';
+
+export {default as GuesthousePost} from './guesthouse/GuesthousePost';
+export {default as MyGuesthouseIntroList} from './guesthouse/IntroList';
+export {default as MyGuesthouseIntroForm} from './guesthouse/IntroForm';
+export {default as MyGuesthousePreview} from './guesthouse/MyGuesthouseDetail';
+export {default as MyRoomDetail} from './guesthouse/MyRoomDetail';
+export {default as MyGuesthouseList} from './guesthouse/MyGuesthouseList';
+export {default as MyGuesthouseEdit} from './guesthouse/MyGuesthouseEdit';
+export {default as MyGuesthouseAdd} from './guesthouse/MyGuesthouseAdd';
+export {default as MyRoomManage} from './guesthouse/MyRoomManage';
+export {default as MyGuesthouseReview} from './guesthouse/MyGuesthouseReview';
+export {default as MyGuesthouseReservation} from './guesthouse/MyGuesthouseReservation';
+export {default as MyGuesthouseReservationDetail} from './guesthouse/MyGuesthouseReservationDetail';
+export {default as MyGuesthouseReservationCalendar} from './guesthouse/MyGuesthouseReservationCalendar';
+export {default as CustomerNotificationSettings} from './guesthouse/CustomerNotificationSettings';
+export {default as CheckInGuide} from './guesthouse/CustomerNotificationSettings/CheckInGuide';
+export {default as RoomGuideMessageEditor} from './guesthouse/CustomerNotificationSettings/CheckInGuide/RoomGuideMessageEditor';
+
+export {default as ApplicantList} from './recruitment/ApplicantList';
+export {default as ApplicantListByRecruit} from './recruitment/ApplicantListByRecruit';
+export {default as EmployDetail} from './recruitment/EmployDetail';
+export {default as MyRecruitmentList} from './recruitment/MyRecruitmentList';
+export {default as RecruitmentForm} from './recruitment/RecruitmentForm';
+export {default as ResumeDetail} from './recruitment/ResumeDetail';
+
+export {default as MyMeetList} from './meet/Meet/MyMeetList';
+export {default as MyMeetDetail} from './meet/Meet/MyMeetDetail';
+export {default as MyMeetAdd} from './meet/Meet/MyMeetAdd';
+export {default as MeetBasics} from './meet/Meet/MyMeetAdd/MeetBasics';
+export {default as MeetDetails} from './meet/Meet/MyMeetAdd/MeetDetails';
+export {default as MeetDirections} from './meet/Meet/MyMeetAdd/MeetDirections';
