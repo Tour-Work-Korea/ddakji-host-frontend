@@ -159,6 +159,49 @@ const buildRoomBasicFull = (cur) => {
   return payload;
 };
 
+const EMPTY_ROOM = {
+  id: undefined,
+  roomName: '',
+  roomDesc: '',
+  roomImages: [],
+  roomCapacity: null,
+  roomMaxCapacity: null,
+  roomType: null,
+  dormitoryGenderType: null,
+  femaleOnly: false,
+  roomPrice: '',
+};
+
+const normalizeRooms = (list = []) =>
+  (Array.isArray(list) ? list : []).map((r) => {
+    const rawRoomType = r.roomType ?? null;
+    const isLegacyGenderType = ['MIXED', 'MALE_ONLY', 'FEMALE_ONLY'].includes(rawRoomType);
+    const normalizedRoomType = isLegacyGenderType ? 'DORMITORY' : rawRoomType;
+    const normalizedDormitoryGenderType = isLegacyGenderType
+      ? rawRoomType
+      : r.dormitoryGenderType ?? null;
+
+    return {
+      id: r.id ?? undefined,
+      roomName: r.roomName ?? '',
+      roomDesc: r.roomDesc ?? '',
+      roomImages: (r.roomImages ?? []).map(ri => ({
+        id: ri.id ?? undefined,
+        roomImageUrl: ri.roomImageUrl,
+        isThumbnail: !!ri.isThumbnail,
+      })),
+      roomCapacity: r.roomCapacity ?? null,
+      roomMaxCapacity: r.roomMaxCapacity ?? r.roomCapacity ?? null,
+      roomType: normalizedRoomType,
+      dormitoryGenderType: normalizedDormitoryGenderType,
+      femaleOnly: r.femaleOnly ?? false,
+      roomPrice: r.roomPrice != null ? String(r.roomPrice) : '',
+      roomExtraFees: r.roomExtraFees ?? [],
+    };
+  });
+
+const normalizeRoom = (room) => normalizeRooms([room])[0] ?? EMPTY_ROOM;
+
 const GuesthouseRoomModal = ({
   visible,
   onClose,
@@ -167,6 +210,9 @@ const GuesthouseRoomModal = ({
 
   defaultRooms = [],
   guesthouseId,
+  directEditRoomId = null,
+  directEditMode = false,
+  directCreateMode = false,
 }) => {
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   
@@ -211,57 +257,12 @@ const GuesthouseRoomModal = ({
   const [rooms, setRooms] = useState([]);
   const [baselineRooms, setBaselineRooms] = useState([]);
 
-  const EMPTY_ROOM = {
-    id: undefined,
-    roomName: '',
-    roomDesc: '',
-    roomImages: [],
-    roomCapacity: null,
-    roomMaxCapacity: null,
-    roomType: null,
-    dormitoryGenderType: null,
-    femaleOnly: false,
-    roomPrice: '',     // 문자열로 관리(숫자만 입력 허용)
-  }; 
-
   const [tempRoomData, setTempRoomData] = useState(EMPTY_ROOM); // info, type 입력 중인 데이터
   const [editId, setEditId] = useState(null);
   const [editIndexFallback, setEditIndexFallback] = useState(null); // id 없을 때 폴백
 
   // 마지막 적용된 값 저장
   const [appliedData, setAppliedData] = useState(null);
-
-  // 기본값 normalize (깊은 복사 + 빠진 필드 보정)
-  const normalizeRooms = (list = []) =>
-    (Array.isArray(list) ? list : []).map((r) => {
-      const rawRoomType = r.roomType ?? null;
-      const isLegacyGenderType = ['MIXED', 'MALE_ONLY', 'FEMALE_ONLY'].includes(rawRoomType);
-      const normalizedRoomType = isLegacyGenderType ? 'DORMITORY' : rawRoomType;
-      const normalizedDormitoryGenderType = isLegacyGenderType
-        ? rawRoomType
-        : r.dormitoryGenderType ?? null;
-
-      return {
-        id: r.id ?? undefined,
-        roomName: r.roomName ?? '',
-        roomDesc: r.roomDesc ?? '',
-        roomImages: (r.roomImages ?? []).map(ri => ({
-          id: ri.id ?? undefined,
-          roomImageUrl: ri.roomImageUrl,
-          isThumbnail: !!ri.isThumbnail,
-        })),
-        roomCapacity: r.roomCapacity ?? null,
-        roomMaxCapacity: r.roomMaxCapacity ?? r.roomCapacity ?? null,
-        roomType: normalizedRoomType,
-        dormitoryGenderType: normalizedDormitoryGenderType,
-        femaleOnly: r.femaleOnly ?? false,
-        // 내부 입력은 문자열로 관리 (기존 입력 UX 유지)
-        roomPrice: r.roomPrice != null ? String(r.roomPrice) : '',
-        roomExtraFees: r.roomExtraFees ?? [],
-      };
-    });
-
-  const normalizeRoom = (r) => normalizeRooms([r])[0] ?? EMPTY_ROOM;
 
   // 모달 열릴 때 초기화/복원
   useEffect(() => {
@@ -278,9 +279,39 @@ const GuesthouseRoomModal = ({
       setTempRoomData(EMPTY_ROOM);
       setEditId(null);
       setEditIndexFallback(null);
-      setStep('list');
+      setStep(directEditMode || directCreateMode ? 'info' : 'list');
     }
-  }, [visible, shouldResetOnClose, appliedData, defaultRooms]);
+  }, [visible, shouldResetOnClose, appliedData, defaultRooms, directEditMode, directCreateMode]);
+
+  useEffect(() => {
+    if (!visible || !directEditMode) return;
+
+    const n = normalizeRooms(defaultRooms);
+    const byId =
+      directEditRoomId != null
+        ? n.find(room => String(room?.id) === String(directEditRoomId))
+        : n[0];
+
+    if (!byId) return;
+
+    setRooms(n);
+    setBaselineRooms(n);
+    setEditId(byId?.id ?? null);
+    setEditIndexFallback(null);
+    setTempRoomData(normalizeRoom(byId));
+    setStep('info');
+  }, [visible, directEditMode, directEditRoomId, defaultRooms]);
+
+  useEffect(() => {
+    if (!visible || !directCreateMode) return;
+
+    setRooms([]);
+    setBaselineRooms([]);
+    setEditId(null);
+    setEditIndexFallback(null);
+    setTempRoomData(EMPTY_ROOM);
+    setStep('info');
+  }, [visible, directCreateMode]);
 
   // 객실 추가: 새 입력 시작 -> 무조건 초기화
   const startNewRoom = () => {
@@ -305,7 +336,88 @@ const GuesthouseRoomModal = ({
     setStep(tempRoomData.roomType === 'PRIVATE' ? 'typePrivate' : 'typeDormitory');
   };
 
-  const handleApplyRoom = (nextData) => {
+  const buildRequests = (current) => {
+    const requests = [];
+
+    for (const cur of current) {
+      const base = cur?.id != null
+        ? baselineRooms.find(b => b.id === cur.id)
+        : null;
+
+      if (cur?.id != null) {
+        if (!base) {
+          const fullPayload = buildRoomBasicFull(cur);
+          requests.push(hostGuesthouseApi.updateRoomBasic(guesthouseId, cur.id, fullPayload));
+          requests.push(
+            hostGuesthouseApi.updateRoomImages(
+              guesthouseId,
+              cur.id,
+              cur.roomImages.map(i => ({ roomImageUrl: i.roomImageUrl, isThumbnail: !!i.isThumbnail }))
+            )
+          );
+        } else {
+          const basicDiff = buildRoomBasicDiff(base, cur);
+          const imgsChanged = !imagesEqual(base.roomImages, cur.roomImages);
+
+          if (Object.keys(basicDiff).length > 0) {
+            requests.push(hostGuesthouseApi.updateRoomBasic(guesthouseId, cur.id, basicDiff));
+          }
+          if (imgsChanged) {
+            requests.push(
+              hostGuesthouseApi.updateRoomImages(
+                guesthouseId,
+                cur.id,
+                cur.roomImages.map(i => ({ roomImageUrl: i.roomImageUrl, isThumbnail: !!i.isThumbnail }))
+              )
+            );
+          }
+        }
+      } else {
+        const createPayload = {
+          ...buildRoomBasicFull(cur),
+          roomExtraFees: Array.isArray(cur.roomExtraFees) ? cur.roomExtraFees : [],
+          roomImages: (cur.roomImages || []).map(i => ({
+            roomImageUrl: i.roomImageUrl,
+            isThumbnail: !!i.isThumbnail,
+          })),
+        };
+        requests.push(hostGuesthouseApi.createRoom(guesthouseId, createPayload));
+      }
+    }
+
+    return requests;
+  };
+
+  const persistRooms = async current => {
+    if (!guesthouseId) {
+      Toast.show({ type: 'error', text1: '수정 중 오류가 발생했어요.', position: 'top' });
+      return;
+    }
+
+    const requests = buildRequests(current);
+
+    try {
+      if (requests.length === 0) {
+        Toast.show({ type: 'success', text1: '수정이 등록되었습니다!', position: 'top' });
+        onClose();
+        return;
+      }
+
+      await Promise.all(requests);
+
+      Toast.show({ type: 'success', text1: '수정이 등록되었습니다!', position: 'top' });
+
+      setAppliedData(current);
+      setBaselineRooms(current);
+      onSelect(current);
+      onClose();
+    } catch (e) {
+      Toast.show({ type: 'error', text1: '수정 중 오류가 발생했어요.', position: 'top' });
+      onClose();
+    }
+  };
+
+  const handleApplyRoom = async (nextData) => {
     const src = nextData ?? tempRoomData;
     const isPrivate = src.roomType === 'PRIVATE';
     const normalized = {
@@ -318,12 +430,12 @@ const GuesthouseRoomModal = ({
       roomImages: ensureOneThumbnail(src.roomImages),
     };
 
-    setRooms(prev => {
+    const nextRooms = (() => {
+      const prev = rooms;
       if (editId != null) {
         const idx = prev.findIndex(r => r.id === editId);
         if (idx >= 0) {
           const next = [...prev];
-          // id는 유지
           next[idx] = { ...normalized, id: prev[idx].id };
           return next;
         }
@@ -335,10 +447,18 @@ const GuesthouseRoomModal = ({
       }
       // 신규 추가
       return [...prev, normalized];
-    });
+    })();
+
+    setRooms(nextRooms);
 
     setEditId(null);
     setEditIndexFallback(null);
+
+    if (directEditMode || directCreateMode) {
+      await persistRooms(nextRooms);
+      return;
+    }
+
     setStep('list');
   };
 
@@ -390,95 +510,18 @@ const GuesthouseRoomModal = ({
       setTempRoomData(EMPTY_ROOM);
       setEditId(null);
       setEditIndexFallback(null);
-      setStep('list');
+      setStep(directEditMode || directCreateMode ? 'info' : 'list');
     }
     onClose();
   };
 
   // 적용 버튼 눌렀을 때
   const handleConfirm = async () => {
-    if (!guesthouseId) {
-      Toast.show({ type: 'error', text1: '수정 중 오류가 발생했어요.', position: 'top' });
-      return;
-    }
-
     const current = rooms.map(r => ({
       ...r,
       roomImages: ensureOneThumbnail(r.roomImages),
     }));
-
-    const requests = [];
-
-    for (const cur of current) {
-      const base = cur?.id != null
-        ? baselineRooms.find(b => b.id === cur.id)
-        : null;
-
-      if (cur?.id != null) {
-        // 기존 방: diff 후 변경 시 update
-        if (!base) {
-          // 기준이 없는데 id가 있으면 전체 업데이트로 안전하게
-          const fullPayload = buildRoomBasicFull(cur);
-          requests.push(hostGuesthouseApi.updateRoomBasic(guesthouseId, cur.id, fullPayload));
-          requests.push(
-            hostGuesthouseApi.updateRoomImages(
-              guesthouseId,
-              cur.id,
-              cur.roomImages.map(i => ({ roomImageUrl: i.roomImageUrl, isThumbnail: !!i.isThumbnail }))
-            )
-          );
-        } else {
-          const basicDiff = buildRoomBasicDiff(base, cur);
-          const imgsChanged = !imagesEqual(base.roomImages, cur.roomImages);
-
-          if (Object.keys(basicDiff).length > 0) {
-            requests.push(hostGuesthouseApi.updateRoomBasic(guesthouseId, cur.id, basicDiff));
-          }
-          if (imgsChanged) {
-            requests.push(
-              hostGuesthouseApi.updateRoomImages(
-                guesthouseId,
-                cur.id,
-                cur.roomImages.map(i => ({ roomImageUrl: i.roomImageUrl, isThumbnail: !!i.isThumbnail }))
-              )
-            );
-          }
-        }
-      } else {
-        // 신규 방: create
-        const createPayload = {
-          ...buildRoomBasicFull(cur),
-          roomExtraFees: Array.isArray(cur.roomExtraFees) ? cur.roomExtraFees : [],
-          roomImages: (cur.roomImages || []).map(i => ({
-            roomImageUrl: i.roomImageUrl,
-            isThumbnail: !!i.isThumbnail,
-          })),
-        };
-        requests.push(hostGuesthouseApi.createRoom(guesthouseId, createPayload));
-      }
-    }
-
-    try {
-      if (requests.length === 0) {
-        Toast.show({ type: 'success', text1: '수정이 등록되었습니다!', position: 'top' });
-        onClose();
-        return;
-      }
-
-      await Promise.all(requests);
-
-      Toast.show({ type: 'success', text1: '수정이 등록되었습니다!', position: 'top' });
-
-      // 기준값 갱신 + 부모 반영
-      setAppliedData(current);
-      setBaselineRooms(current);
-      onSelect(current);
-
-      onClose();
-    } catch (e) {
-      Toast.show({ type: 'error', text1: '수정 중 오류가 발생했어요.', position: 'top' });
-      onClose();
-    }
+    await persistRooms(current);
   };
 
   const handleOverlayPress = () => {
@@ -519,7 +562,7 @@ const GuesthouseRoomModal = ({
 
           {/* 룸 정보 */}
           <View style={styles.body}>
-            {step === 'list' && (
+            {step === 'list' && !directEditMode && (
               <>
                 {/* {console.log('[GuesthouseRoomModal] 등록된 객실:', JSON.stringify(rooms, null, 2))} */}
                 <RoomList 
@@ -557,7 +600,7 @@ const GuesthouseRoomModal = ({
             )}
           </View>
 
-          {step === 'list' && (
+          {step === 'list' && !directEditMode && (
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={styles.addButton}

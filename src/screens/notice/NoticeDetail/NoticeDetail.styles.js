@@ -1,6 +1,7 @@
 import {StyleSheet} from 'react-native';
 
 import {COLORS} from '@constants/colors';
+import {FONTS} from '@constants/fonts';
 
 export default StyleSheet.create({
   container: {
@@ -98,5 +99,83 @@ export default StyleSheet.create({
   },
   emptyText: {
     color: COLORS.grayscale_500,
+  },
+  markdownSummary: {
+    body: {
+      ...FONTS.fs_16_semibold,
+      color: COLORS.grayscale_700,
+      lineHeight: 24,
+      marginBottom: 16,
+    },
+    paragraph: {
+      marginTop: 0,
+      marginBottom: 16,
+    },
+    bullet_list: {
+      marginTop: 0,
+      marginBottom: 16,
+    },
+    ordered_list: {
+      marginTop: 0,
+      marginBottom: 16,
+    },
+    list_item: {
+      marginBottom: 8,
+    },
+    bullet_list_icon: {
+      color: COLORS.grayscale_700,
+    },
+    bullet_list_content: {
+      ...FONTS.fs_16_medium,
+      color: COLORS.grayscale_700,
+    },
+    strong: {
+      ...FONTS.fs_16_semibold,
+      color: COLORS.grayscale_700,
+    },
+    link: {
+      ...FONTS.fs_16_medium,
+      color: COLORS.semantic_blue,
+      textDecorationLine: 'underline',
+    },
+  },
+  markdownContent: {
+    body: {
+      ...FONTS.fs_16_regular,
+      color: COLORS.grayscale_700,
+      lineHeight: 24,
+      marginBottom: 16,
+    },
+    paragraph: {
+      marginTop: 0,
+      marginBottom: 16,
+    },
+    bullet_list: {
+      marginTop: 0,
+      marginBottom: 16,
+    },
+    ordered_list: {
+      marginTop: 0,
+      marginBottom: 16,
+    },
+    list_item: {
+      marginBottom: 8,
+    },
+    bullet_list_icon: {
+      color: COLORS.grayscale_700,
+    },
+    bullet_list_content: {
+      ...FONTS.fs_16_medium,
+      color: COLORS.grayscale_700,
+    },
+    strong: {
+      ...FONTS.fs_16_semibold,
+      color: COLORS.grayscale_700,
+    },
+    link: {
+      ...FONTS.fs_16_medium,
+      color: COLORS.semantic_blue,
+      textDecorationLine: 'underline',
+    },
   },
 });

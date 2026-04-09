@@ -89,6 +89,20 @@ const hostGuesthouseApi = {
   deleteRoom: (guesthouseId, roomId) =>
     api.delete(`/host/guesthouses/${guesthouseId}/rooms/${roomId}`),
 
+  // 게스트하우스 전체 객실 예약 상태 변경(예약버튼)
+  // body: { roomStatus: 'OPEN' | 'CLOSED' }
+  updateRoomsReservationStatus: (guesthouseId, roomStatus) =>
+    api.patch(`/host/guesthouses/${guesthouseId}/rooms/reservation-status`, {
+      roomStatus,
+    }),
+
+  // 객실 고객 노출 여부 변경(노출)
+  // body: { isVisible: boolean }
+  updateRoomVisibility: (guesthouseId, roomId, isVisible) =>
+    api.patch(`/host/guesthouses/${guesthouseId}/rooms/${roomId}/visibility`, {
+      isVisible,
+    }),
+
   // 게스트하우스 삭제
   deleteGuesthouse: guesthouseId =>
     api.delete(`/host/guesthouses/${guesthouseId}`),
@@ -163,10 +177,10 @@ const hostGuesthouseApi = {
   updateRoomStatusByDate: (guesthouseId, roomId, payload) =>
     api.put(`/host/guesthouses/${guesthouseId}/rooms/${roomId}/status`, payload),
 
-  // 객실 날짜별 운영 상태 변경 (여러개 동시)
+  // 객실 날짜별 운영 상태 변경 (여러개 동시) -> 웹용
   // body: [{ date: 'YYYY-MM-DD', isClosed: boolean }, ...]
-  updateRoomStatusesByDates: (guesthouseId, roomId, payload) =>
-    api.put(`/host/guesthouses/${guesthouseId}/rooms/${roomId}/statuses`, payload),
+  // updateRoomStatusesByDates: (guesthouseId, roomId, payload) =>
+  //   api.put(`/host/guesthouses/${guesthouseId}/rooms/${roomId}/statuses`, payload),
 
   // 객실 체크인 안내문 조회
   getRoomCheckinNotice: (guesthouseId, roomId) =>

@@ -1,7 +1,6 @@
 import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {
-  LoginIntro,
   LoginByEmail,
   FindIntro,
   VerifyPhone,
@@ -13,9 +12,14 @@ const Stack = createNativeStackNavigator();
 
 export default function Login() {
   return (
-    <Stack.Navigator screenOptions={{headerShown: false}}>
-      <Stack.Screen name="LoginIntro" component={LoginIntro} />
-      <Stack.Screen name="LoginByEmail" component={LoginByEmail} />
+    <Stack.Navigator
+      initialRouteName="LoginByEmail"
+      screenOptions={{headerShown: false}}>
+      <Stack.Screen
+        name="LoginByEmail"
+        component={LoginByEmail}
+        initialParams={{userRole: 'HOST'}}
+      />
       <Stack.Screen name="FindIntro" component={FindIntro} />
       <Stack.Screen name="VerifyPhone" component={VerifyPhone} />
       <Stack.Screen name="FindId" component={FindId} />

@@ -82,9 +82,6 @@ const EventCard = ({item}) => {
 
 const HostProfileEvents = ({guesthouseId}) => {
   const hostProfile = useUserStore(state => state.hostProfile);
-  const selectedHostGuesthouseId = useUserStore(
-    state => state.selectedHostGuesthouseId,
-  );
 
   const [events, setEvents] = useState([]);
   const [page, setPage] = useState(0);
@@ -102,16 +99,11 @@ const HostProfileEvents = ({guesthouseId}) => {
       : [];
     if (!profiles.length) return null;
 
-    const selected =
-      profiles.find(
-        (item, index) =>
-          String(item?.guesthouseId ?? `guesthouse-${index}`) ===
-          String(selectedHostGuesthouseId),
-      ) || profiles[0];
+    const selected = profiles[0];
 
     const id = Number(selected?.guesthouseId);
     return Number.isFinite(id) && id > 0 ? id : null;
-  }, [guesthouseId, hostProfile?.guesthouseProfiles, selectedHostGuesthouseId]);
+  }, [guesthouseId, hostProfile?.guesthouseProfiles]);
 
   const fetchPage = useCallback(
     async ({pageToFetch, append}) => {
