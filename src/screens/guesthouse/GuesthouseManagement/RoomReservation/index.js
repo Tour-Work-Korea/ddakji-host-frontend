@@ -1,0 +1,56 @@
+import React, {useState} from 'react';
+import {ScrollView, Text, TouchableOpacity, View} from 'react-native';
+
+import {FONTS} from '@constants/fonts';
+import ReservationCalendar from './ReservationCalendar';
+import ReservationManagement from './ReservationManagement';
+import RoomList from './RoomList';
+import RoomManagement from './RoomManagement';
+import NotificationSettings from './NotificationSettings';
+import styles from './RoomReservation.styles';
+
+const chips = ['예약 관리', '예약 캘린더', '방관리', '객실 목록', '알림 설정'];
+
+const RoomReservation = ({guesthouseId}) => {
+  const [activeChip, setActiveChip] = useState(chips[0]);
+
+  return (
+    <View style={styles.container}>
+      <ScrollView
+        style={styles.chipScrollView}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.chipRow}>
+        {chips.map(chip => (
+          <TouchableOpacity
+            key={chip}
+            activeOpacity={0.8}
+            style={[styles.chip, activeChip === chip && styles.chipActive]}
+            onPress={() => setActiveChip(chip)}>
+            <Text
+              style={[
+                FONTS.fs_14_medium,
+                activeChip === chip ? styles.chipTextActive : styles.chipText,
+              ]}>
+              {chip}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      {activeChip === chips[0] ? (
+        <ReservationManagement guesthouseId={guesthouseId} />
+      ) : activeChip === chips[1] ? (
+        <ReservationCalendar guesthouseId={guesthouseId} />
+      ) : activeChip === chips[2] ? (
+        <RoomManagement guesthouseId={guesthouseId} />
+      ) : activeChip === chips[3] ? (
+        <RoomList guesthouseId={guesthouseId} />
+      ) : (
+        <NotificationSettings embedded guesthouseId={guesthouseId} />
+      )}
+    </View>
+  );
+};
+
+export default RoomReservation;

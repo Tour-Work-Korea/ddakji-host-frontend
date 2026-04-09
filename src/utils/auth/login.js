@@ -4,6 +4,7 @@ import {Platform} from 'react-native';
 import authApi from '@utils/api/authApi';
 import useUserStore from '@stores/userStore';
 import hostMyApi from '@utils/api/hostMyApi';
+import {normalizeHostProfile} from '@utils/hostProfile';
 import {log, mask} from '@utils/logger';
 import {navigate} from '@utils/navigationService';
 
@@ -144,50 +145,13 @@ export const tryLogout = async () => {
 
 const updateProfile = async role => {
   log.info('👤 updateProfile: role=', role);
-  const {
-    setHostProfile,
-    selectedHostGuesthouseId,
-    setSelectedHostGuesthouseId,
-  } = useUserStore.getState();
+  const {setHostProfile} = useUserStore.getState();
 
   try {
     const res = await hostMyApi.getMyProfile();
-    const {hostId, name, photoUrl, phone, email, businessNum, guesthouseProfiles} =
-      res.data ?? {};
-    const normalizedGuesthouseProfiles = Array.isArray(guesthouseProfiles)
-      ? guesthouseProfiles.map(guesthouse => ({
-          guesthouseId: guesthouse?.guesthouseId ?? null,
-          guesthouseName: guesthouse?.guesthouseName ?? '',
-          profileImageUrl:
-            guesthouse?.profileImageUrl &&
-            guesthouse.profileImageUrl !== '사진을 추가해주세요'
-              ? guesthouse.profileImageUrl
-              : null,
-        }))
-      : [];
-    const profileIds = normalizedGuesthouseProfiles.map((guesthouse, index) =>
-      String(guesthouse.guesthouseId ?? `guesthouse-${index}`),
-    );
+    const normalizedProfile = normalizeHostProfile(res?.data);
 
-    setHostProfile({
-      hostId: hostId ?? null,
-      name: name ?? '',
-      photoUrl:
-        photoUrl && photoUrl !== '사진을 추가해주세요' ? photoUrl : null,
-      phone: phone ?? '',
-      email: email ?? '',
-      businessNum: businessNum ?? '',
-      guesthouseProfiles: normalizedGuesthouseProfiles,
-    });
-
-    if (profileIds.length === 0) {
-      setSelectedHostGuesthouseId(null);
-    } else if (
-      !selectedHostGuesthouseId ||
-      !profileIds.includes(String(selectedHostGuesthouseId))
-    ) {
-      setSelectedHostGuesthouseId(profileIds[0]);
-    }
+    setHostProfile(normalizedProfile);
     log.info('👤 HOST profile loaded');
   } catch (error) {
     log.warn(`👤 ${role} profile fetch failed:`, error?.message);

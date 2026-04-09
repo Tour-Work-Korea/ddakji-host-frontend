@@ -65,6 +65,7 @@ const mapReservationDetailToViewData = (reservation = {}) => {
     paymentAmount:
       reservation?.paymentAmount ??
       (Number.isFinite(amount) ? `${amount.toLocaleString('ko-KR')}원` : ''),
+    requests: reservation?.requests ?? '',
     showCancelButton:
       reservation?.showCancelButton != null
         ? reservation?.showCancelButton
@@ -123,6 +124,7 @@ const MyGuesthouseReservationDetail = ({ route }) => {
   const paymentStatusText = reservation.paymentStatus || reservation.paymentState;
   const paymentStatusColor = isCancelled ? styles.highlightText : null;
   const paymentAmountColor = isCancelled ? styles.highlightText : null;
+  const requestsText = reservation?.requests?.trim?.() || '';
 
   const statusStyle = STATUS_STYLE[reservation.status] || STATUS_STYLE.완료;
 
@@ -153,6 +155,14 @@ const MyGuesthouseReservationDetail = ({ route }) => {
           <InfoRow label="인원수" value={reservation.guestCount} />
         </View>
 
+        {/* <View style={styles.divider} />
+
+        <View style={styles.section}>
+          <Text style={[FONTS.fs_16_semibold, styles.sectionTitle]}>방문자 정보</Text>
+          <InfoRow label="이름" value={reservation.serviceName} />
+          <InfoRow label="전화번호" value={reservation.room} />
+        </View> */}
+
         <View style={styles.divider} />
 
         <View style={styles.section}>
@@ -161,6 +171,19 @@ const MyGuesthouseReservationDetail = ({ route }) => {
           <InfoRow label="객실" value={reservation.room} highlight />
           <InfoRow label="이용기간" value={reservation.period} highlight />
         </View>
+
+        {requestsText ? (
+          <>
+            <View style={styles.divider} />
+
+            <View style={styles.section}>
+              <Text style={[FONTS.fs_16_semibold, styles.sectionTitle]}>요청사항</Text>
+              <View style={styles.requestContainer}>
+                <Text style={[FONTS.fs_14_regular, styles.requestText]}>{requestsText}</Text>
+              </View>
+            </View>
+          </>
+        ) : null}
 
         <View style={styles.divider} />
 

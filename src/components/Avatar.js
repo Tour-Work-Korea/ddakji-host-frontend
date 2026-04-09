@@ -7,12 +7,20 @@ const Avatar = ({
   uri,
   size = 80,
   iconSize,
+  iconScale = 0.4,
   borderRadius,
   style,
   imageStyle,
-  IconComponent = EmptyImage,
 }) => {
-  const fallbackIconSize = iconSize ?? Math.round(size * 0.4);
+  const defaultIconSize = Math.round(size * iconScale);
+  const fallbackIconWidth =
+    typeof iconSize === 'number'
+      ? iconSize
+      : iconSize?.width ?? defaultIconSize;
+  const fallbackIconHeight =
+    typeof iconSize === 'number'
+      ? iconSize
+      : iconSize?.height ?? fallbackIconWidth;
   const imageUri =
     typeof uri === 'string' && uri.trim() && uri !== '사진을 추가해주세요'
       ? uri
@@ -32,7 +40,7 @@ const Avatar = ({
       {imageUri ? (
         <Image source={{uri: imageUri}} style={[styles.image, imageStyle]} />
       ) : (
-        <IconComponent width={fallbackIconSize} height={fallbackIconSize} />
+        <EmptyImage width={fallbackIconWidth} height={fallbackIconHeight} />
       )}
     </View>
   );

@@ -51,7 +51,7 @@ const menuSections = [
     key: 'alarm',
     label: '알림 설정',
     icon: AlarmIcon,
-    routeName: 'CustomerNotificationSettings',
+    // routeName: 'CustomerNotificationSettings',
   },
   {
     key: 'setting',
@@ -77,21 +77,14 @@ const HostHomeMenu = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const hostProfile = useUserStore(state => state.hostProfile);
-  const selectedProfileId = useUserStore(
-    state => state.selectedHostGuesthouseId,
-  );
 
   const selectedGuesthouse = useMemo(
     () => {
       const guesthouseProfiles = hostProfile?.guesthouseProfiles ?? [];
 
-      return (
-      guesthouseProfiles.find(
-        item => String(item.guesthouseId) === selectedProfileId,
-      ) || guesthouseProfiles[0]
-      );
+      return guesthouseProfiles[0];
     },
-    [hostProfile?.guesthouseProfiles, selectedProfileId],
+    [hostProfile?.guesthouseProfiles],
   );
 
   const profileName = hostProfile?.name || '';
@@ -152,7 +145,7 @@ const HostHomeMenu = () => {
 
         {/* 프로필 */}
         <View style={styles.profileSection}>
-          <Avatar uri={profileImage} size={52} iconSize={52} />
+          <Avatar uri={profileImage} size={52} iconSize={24} />
           <View style={styles.profileTextWrap}>
             <Text style={[FONTS.fs_18_semibold, styles.profileName]}>
               {profileName}

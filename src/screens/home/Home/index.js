@@ -151,10 +151,7 @@ const HostHome = () => {
 
         {hasGuesthouseProfiles ? (
           <View style={styles.dashboardSection}>
-            <TouchableOpacity
-              style={styles.instaEventCard}
-              activeOpacity={0.9}
-              onPress={() => navigateWithLoginGuard('HostMyPage')}>
+            <View style={styles.instaEventCard}>
               <View style={styles.instaEventContent}>
                 <View style={styles.instaEventTextWrap}>
                   <Text style={[FONTS.fs_16_medium, styles.instaEventTitle]}>
@@ -190,7 +187,7 @@ const HostHome = () => {
                   />
                 </View>
               </View>
-            </TouchableOpacity>
+            </View>
 
             <View style={styles.myBusinessSection}>
               <TouchableOpacity
@@ -206,11 +203,14 @@ const HostHome = () => {
               <View style={styles.myBusinessList}>
                 {guesthouseProfiles.map((guesthouse, index) => (
                   <TouchableOpacity
-                    key={String(guesthouse?.guesthouseId ?? `guesthouse-${index}`)}
+                    key={String(guesthouse?.profileKey ?? guesthouse?.guesthouseId ?? `guesthouse-${index}`)}
                     style={styles.myBusinessCard}
                     activeOpacity={0.85}
                     onPress={() =>
                       navigateWithLoginGuard('GuesthouseManagement', {
+                        profileKey:
+                          guesthouse?.profileKey ??
+                          String(guesthouse?.guesthouseId ?? `guesthouse-${index}`),
                         businessName: guesthouse?.guesthouseName || '게스트하우스',
                         guesthouseId: guesthouse?.guesthouseId ?? null,
                       })
@@ -220,7 +220,6 @@ const HostHome = () => {
                         uri={guesthouse?.profileImageUrl || null}
                         size={60}
                         borderRadius={10}
-                        iconSize={24}
                       />
                       <Text
                         style={[FONTS.fs_18_semibold, styles.myBusinessName]}

@@ -36,12 +36,6 @@ const HostMyPage = () => {
 
   //저장된 호스트 프로필 호출-> 추후 수정
   const host = useUserStore(state => state.hostProfile);
-  const selectedProfileId = useUserStore(
-    state => state.selectedHostGuesthouseId,
-  );
-  const setSelectedProfileId = useUserStore(
-    state => state.setSelectedHostGuesthouseId,
-  );
   const [isGuesthouseListVisible, setIsGuesthouseListVisible] = useState(false);
 
   const guesthouseProfiles = useMemo(
@@ -56,6 +50,7 @@ const HostMyPage = () => {
         : [],
     [host?.guesthouseProfiles],
   );
+  const [selectedProfileId, setSelectedProfileId] = useState(null);
 
   const selectedGuesthouse = useMemo(
     () =>
@@ -68,7 +63,9 @@ const HostMyPage = () => {
 
   useEffect(() => {
     if (!guesthouseProfiles.length) {
-      setSelectedProfileId(null);
+      if (selectedProfileId !== null) {
+        setSelectedProfileId(null);
+      }
       return;
     }
 
@@ -78,13 +75,18 @@ const HostMyPage = () => {
     if (!hasSelected) {
       setSelectedProfileId(guesthouseProfiles[0].id);
     }
-  }, [guesthouseProfiles, selectedProfileId, setSelectedProfileId]);
+  }, [guesthouseProfiles, selectedProfileId]);
 
   const renderHeaderContent = () => (
     <>
       <TouchableOpacity
         style={styles.profileEditButton}
-        onPress={() => navigation.navigate('HostProfilePage', {isHostMy: true})}
+        onPress={() =>
+          navigation.navigate('HostProfilePage', {
+            isHostMy: true,
+            guesthouseId: selectedGuesthouse?.id ?? null,
+          })
+        }
       >
         <Text style={[FONTS.fs_14_medium, styles.profileEditBtnText]}>미리보기</Text>
       </TouchableOpacity>

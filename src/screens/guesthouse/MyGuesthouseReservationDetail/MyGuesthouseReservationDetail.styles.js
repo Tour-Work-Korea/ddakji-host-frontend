@@ -59,6 +59,16 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     marginLeft: 16,
   },
+  requestContainer: {
+    padding: 12,
+    borderWidth: 1,
+    borderRadius: 10,
+    borderColor: COLORS.grayscale_200,
+  },
+  requestText: {
+    color: COLORS.grayscale_800,
+    lineHeight: 22,
+  },
   highlightText: {
     color: COLORS.primary_orange,
   },

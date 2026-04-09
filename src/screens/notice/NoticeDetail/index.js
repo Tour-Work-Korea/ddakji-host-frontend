@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, Image, ScrollView, Text, View} from 'react-native';
 import {useRoute} from '@react-navigation/native';
+import Markdown from 'react-native-markdown-display';
 
 import Header from '@components/Header';
 import {COLORS} from '@constants/colors';
@@ -136,7 +137,7 @@ const NoticeDetail = () => {
         <Text style={[FONTS.fs_16_medium, styles.date]}>{notice.date}</Text>
 
         {notice.summary ? (
-          <Text style={[FONTS.fs_16_medium, styles.summary]}>{notice.summary}</Text>
+          <Markdown style={styles.markdownSummary}>{notice.summary}</Markdown>
         ) : null}
 
         {notice.blocks.map((block, index) => {
@@ -153,11 +154,11 @@ const NoticeDetail = () => {
 
           if (block?.type === 'TEXT' && block?.text) {
             return (
-              <Text
+              <Markdown
                 key={`text-${block.sortOrder ?? index}`}
-                style={[FONTS.fs_16_medium, styles.content]}>
+                style={styles.markdownContent}>
                 {block.text}
-              </Text>
+              </Markdown>
             );
           }
 
