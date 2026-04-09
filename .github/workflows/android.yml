@@ -1,4 +1,4 @@
-name: Build Android Release APK, AAB
+name: Build Android Release AAB
 
 on:
   push:
@@ -89,7 +89,7 @@ jobs:
 
       - name: Set keystore env
         run: |
-          
+          echo "KEYSTORE_PATH=$GITHUB_WORKSPACE/android/app/ddakji-host-release-key.jks" >> "$GITHUB_ENV"
           echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> "$GITHUB_ENV"
           echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> "$GITHUB_ENV"
           echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> "$GITHUB_ENV"
@@ -97,28 +97,26 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
-      - name: Build Release APK
-        working-directory: android
-        env:
-          ENVFILE: .env.production
-        run: ./gradlew assembleRelease
+      # - name: Build Release APK
+      #   working-directory: android
+      #   env:
+      #     ENVFILE: .env.production
+      #   run: ./gradlew assembleRelease
 
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-release-apk
-          path: android/app/build/outputs/apk/release/app-release.apk
+      # - name: Upload APK Artifact
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: app-release-apk
+      #     path: android/app/build/outputs/apk/release/app-release.apk
 
       - name: Build Release AAB
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
         working-directory: android
         env:
           ENVFILE: .env.production
         run: ./gradlew bundleRelease
 
       - name: Upload AAB Artifact
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-aab
+          name: app-release-aab-${{ env.CI_VERSION_NAME }}
           path: android/app/build/outputs/bundle/release/app-release.aab
