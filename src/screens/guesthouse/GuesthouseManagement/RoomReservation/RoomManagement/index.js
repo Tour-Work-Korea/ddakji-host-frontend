@@ -23,6 +23,7 @@ const normalizeRoom = (room = {}) => ({
   id: room?.roomId ?? room?.id,
   roomId: room?.roomId ?? room?.id,
   name: room?.roomName ?? room?.name ?? '이름 없음',
+  isVisible: room?.isVisible != null ? Boolean(room?.isVisible) : true,
   isClosed: Boolean(room?.isClosed),
   displayBeds: Number(room?.roomCapacity ?? 0),
   availableBeds: Number(room?.roomCapacity ?? 0),
@@ -34,6 +35,12 @@ const normalizeInventory = (inventory = {}, fallbackRoom = {}) => ({
   roomName: inventory?.roomName ?? fallbackRoom?.roomName ?? '이름 없음',
   name: inventory?.roomName ?? fallbackRoom?.roomName ?? '이름 없음',
   roomType: inventory?.roomType ?? fallbackRoom?.roomType,
+  isVisible:
+    inventory?.isVisible != null
+      ? Boolean(inventory?.isVisible)
+      : fallbackRoom?.isVisible != null
+        ? Boolean(fallbackRoom?.isVisible)
+        : true,
   isClosed:
     inventory?.isClosed != null ? Boolean(inventory?.isClosed) : Boolean(fallbackRoom?.isClosed),
   reservedBeds: Number(inventory?.reservedBeds ?? 0),
@@ -164,7 +171,8 @@ const RoomManagement = ({guesthouseId}) => {
 
       const successfulRooms = inventoryResults
         .filter(result => result?.ok)
-        .map(result => result.room);
+        .map(result => result.room)
+        .filter(room => room?.isVisible !== false);
       const failedResults = inventoryResults.filter(result => !result?.ok);
 
       if (successfulRooms.length === 0 && failedResults.length > 0) {
@@ -425,7 +433,7 @@ const RoomManagement = ({guesthouseId}) => {
                             FONTS.fs_12_medium,
                             isExposed ? styles.exposureTextOn : styles.exposureTextOff,
                           ]}>
-                          {isExposed ? '노출중' : '미노출'}
+                          {isExposed ? '예약 가능' : '예약 마감'}
                         </Text>
                       </View>
                       <Switch
@@ -524,7 +532,7 @@ const RoomManagement = ({guesthouseId}) => {
                             FONTS.fs_12_medium,
                             isExposed ? styles.exposureTextOn : styles.exposureTextOff,
                           ]}>
-                          {isExposed ? '노출중' : '미노출'}
+                          {isExposed ? '예약 가능' : '예약 마감'}
                         </Text>
                       </View>
                       <Switch

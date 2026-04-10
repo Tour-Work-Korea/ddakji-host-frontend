@@ -70,13 +70,9 @@ const mapRoomDetailToEditableRoom = room => ({
 });
 
 const RoomList = ({guesthouseId}) => {
-  const [isBulkOpen, setIsBulkOpen] = useState(false);
-  const [bulkReservationOpenFlag, setBulkReservationOpenFlag] = useState(null);
   const [rooms, setRooms] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
-  const [bulkModalVisible, setBulkModalVisible] = useState(false);
-  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
   const [updatingRoomId, setUpdatingRoomId] = useState(null);
   const [isEditRoomModalVisible, setIsEditRoomModalVisible] = useState(false);
   const [isCreateRoomModalVisible, setIsCreateRoomModalVisible] = useState(false);
@@ -103,18 +99,12 @@ const RoomList = ({guesthouseId}) => {
       const selectedGuesthouse = guesthouses.find(
         item => String(item?.guesthouseId) === String(guesthouseId),
       );
-      const nextBulkReservationOpenFlag =
-        typeof selectedGuesthouse?.isAllReservationOpen === 'boolean'
-          ? selectedGuesthouse.isAllReservationOpen
-          : null;
       const nextRooms = Array.isArray(selectedGuesthouse?.rooms)
         ? selectedGuesthouse.rooms.map(normalizeRoom).filter(room => room.roomId != null)
         : [];
 
-      setBulkReservationOpenFlag(nextBulkReservationOpenFlag);
       setRooms(nextRooms);
     } catch (error) {
-      setBulkReservationOpenFlag(null);
       setRooms([]);
       setErrorMessage(
         error?.response?.data?.message ?? '객실 목록을 불러오지 못했습니다.',
@@ -128,24 +118,6 @@ const RoomList = ({guesthouseId}) => {
     fetchRooms();
   }, [fetchRooms]);
 
-  useEffect(() => {
-    if (typeof bulkReservationOpenFlag === 'boolean') {
-      setIsBulkOpen(bulkReservationOpenFlag);
-      return;
-    }
-
-    if (!rooms.length) {
-      setIsBulkOpen(false);
-      return;
-    }
-
-    setIsBulkOpen(
-      rooms.every(
-        room => Boolean(room?.isVisible) && String(room?.roomStatus) === 'OPEN',
-      ),
-    );
-  }, [bulkReservationOpenFlag, rooms]);
-
   const renderedRooms = useMemo(
     () =>
       rooms.map(room => ({
@@ -155,67 +127,6 @@ const RoomList = ({guesthouseId}) => {
       })),
     [rooms],
   );
-
-  const nextBulkRoomStatus = isBulkOpen ? 'CLOSED' : 'OPEN';
-  const bulkModalTitle = isBulkOpen
-    ? '전체 예약을 닫으시겠습니까?'
-    : '전체 예약 오픈하시겠습니까?';
-  const bulkModalMessage = isBulkOpen
-    ? '예약을 닫으면, 모든 객실 예약이 중단되어 \n고객이 예약할 수 없습니다.'
-    : '예약을 오픈하면 \n현재 모든 객실이 예약 가능 상태로 변경됩니다.';
-  const bulkConfirmText = isBulkOpen ? '예약 닫기' : '예약 오픈하기';
-
-  const handlePressBulkReservationStatus = () => {
-    if (!guesthouseId || isLoading || isBulkUpdating) {
-      return;
-    }
-
-    setBulkModalVisible(true);
-  };
-
-  const handleConfirmBulkReservationStatus = async () => {
-    if (!guesthouseId || isBulkUpdating) {
-      return;
-    }
-
-    try {
-      setIsBulkUpdating(true);
-      await hostGuesthouseApi.updateRoomsReservationStatus(
-        guesthouseId,
-        nextBulkRoomStatus,
-      );
-
-      setRooms(prev =>
-        prev.map(room => ({
-          ...room,
-          roomStatus: nextBulkRoomStatus,
-          isClosed: nextBulkRoomStatus !== 'OPEN',
-        })),
-      );
-      setBulkReservationOpenFlag(nextBulkRoomStatus === 'OPEN');
-      Toast.show({
-        type: 'success',
-        text1:
-          nextBulkRoomStatus === 'OPEN'
-            ? '전체 예약이 오픈되었어요.'
-            : '전체 예약이 닫혔어요.',
-        position: 'top',
-      });
-      setBulkModalVisible(false);
-    } catch (error) {
-      const message =
-        error?.response?.data?.message ?? '전체 예약 상태 변경에 실패했어요.';
-      setErrorMessage(message);
-      Toast.show({
-        type: 'error',
-        text1: message,
-        position: 'top',
-      });
-      setBulkModalVisible(false);
-    } finally {
-      setIsBulkUpdating(false);
-    }
-  };
 
   const handleToggleRoomVisibility = async (roomId, nextValue) => {
     if (!guesthouseId || !roomId || updatingRoomId != null) {
@@ -365,29 +276,6 @@ const RoomList = ({guesthouseId}) => {
         style={styles.scrollView}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}>
-        <TouchableOpacity
-          activeOpacity={isLoading || isBulkUpdating ? 1 : 0.85}
-          style={styles.bulkCard}
-          onPress={handlePressBulkReservationStatus}
-          disabled={isLoading || isBulkUpdating}>
-          <Text style={[FONTS.fs_16_medium, styles.bulkTitle]}>전체 예약 오픈 관리</Text>
-          <Text style={[FONTS.fs_14_medium, styles.bulkDescription]}>
-            모든 객실의 예약을 한번에 오픈하거나 닫습니다.
-          </Text>
-
-          <View style={styles.bulkStatusWrap}>
-            <View style={styles.bulkButton}>
-              <Text style={[FONTS.fs_12_medium, styles.bulkButtonLabel]}>
-                {isBulkOpen ? '전체 예약 닫기' : '전체 예약 오픈'}
-              </Text>
-            </View>
-
-            <Text style={[FONTS.fs_12_medium, styles.bulkStatus]}>
-              {`현재 예약 상태: ${isBulkOpen ? '오픈' : '닫힘'}`}
-            </Text>
-          </View>
-        </TouchableOpacity>
-
         {isLoading ? (
           <Text style={[FONTS.fs_14_medium, styles.emptyText]}>
             객실 목록을 불러오는 중입니다
@@ -490,20 +378,6 @@ const RoomList = ({guesthouseId}) => {
           <Text style={[FONTS.fs_14_medium, styles.primaryButtonText]}>등록하기</Text>
         </TouchableOpacity> */}
       </View>
-
-      <AlertModal
-        visible={bulkModalVisible}
-        title={bulkModalTitle}
-        message={bulkModalMessage}
-        buttonText={bulkConfirmText}
-        buttonText2="취소"
-        onPress={handleConfirmBulkReservationStatus}
-        onPress2={() => {
-          if (!isBulkUpdating) {
-            setBulkModalVisible(false);
-          }
-        }}
-      />
 
       <AlertModal
         visible={Boolean(deleteTargetRoom)}
