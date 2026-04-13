@@ -40,7 +40,12 @@ platform :ios do
     UI.message("🚀 Build scheme: #{scheme_name}")
     UI.message("🌐 API_BASE_URL: #{ENV['API_BASE_URL']}")
 
-    increment_version_number(version_number: "1.0.0")
+    require 'json'
+    package_path = File.join(__dir__, "..", "..", "package.json")
+    package = JSON.parse(File.read(package_path))
+    app_version = package["version"]
+
+    increment_version_number(version_number: app_version)
     increment_build_number(build_number: Time.now.strftime("%Y%m%d%H%M"))
 
     match(
