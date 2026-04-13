@@ -35,7 +35,7 @@ export {default as StoreRegisterForm1} from './onboarding/StoreRegister/StoreReg
 export {default as StoreRegisterForm2} from './onboarding/StoreRegister/StoreRegisterForm/StoreRegisterForm2';
 export {default as StoreRegisterList} from './onboarding/StoreRegister/StoreRegisterList';
 export {default as StoreRegisterComplete} from './onboarding/StoreRegister/StoreRegisterComplete';
-export {default as GuesthouseManagement} from './guesthouse/GuesthouseManagement';
+export {default as GuesthouseManagement} from './GuesthouseManagement';
 
 export {default as GuesthousePost} from './guesthouse/GuesthousePost';
 export {default as MyGuesthouseIntroList} from './guesthouse/IntroList';
@@ -45,14 +45,14 @@ export {default as MyRoomDetail} from './guesthouse/MyRoomDetail';
 export {default as MyGuesthouseList} from './guesthouse/MyGuesthouseList';
 export {default as MyGuesthouseEdit} from './guesthouse/MyGuesthouseEdit';
 export {default as MyGuesthouseAdd} from './guesthouse/MyGuesthouseAdd';
-export {default as MyRoomManage} from './guesthouse/GuesthouseManagement/RoomReservation/RoomManagement';
+export {default as MyRoomManage} from './GuesthouseManagement/RoomReservation/RoomManagement';
 export {default as MyGuesthouseReview} from './guesthouse/MyGuesthouseReview';
-export {default as MyGuesthouseReservation} from './guesthouse/GuesthouseManagement/RoomReservation';
+export {default as MyGuesthouseReservation} from './GuesthouseManagement/RoomReservation';
 export {default as MyGuesthouseReservationDetail} from './guesthouse/MyGuesthouseReservationDetail';
-export {default as MyGuesthouseReservationCalendar} from './guesthouse/GuesthouseManagement/RoomReservation/ReservationCalendar';
-export {default as CustomerNotificationSettings} from './guesthouse/GuesthouseManagement/RoomReservation/NotificationSettings';
-export {default as CheckInGuide} from './guesthouse/GuesthouseManagement/RoomReservation/NotificationSettings/CheckInGuide';
-export {default as RoomGuideMessageEditor} from './guesthouse/GuesthouseManagement/RoomReservation/NotificationSettings/CheckInGuide/RoomGuideMessageEditor';
+export {default as MyGuesthouseReservationCalendar} from './GuesthouseManagement/RoomReservation/ReservationCalendar';
+export {default as CustomerNotificationSettings} from './GuesthouseManagement/RoomReservation/NotificationSettings';
+export {default as CheckInGuide} from './GuesthouseManagement/RoomReservation/NotificationSettings/CheckInGuide';
+export {default as RoomGuideMessageEditor} from './GuesthouseManagement/RoomReservation/NotificationSettings/CheckInGuide/RoomGuideMessageEditor';
 
 export {default as ApplicantList} from './recruitment/ApplicantList';
 export {default as ApplicantListByRecruit} from './recruitment/ApplicantListByRecruit';

@@ -8,13 +8,14 @@ import {
   Dimensions,
   TextInput,
   ScrollView,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 
 import {FONTS} from '@constants/fonts';
 import {COLORS} from '@constants/colors';
+import useKeyboardAwareScrollView from '@hooks/useKeyboardAwareScrollView';
 
 import CheckWhite from '@assets/images/check_white.svg';
 import XBtn from '@assets/images/x_gray.svg';
@@ -57,8 +58,8 @@ const PillSubmitButton = ({disabled, onPress}) => (
     style={[styles.submitButton, disabled && styles.submitButtonDisabled]}
     disabled={disabled}
     onPress={onPress}>
-    <Text style={[FONTS.fs_16_semibold, styles.submitButtonText]}>적용하기</Text>
-    <CheckWhite width={22} height={22} />
+    <Text style={[FONTS.fs_14_medium, styles.submitButtonText]}>적용하기</Text>
+    <CheckWhite width={20} height={20} />
   </TouchableOpacity>
 );
 
@@ -69,6 +70,8 @@ const PartyDirectionsModal = ({
   shouldResetOnClose,
   initialValues,
 }) => {
+  const {keyboardHeight} = useKeyboardAwareScrollView({iosOnly: false});
+  const isKeyboardVisible = keyboardHeight > 0;
   const [form, setForm] = useState(normalize(initialValues));
   const [appliedData, setAppliedData] = useState(null);
 
@@ -103,24 +106,30 @@ const PartyDirectionsModal = ({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleModalClose}>
-      <View style={styles.overlay}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={handleModalClose} />
-        <KeyboardAvoidingView
-          style={{width: '100%'}}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <View style={styles.modalContainer}>
+      <TouchableWithoutFeedback
+        onPress={() => (isKeyboardVisible ? Keyboard.dismiss() : handleModalClose())}>
+        <View style={styles.overlay}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => {}} />
+          <TouchableWithoutFeedback onPress={() => {}}>
+            <View style={styles.modalContainer}>
             <View style={styles.header}>
+              <Text style={[FONTS.fs_20_semibold, styles.modalTitle]}>오시는 길</Text>
               <TouchableOpacity onPress={handleModalClose} style={styles.closeButton}>
                 <XBtn width={24} height={24} />
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.body} keyboardShouldPersistTaps="handled">
+            <ScrollView
+              style={styles.body}
+              contentContainerStyle={{
+                paddingBottom: keyboardHeight + 96,
+              }}
+              keyboardShouldPersistTaps="handled">
               <View style={styles.sectionTopRow}>
-                <Text style={[FONTS.fs_20_semibold, styles.sectionTitle]}>
+                <Text style={[FONTS.fs_16_medium, styles.sectionTitle]}>
                   참여자들이 모일 장소를 기재해 주세요
                 </Text>
-                <Text style={[FONTS.fs_14_medium, styles.counterText]}>
+                <Text style={[FONTS.fs_12_light, styles.counterText]}>
                   <Text style={styles.counterAccent}>{form.meetingPlace.length}</Text>/{TEXT_MAX}
                 </Text>
               </View>
@@ -129,21 +138,21 @@ const PartyDirectionsModal = ({
                 onChangeText={text => setForm(prev => ({...prev, meetingPlace: text.slice(0, TEXT_MAX)}))}
                 placeholder="1층 라운지에서 만나요~"
                 placeholderTextColor={COLORS.grayscale_400}
-                style={[styles.mediumTextArea, FONTS.fs_16_regular]}
+                style={[styles.mediumTextArea, FONTS.fs_14_regular]}
                 multiline
                 textAlignVertical="top"
               />
               <TouchableOpacity
                 style={styles.rewriteButton}
                 onPress={() => setForm(prev => ({...prev, meetingPlace: ''}))}>
-                <Text style={[FONTS.fs_14_medium, styles.rewriteText]}>다시쓰기</Text>
+                <Text style={[FONTS.fs_12_medium, styles.rewriteText]}>다시쓰기</Text>
               </TouchableOpacity>
 
               <View style={[styles.sectionTopRow, {marginTop: 12}]}>
-                <Text style={[FONTS.fs_20_semibold, styles.sectionTitle]}>
+                <Text style={[FONTS.fs_16_medium, styles.sectionTitle]}>
                   교통 정보 안내 글을 작성해주세요
                 </Text>
-                <Text style={[FONTS.fs_14_medium, styles.counterText]}>
+                <Text style={[FONTS.fs_12_light, styles.counterText]}>
                   <Text style={styles.counterAccent}>{form.trafficInfo.length}</Text>/{TEXT_MAX}
                 </Text>
               </View>
@@ -152,17 +161,17 @@ const PartyDirectionsModal = ({
                 onChangeText={text => setForm(prev => ({...prev, trafficInfo: text.slice(0, TEXT_MAX)}))}
                 placeholder="대중교통: 제주공항에서 버스로 20분"
                 placeholderTextColor={COLORS.grayscale_400}
-                style={[styles.mediumTextArea, FONTS.fs_16_regular]}
+                style={[styles.mediumTextArea, FONTS.fs_14_regular]}
                 multiline
                 textAlignVertical="top"
               />
               <TouchableOpacity
                 style={styles.rewriteButton}
                 onPress={() => setForm(prev => ({...prev, trafficInfo: ''}))}>
-                <Text style={[FONTS.fs_14_medium, styles.rewriteText]}>다시쓰기</Text>
+                <Text style={[FONTS.fs_12_medium, styles.rewriteText]}>다시쓰기</Text>
               </TouchableOpacity>
 
-              <Text style={[FONTS.fs_20_semibold, styles.sectionTitle, {marginTop: 12}]}>
+              <Text style={[FONTS.fs_16_medium, styles.sectionTitle, {marginTop: 12}]}>
                 주차 가능 여부
               </Text>
               <View style={styles.tagGrid}>
@@ -175,7 +184,7 @@ const PartyDirectionsModal = ({
                       onPress={() => toggleParkingTag(item.key)}>
                       <Text
                         style={[
-                          FONTS.fs_16_medium,
+                          FONTS.fs_14_medium,
                           selected ? styles.tagTextSelected : styles.tagText,
                         ]}>
                         {item.label}
@@ -186,10 +195,10 @@ const PartyDirectionsModal = ({
               </View>
 
               <View style={[styles.sectionTopRow, {marginTop: 20}]}>
-                <Text style={[FONTS.fs_20_semibold, styles.sectionTitle]}>
+                <Text style={[FONTS.fs_16_medium, styles.sectionTitle]}>
                   주차 관련 안내 글을 작성해주세요
                 </Text>
-                <Text style={[FONTS.fs_14_medium, styles.counterText]}>
+                <Text style={[FONTS.fs_12_light, styles.counterText]}>
                   <Text style={styles.counterAccent}>{form.parkingInfo.length}</Text>/{TEXT_MAX}
                 </Text>
               </View>
@@ -198,23 +207,27 @@ const PartyDirectionsModal = ({
                 onChangeText={text => setForm(prev => ({...prev, parkingInfo: text.slice(0, TEXT_MAX)}))}
                 placeholder="숙소 자체 주차 공간은 협소하여 이용이 불가능합니다."
                 placeholderTextColor={COLORS.grayscale_400}
-                style={[styles.mediumTextArea, FONTS.fs_16_regular]}
+                style={[styles.mediumTextArea, FONTS.fs_14_regular]}
                 multiline
                 textAlignVertical="top"
               />
               <TouchableOpacity
                 style={styles.rewriteButton}
                 onPress={() => setForm(prev => ({...prev, parkingInfo: ''}))}>
-                <Text style={[FONTS.fs_14_medium, styles.rewriteText]}>다시쓰기</Text>
+                <Text style={[FONTS.fs_12_medium, styles.rewriteText]}>다시쓰기</Text>
               </TouchableOpacity>
             </ScrollView>
-
-            <View style={styles.footer}>
+            <View
+              style={[
+                styles.footer,
+                {bottom: keyboardHeight > 0 ? keyboardHeight + 12 : 24},
+              ]}>
               <PillSubmitButton disabled={isDisabled} onPress={handleConfirm} />
             </View>
           </View>
-        </KeyboardAvoidingView>
-      </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };
@@ -232,23 +245,28 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.grayscale_0,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    paddingHorizontal: 14,
+    paddingHorizontal: 20,
     paddingTop: 14,
   },
   header: {
     height: 28,
     justifyContent: 'center',
+    alignItems: 'center',
   },
   closeButton: {
-    alignSelf: 'flex-end',
+    position: 'absolute',
+    right: 0,
     padding: 2,
+  },
+  modalTitle: {
+    color: COLORS.grayscale_900,
   },
   body: {
     flex: 1,
-    paddingTop: 4,
+    paddingTop: 10,
   },
   sectionTopRow: {
-    marginBottom: 10,
+    marginBottom: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -263,12 +281,13 @@ const styles = StyleSheet.create({
     color: COLORS.primary_orange,
   },
   mediumTextArea: {
-    minHeight: 96,
+    minHeight: 126,
+    maxHeight: 340,
     borderWidth: 1,
     borderColor: COLORS.grayscale_200,
-    borderRadius: 22,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
     color: COLORS.grayscale_900,
   },
   rewriteButton: {
@@ -281,21 +300,19 @@ const styles = StyleSheet.create({
   tagGrid: {
     marginTop: 8,
     backgroundColor: COLORS.grayscale_100,
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
+    borderRadius: 4,
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
   tagButton: {
-    width: '50%',
-    height: 44,
+    width: '48%',
+    paddingHorizontal: 8,
+    paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 8,
   },
   tagButtonSelected: {
-    backgroundColor: COLORS.grayscale_0,
   },
   tagText: {
     color: COLORS.grayscale_400,
@@ -304,14 +321,14 @@ const styles = StyleSheet.create({
     color: COLORS.primary_orange,
   },
   footer: {
-    paddingTop: 12,
-    paddingBottom: 16,
+    position: 'absolute',
+    right: 20,
     alignItems: 'flex-end',
   },
   submitButton: {
-    height: 50,
-    paddingHorizontal: 22,
-    borderRadius: 25,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 100,
     backgroundColor: COLORS.primary_orange,
     flexDirection: 'row',
     alignItems: 'center',

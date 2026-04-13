@@ -9,18 +9,19 @@ import {
   TextInput,
   ScrollView,
   Image,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 
 import {FONTS} from '@constants/fonts';
 import {COLORS} from '@constants/colors';
 import {uploadMultiImage} from '@utils/imageUploadHandler';
+import useKeyboardAwareScrollView from '@hooks/useKeyboardAwareScrollView';
 
 import AddImage from '@assets/images/add_image_gray.svg';
 import CheckWhite from '@assets/images/check_white.svg';
-import CheckOrange from '@assets/images/check_orange.svg';
+import CheckIcon from '@assets/images/star_filled.svg';
 import XBtn from '@assets/images/x_gray.svg';
 
 const MODAL_HEIGHT = Math.round(Dimensions.get('window').height * 0.9);
@@ -62,8 +63,8 @@ const PillSubmitButton = ({disabled, onPress}) => (
     style={[styles.submitButton, disabled && styles.submitButtonDisabled]}
     disabled={disabled}
     onPress={onPress}>
-    <Text style={[FONTS.fs_16_semibold, styles.submitButtonText]}>적용하기</Text>
-    <CheckWhite width={22} height={22} />
+    <Text style={[FONTS.fs_14_medium, styles.submitButtonText]}>적용하기</Text>
+    <CheckWhite width={20} height={20} />
   </TouchableOpacity>
 );
 
@@ -76,6 +77,8 @@ const PartyTitleIntroModal = ({
   initialTags = '',
   initialPartyImages = [],
 }) => {
+  const {keyboardHeight} = useKeyboardAwareScrollView({iosOnly: false});
+  const isKeyboardVisible = keyboardHeight > 0;
   const [form, setForm] = useState(
     normalize({
       partyTitle: initialPartyTitle,
@@ -181,20 +184,28 @@ const PartyTitleIntroModal = ({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleModalClose}>
-      <View style={styles.overlay}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={handleModalClose} />
-        <KeyboardAvoidingView
-          style={{width: '100%'}}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <View style={styles.modalContainer}>
+      <TouchableWithoutFeedback
+        onPress={() => (isKeyboardVisible ? Keyboard.dismiss() : handleModalClose())}>
+        <View style={styles.overlay}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => {}} />
+          <TouchableWithoutFeedback onPress={() => {}}>
+            <View style={styles.modalContainer}>
             <View style={styles.header}>
+              <Text style={[FONTS.fs_20_semibold, styles.modalTitle]}>
+                파티 제목 및 소개
+              </Text>
               <TouchableOpacity onPress={handleModalClose} style={styles.closeButton}>
                 <XBtn width={24} height={24} />
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.body} keyboardShouldPersistTaps="handled">
-              <Text style={[FONTS.fs_24_semibold, styles.label]}>파티 제목</Text>
+            <ScrollView
+              style={styles.body}
+              contentContainerStyle={{
+                paddingBottom: keyboardHeight + 96,
+              }}
+              keyboardShouldPersistTaps="handled">
+              <Text style={[FONTS.fs_16_medium, styles.label, {marginBottom: 8}]}>파티 제목</Text>
               <TextInput
                 value={form.partyTitle}
                 onChangeText={text =>
@@ -202,49 +213,52 @@ const PartyTitleIntroModal = ({
                 }
                 placeholder="파티 제목을 입력해주세요."
                 placeholderTextColor={COLORS.grayscale_400}
-                style={[FONTS.fs_16_medium, styles.roundInput]}
+                style={[FONTS.fs_14_regular, styles.roundInput]}
                 maxLength={TITLE_MAX}
               />
 
-              <View style={styles.sectionTopRow}>
-                <Text style={[FONTS.fs_24_semibold, styles.label]}>배너 사진을 추가해주세요</Text>
-                <Text style={[FONTS.fs_16_medium, styles.counterText]}>
+              <View style={[styles.sectionTopRow, {marginBottom: 4}]}>
+                <Text style={[FONTS.fs_16_medium, styles.label]}>배너 사진을 추가해주세요</Text>
+                <Text style={[FONTS.fs_12_light, styles.counterText]}>
                   <Text style={styles.counterAccent}>{form.partyImages.length}</Text>/{MAX_IMAGES}
                 </Text>
               </View>
+              <Text style={[FONTS.fs_12_medium, styles.subText]}>
+                대표로 보여줄 사진을 선택해주세요{'\n'}(선택된 사진에는 별이 표시됩니다)
+              </Text>
               <View style={styles.imageGrid}>
-                {form.partyImages.map((item, index) => (
-                  <View key={`${item.imageUrl}-${index}`} style={styles.imageCard}>
-                    <Image source={{uri: item.imageUrl}} style={styles.image} />
-                    <View style={styles.imageActionRow}>
-                      <TouchableOpacity
-                        style={styles.imageActionButton}
-                        onPress={() => handleSelectThumbnail(index)}>
-                        <CheckOrange width={16} height={16} />
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <TouchableOpacity
+                    style={styles.addImageBox}
+                    onPress={handleAddImage}
+                    disabled={form.partyImages.length >= MAX_IMAGES}>
+                    <AddImage width={30} height={30} />
+                  </TouchableOpacity>
+
+                  {form.partyImages.map((item, index) => (
+                    <View key={`${item.imageUrl}-${index}`} style={{position: 'relative'}}>
+                      <TouchableOpacity onPress={() => handleSelectThumbnail(index)}>
+                        <Image source={{uri: item.imageUrl}} style={styles.uploadedImage} />
+                        {item.isThumbnail && (
+                          <View style={styles.checkIconContainer}>
+                            <CheckIcon width={14} height={14} />
+                          </View>
+                        )}
                       </TouchableOpacity>
+
                       <TouchableOpacity
-                        style={styles.imageActionButton}
+                        style={styles.deleteBtn}
                         onPress={() => handleDeleteImage(index)}>
                         <XBtn width={14} height={14} />
                       </TouchableOpacity>
                     </View>
-                    {item.isThumbnail ? (
-                      <View style={styles.thumbnailBadge}>
-                        <Text style={[FONTS.fs_12_medium, styles.thumbnailBadgeText]}>대표</Text>
-                      </View>
-                    ) : null}
-                  </View>
-                ))}
-                {form.partyImages.length < MAX_IMAGES ? (
-                  <TouchableOpacity style={styles.addCard} onPress={handleAddImage}>
-                    <AddImage width={38} height={38} />
-                  </TouchableOpacity>
-                ) : null}
+                  ))}
+                </ScrollView>
               </View>
 
               <View style={[styles.sectionTopRow, {marginTop: 18}]}>
-                <Text style={[FONTS.fs_24_semibold, styles.label]}># 태그</Text>
-                <Text style={[FONTS.fs_16_medium, styles.counterText]}>
+                <Text style={[FONTS.fs_16_medium, styles.label]}># 태그</Text>
+                <Text style={[FONTS.fs_12_light, styles.counterText]}>
                   <Text style={styles.counterAccent}>{form.tags.length}</Text>/{TAG_MAX}
                 </Text>
               </View>
@@ -253,17 +267,21 @@ const PartyTitleIntroModal = ({
                 onChangeText={text => setForm(prev => ({...prev, tags: text.slice(0, TAG_MAX)}))}
                 placeholder="#방탈출 #포트럭 #불멍 #소규모 #따뜻한"
                 placeholderTextColor={COLORS.grayscale_400}
-                style={[FONTS.fs_16_medium, styles.roundInput]}
+                style={[FONTS.fs_14_regular, styles.roundInput]}
                 maxLength={TAG_MAX}
               />
             </ScrollView>
-
-            <View style={styles.footer}>
+            <View
+              style={[
+                styles.footer,
+                {bottom: keyboardHeight > 0 ? keyboardHeight + 12 : 24},
+              ]}>
               <PillSubmitButton disabled={isDisabled} onPress={handleConfirm} />
             </View>
           </View>
-        </KeyboardAvoidingView>
-      </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };
@@ -287,10 +305,15 @@ const styles = StyleSheet.create({
   header: {
     height: 28,
     justifyContent: 'center',
+    alignItems: 'center',
   },
   closeButton: {
-    alignSelf: 'flex-end',
+    position: 'absolute',
+    right: 0,
     padding: 2,
+  },
+  modalTitle: {
+    color: COLORS.grayscale_900,
   },
   body: {
     flex: 1,
@@ -298,19 +321,17 @@ const styles = StyleSheet.create({
   },
   label: {
     color: COLORS.grayscale_900,
-    marginBottom: 12,
   },
   roundInput: {
-    height: 56,
     borderWidth: 1,
+    padding: 12,
     borderColor: COLORS.grayscale_200,
-    borderRadius: 28,
-    paddingHorizontal: 18,
+    borderRadius: 20,
     color: COLORS.grayscale_900,
   },
   sectionTopRow: {
     marginTop: 18,
-    marginBottom: 12,
+    marginBottom: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -321,68 +342,61 @@ const styles = StyleSheet.create({
   counterAccent: {
     color: COLORS.primary_orange,
   },
-  imageGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
+  subText: {
+    color: COLORS.grayscale_400,
+    marginBottom: 8,
   },
-  addCard: {
-    width: 112,
-    height: 112,
-    borderRadius: 8,
+  imageGrid: {
+    marginTop: 8,
+  },
+  addImageBox: {
+    width: 100,
+    height: 100,
+    borderRadius: 4,
     borderWidth: 1,
     borderColor: COLORS.grayscale_200,
     backgroundColor: COLORS.grayscale_100,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 8,
   },
-  imageCard: {
-    width: 112,
-    height: 112,
-    borderRadius: 8,
-    overflow: 'hidden',
-    backgroundColor: COLORS.grayscale_100,
+  uploadedImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 4,
+    marginRight: 8,
   },
-  image: {
-    width: '100%',
-    height: '100%',
-  },
-  imageActionRow: {
+  checkIconContainer: {
     position: 'absolute',
-    top: 6,
-    right: 6,
-    flexDirection: 'row',
-    gap: 6,
-  },
-  imageActionButton: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.92)',
+    top: 4,
+    left: 4,
+    height: 18,
+    width: 18,
+    backgroundColor: COLORS.grayscale_100,
+    borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  thumbnailBadge: {
+  deleteBtn: {
     position: 'absolute',
-    left: 8,
-    bottom: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 999,
-    backgroundColor: COLORS.primary_orange,
-  },
-  thumbnailBadgeText: {
-    color: COLORS.grayscale_0,
+    top: 4,
+    right: 12,
+    height: 18,
+    width: 18,
+    backgroundColor: COLORS.grayscale_100,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   footer: {
-    paddingTop: 12,
-    paddingBottom: 16,
+    position: 'absolute',
+    right: 20,
     alignItems: 'flex-end',
   },
   submitButton: {
-    height: 50,
-    paddingHorizontal: 22,
-    borderRadius: 25,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 100,
     backgroundColor: COLORS.primary_orange,
     flexDirection: 'row',
     alignItems: 'center',

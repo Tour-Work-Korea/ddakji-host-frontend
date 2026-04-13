@@ -6,13 +6,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.grayscale_0,
   },
-  scrollView: {
+  loadingContainer: {
     flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scrollContent: {
     paddingHorizontal: 16,
     paddingTop: 12,
-    paddingBottom: 140,
+    flex: 1,
   },
 
   bodyContainer: {
@@ -52,7 +54,7 @@ const styles = StyleSheet.create({
     color: COLORS.grayscale_500,
   },
   sectionTitleDone: {
-    color: COLORS.primary_orange,
+    color: COLORS.grayscale_900,
   },
   sectionDescription: {
     color: COLORS.grayscale_500,

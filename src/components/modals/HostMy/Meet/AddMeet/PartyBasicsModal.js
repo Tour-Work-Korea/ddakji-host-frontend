@@ -27,7 +27,7 @@ const normalize = initialValues => ({
   partyStartTime: initialValues?.partyStartTime || '20:00:00',
   partyEndTime: initialValues?.partyEndTime || '20:00:00',
   minAttendees: Number(initialValues?.minAttendees) || 10,
-  maxAttendees: Number(initialValues?.maxAttendees) || 35,
+  maxAttendees: Number(initialValues?.maxAttendees) || 15,
   isGuest: initialValues?.isGuest ?? true,
   amount: initialValues?.amount ?? 0,
   femaleAmount: initialValues?.femaleAmount ?? 0,
@@ -40,8 +40,8 @@ const PillSubmitButton = ({disabled, onPress}) => (
     style={[styles.submitButton, disabled && styles.submitButtonDisabled]}
     disabled={disabled}
     onPress={onPress}>
-    <Text style={[FONTS.fs_16_semibold, styles.submitButtonText]}>적용하기</Text>
-    <CheckWhite width={22} height={22} />
+    <Text style={[FONTS.fs_14_medium, styles.submitButtonText]}>적용하기</Text>
+    <CheckWhite width={20} height={20} />
   </TouchableOpacity>
 );
 
@@ -51,7 +51,7 @@ const Counter = ({value, onMinus, onPlus}) => (
       <MinusIcon width={20} height={20} />
     </TouchableOpacity>
     <View style={styles.counterValue}>
-      <Text style={[FONTS.fs_20_medium, styles.counterText]}>{value}</Text>
+      <Text style={[FONTS.fs_14_medium, styles.counterText]}>{value}</Text>
     </View>
     <TouchableOpacity style={styles.circleButton} onPress={onPlus}>
       <PlusIcon width={20} height={20} />
@@ -115,20 +115,21 @@ const PartyBasicsModal = ({
         <Pressable style={StyleSheet.absoluteFill} onPress={handleModalClose} />
         <View style={styles.modalContainer}>
           <View style={styles.header}>
+            <Text style={[FONTS.fs_20_semibold, styles.modalTitle]}>기본 정보</Text>
             <TouchableOpacity onPress={handleModalClose} style={styles.closeButton}>
               <XBtn width={24} height={24} />
             </TouchableOpacity>
           </View>
 
           <View style={styles.body}>
-            <Text style={[FONTS.fs_24_semibold, styles.label]}>파티 시간</Text>
+            <Text style={[FONTS.fs_16_medium, styles.label]}>파티 시간</Text>
             <View style={styles.timeRow}>
               {['partyStartTime', 'partyEndTime'].map(key => (
                 <TouchableOpacity
                   key={key}
                   style={styles.timeInput}
                   onPress={() => setTimePickerType(key)}>
-                  <Text style={[FONTS.fs_16_medium, styles.timeInputText]}>
+                  <Text style={[FONTS.fs_14_regular, styles.timeInputText]}>
                     {formatLocalTimeToKorean12Hour(form[key])}
                   </Text>
                   <ClockIcon width={24} height={24} />
@@ -136,9 +137,9 @@ const PartyBasicsModal = ({
               ))}
             </View>
 
-            <Text style={[FONTS.fs_24_semibold, styles.label, {marginTop: 22}]}>참여 인원</Text>
+            <Text style={[FONTS.fs_16_medium, styles.label, {marginTop: 18}]}>참여 인원</Text>
             <View style={styles.infoRow}>
-              <Text style={[FONTS.fs_20_medium, styles.infoLabel]}>최소</Text>
+              <Text style={[FONTS.fs_14_medium, styles.infoLabel]}>최소</Text>
               <Counter
                 value={form.minAttendees}
                 onMinus={() => step('minAttendees', 'minus')}
@@ -146,7 +147,7 @@ const PartyBasicsModal = ({
               />
             </View>
             <View style={styles.infoRow}>
-              <Text style={[FONTS.fs_20_medium, styles.infoLabel]}>최대</Text>
+              <Text style={[FONTS.fs_14_medium, styles.infoLabel]}>최대</Text>
               <Counter
                 value={form.maxAttendees}
                 onMinus={() => step('maxAttendees', 'minus')}
@@ -154,14 +155,14 @@ const PartyBasicsModal = ({
               />
             </View>
 
-            <Text style={[FONTS.fs_24_semibold, styles.label, {marginTop: 22}]}>숙박 여부</Text>
+            <Text style={[FONTS.fs_16_medium, styles.label, {marginTop: 18}]}>숙박 여부</Text>
             <View style={styles.segment}>
               <TouchableOpacity
                 style={[styles.segmentItem, form.isGuest && styles.segmentItemActive]}
                 onPress={() => setForm(prev => ({...prev, isGuest: true}))}>
                 <Text
                   style={[
-                    FONTS.fs_18_medium,
+                    FONTS.fs_14_medium,
                     form.isGuest ? styles.segmentTextActive : styles.segmentText,
                   ]}>
                   숙박객만 참여가능
@@ -172,7 +173,7 @@ const PartyBasicsModal = ({
                 onPress={() => setForm(prev => ({...prev, isGuest: false}))}>
                 <Text
                   style={[
-                    FONTS.fs_18_medium,
+                    FONTS.fs_14_medium,
                     !form.isGuest ? styles.segmentTextActive : styles.segmentText,
                   ]}>
                   비숙박객 참여가능
@@ -219,10 +220,15 @@ const styles = StyleSheet.create({
   header: {
     height: 28,
     justifyContent: 'center',
+    alignItems: 'center',
   },
   closeButton: {
-    alignSelf: 'flex-end',
+    position: 'absolute',
+    right: 0,
     padding: 2,
+  },
+  modalTitle: {
+    color: COLORS.grayscale_900,
   },
   body: {
     flex: 1,
@@ -230,7 +236,7 @@ const styles = StyleSheet.create({
   },
   label: {
     color: COLORS.grayscale_900,
-    marginBottom: 14,
+    marginBottom: 8,
   },
   timeRow: {
     flexDirection: 'row',
@@ -238,11 +244,10 @@ const styles = StyleSheet.create({
   },
   timeInput: {
     flex: 1,
-    height: 56,
-    borderRadius: 28,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: COLORS.grayscale_200,
-    paddingHorizontal: 18,
+    padding: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -251,7 +256,7 @@ const styles = StyleSheet.create({
     color: COLORS.grayscale_500,
   },
   infoRow: {
-    marginBottom: 18,
+    marginBottom: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -265,17 +270,16 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   circleButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    padding: 4,
+    borderRadius: 100,
     backgroundColor: COLORS.grayscale_100,
     alignItems: 'center',
     justifyContent: 'center',
   },
   counterValue: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 48,
+    borderRadius: 20,
+    padding: 12,
     borderWidth: 1,
     borderColor: COLORS.grayscale_200,
     alignItems: 'center',
@@ -287,18 +291,15 @@ const styles = StyleSheet.create({
   segment: {
     flexDirection: 'row',
     backgroundColor: COLORS.grayscale_100,
-    borderRadius: 10,
-    padding: 4,
+    borderRadius: 4,
   },
   segmentItem: {
     flex: 1,
-    height: 48,
-    borderRadius: 8,
+    padding: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   segmentItemActive: {
-    backgroundColor: COLORS.grayscale_0,
   },
   segmentText: {
     color: COLORS.grayscale_400,
@@ -308,13 +309,13 @@ const styles = StyleSheet.create({
   },
   footer: {
     paddingTop: 12,
-    paddingBottom: 16,
+    paddingBottom: 24,
     alignItems: 'flex-end',
   },
   submitButton: {
-    height: 50,
-    paddingHorizontal: 22,
-    borderRadius: 25,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 100,
     backgroundColor: COLORS.primary_orange,
     flexDirection: 'row',
     alignItems: 'center',

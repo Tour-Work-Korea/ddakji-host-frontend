@@ -8,17 +8,15 @@ import {
   Dimensions,
   TouchableWithoutFeedback,
   ScrollView,
-  KeyboardAvoidingView,
   Keyboard,
-  Platform,
   TextInput,
   Image,
 } from 'react-native';
 
 import {FONTS} from '@constants/fonts';
 import {COLORS} from '@constants/colors';
-import ButtonScarlet from '@components/ButtonScarlet';
 import {uploadMultiImage} from '@utils/imageUploadHandler';
+import useKeyboardAwareScrollView from '@hooks/useKeyboardAwareScrollView';
 
 import XBtn from '@assets/images/x_gray.svg';
 import PlusIcon from '@assets/images/plus_gray.svg';
@@ -26,11 +24,22 @@ import MinusIcon from '@assets/images/minus_gray.svg';
 import ImageAddIcon from '@assets/images/add_image_gray.svg';
 import PreviewIcon from '@assets/images/show_password.svg';
 import BackIcon from '@assets/images/chevron_left_gray.svg';
+import CheckWhite from '@assets/images/check_white.svg';
 
 const MODAL_HEIGHT = Math.round(Dimensions.get('window').height * 0.9);
 const MAX_SECTIONS = 10;
 const TITLE_MAX = 100;
 const DESC_MAX = 5000;
+
+const PillSubmitButton = ({disabled, onPress}) => (
+  <TouchableOpacity
+    style={[styles.submitButton, disabled && styles.submitButtonDisabled]}
+    disabled={disabled}
+    onPress={onPress}>
+    <Text style={[FONTS.fs_14_medium, styles.submitText]}>적용하기</Text>
+    <CheckWhite width={20} height={20} />
+  </TouchableOpacity>
+);
 
 const normalizeInitialEvents = (arr = []) =>
   (Array.isArray(arr) ? arr : []).map((e) => ({
@@ -54,26 +63,14 @@ const MeetEventModal = ({
   shouldResetOnClose,
   initialEvents = [],
 }) => {
-  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const {keyboardHeight} = useKeyboardAwareScrollView({iosOnly: false});
+  const isKeyboardVisible = keyboardHeight > 0;
   const [preview, setPreview] = useState(false);
 
   // [{eventName, eventDescription, imageUrl}]
   const [sections, setSections] = useState([]);
   // 마지막 적용값
   const [applied, setApplied] = useState(null);
-
-  useEffect(() => {
-    const showSub = Keyboard.addListener('keyboardDidShow', () =>
-      setIsKeyboardVisible(true),
-    );
-    const hideSub = Keyboard.addListener('keyboardDidHide', () =>
-      setIsKeyboardVisible(false),
-    );
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, []);
 
   // 열릴 때 복원 로직
   useEffect(() => {
@@ -153,7 +150,7 @@ const MeetEventModal = ({
   const HeaderBar = () => (
     <View style={styles.header}>
       <Text style={[FONTS.fs_20_semibold, styles.modalTitle]}>
-        이벤트 소개글
+        소개글
       </Text>
       <View style={{position: 'absolute', right: 0, flexDirection: 'row', alignItems: 'center'}}>
         {!preview ? (
@@ -182,18 +179,19 @@ const MeetEventModal = ({
       transparent
       animationType="slide"
       onRequestClose={handleModalClose}>
-      <KeyboardAvoidingView
-        style={{flex: 1}}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? -120 : 0}>
-        <TouchableWithoutFeedback onPress={() => (isKeyboardVisible ? Keyboard.dismiss() : handleModalClose())}>
-          <View style={styles.overlay}>
-            <TouchableWithoutFeedback onPress={() => {}}>
-              <View style={styles.modalContainer}>
+      <TouchableWithoutFeedback onPress={() => (isKeyboardVisible ? Keyboard.dismiss() : handleModalClose())}>
+        <View style={styles.overlay}>
+          <TouchableWithoutFeedback onPress={() => {}}>
+            <View style={styles.modalContainer}>
                 <HeaderBar />
 
                 {!preview ? (
-                  <ScrollView style={styles.body} keyboardShouldPersistTaps="handled">
+                  <ScrollView
+                    style={styles.body}
+                    contentContainerStyle={{
+                      paddingBottom: keyboardHeight + 96,
+                    }}
+                    keyboardShouldPersistTaps="handled">
                     {/* 상단 설명 + 추가 버튼 */}
                     <View style={styles.topRow}>
                       <Text style={[FONTS.fs_16_medium, {color: COLORS.grayscale_800}]}>
@@ -289,8 +287,12 @@ const MeetEventModal = ({
                   </ScrollView>
                 ) : (
                   // 미리보기 (블로그 스타일): 이미지 → 제목 → 내용
-                  <ScrollView style={styles.previewBody}>
-                    <View style={{paddingBottom: 120}}>
+                  <ScrollView
+                    style={styles.previewBody}
+                    contentContainerStyle={{
+                      paddingBottom: keyboardHeight + 96,
+                    }}>
+                    <View>
                       {sections.map((s, idx) => (
                         <View key={`pv-${idx}`} style={styles.previewCard}>
                           <Text style={[FONTS.fs_12_medium, {color: COLORS.grayscale_500, marginBottom: 8}]}>
@@ -316,19 +318,17 @@ const MeetEventModal = ({
                     </View>
                   </ScrollView>
                 )}
-
-                {/* 적용하기 버튼 */}
-                <ButtonScarlet
-                  title={'적용하기'}
-                  onPress={handleConfirm}
-                  disabled={!allValid}
-                  style={{marginBottom: 16}}
-                />
+                <View
+                  style={[
+                    styles.footer,
+                    {bottom: keyboardHeight > 0 ? keyboardHeight + 12 : 24},
+                  ]}>
+                  <PillSubmitButton disabled={!allValid} onPress={handleConfirm} />
+                </View>
               </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };
@@ -444,5 +444,25 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.grayscale_100,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  footer: {
+    position: 'absolute',
+    right: 20,
+    alignItems: 'flex-end',
+  },
+  submitButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 100,
+    backgroundColor: COLORS.primary_orange,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  submitButtonDisabled: {
+    backgroundColor: COLORS.grayscale_300,
+  },
+  submitText: {
+    color: COLORS.grayscale_0,
   },
 });

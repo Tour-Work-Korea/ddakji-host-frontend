@@ -12,6 +12,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 import { FONTS } from '@constants/fonts';
 import { COLORS } from '@constants/colors';
+import AlertModal from '@components/modals/AlertModal';
 import hostMeetApi from '@utils/api/hostMeetApi';
 import styles from './PartyInfo.styles';
 
@@ -23,6 +24,7 @@ const PartyInfo = ({ guesthouseId }) => {
   const navigation = useNavigation();
   const [parties, setParties] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deleteTargetId, setDeleteTargetId] = useState(null);
 
   const fetchParties = useCallback(async () => {
     try {
@@ -58,22 +60,21 @@ const PartyInfo = ({ guesthouseId }) => {
   };
 
   const handleDelete = templateId => {
-    Alert.alert('삭제 확인', '정말로 이 파티를 삭제하시겠습니까?', [
-      { text: '취소', style: 'cancel' },
-      {
-        text: '삭제',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await hostMeetApi.deleteParty(templateId);
-            fetchParties();
-          } catch (error) {
-            console.log('Delete party err:', error);
-            Alert.alert('오류', '삭제 중 문제가 발생했습니다.');
-          }
-        },
-      },
-    ]);
+    setDeleteTargetId(templateId);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTargetId) return;
+
+    try {
+      await hostMeetApi.deleteParty(deleteTargetId);
+      setDeleteTargetId(null);
+      fetchParties();
+    } catch (error) {
+      console.log('Delete party err:', error);
+      setDeleteTargetId(null);
+      Alert.alert('오류', '삭제 중 문제가 발생했습니다.');
+    }
   };
 
   if (loading) {
@@ -114,7 +115,7 @@ const PartyInfo = ({ guesthouseId }) => {
             {item.partyTitle}
           </Text>
           <View style={styles.attendanceRow}>
-            <PeopleIcon width={12} height={12} />
+            <PeopleIcon width={14} height={14} />
             <Text style={[FONTS.fs_12_medium, styles.attendanceText]}>
               최대인원 {item.maxAttendance}명
             </Text>
@@ -125,19 +126,19 @@ const PartyInfo = ({ guesthouseId }) => {
             style={styles.actionButton}
             activeOpacity={0.8}
             onPress={() => handleEdit(item.templateId)}>
-            <Text style={[FONTS.fs_12_medium, styles.actionButtonText]}>
+            <Text style={[FONTS.fs_14_medium, styles.actionButtonText]}>
               수정하기
             </Text>
-            <PencilIcon width={12} height={12} style={styles.actionIcon} />
+            <PencilIcon width={20} height={20} style={styles.actionIcon} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.actionButton}
             activeOpacity={0.8}
             onPress={() => handleDelete(item.templateId)}>
-            <Text style={[FONTS.fs_12_medium, styles.actionButtonText]}>
+            <Text style={[FONTS.fs_14_medium, styles.actionButtonText]}>
               삭제하기
             </Text>
-            <TrashIcon width={12} height={12} style={styles.actionIcon} />
+            <TrashIcon width={20} height={20} style={styles.actionIcon} />
           </TouchableOpacity>
         </View>
       </View>
@@ -154,6 +155,16 @@ const PartyInfo = ({ guesthouseId }) => {
         contentContainerStyle={styles.listContent}
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
+      />
+
+      <AlertModal
+        visible={deleteTargetId !== null}
+        title="삭제 확인"
+        message="정말로 이 파티를 삭제하시겠습니까?"
+        buttonText="삭제"
+        buttonText2="취소"
+        onPress={confirmDelete}
+        onPress2={() => setDeleteTargetId(null)}
       />
     </View>
   );

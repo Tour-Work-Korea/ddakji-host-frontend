@@ -35,30 +35,34 @@ export default StyleSheet.create({
     color: COLORS.grayscale_700,
   },
   listContent: {
-    padding: 20,
+    paddingHorizontal: 16,
+    paddingTop: 28,
+    paddingBottom: 24,
   },
   card: {
     flexDirection: 'row',
     marginBottom: 24,
+    alignItems: 'flex-start',
   },
   thumbnail: {
-    width: 86,
-    height: 86,
-    borderRadius: 6,
+    width: 112,
+    height: 112,
+    borderRadius: 4,
     marginRight: 16,
     backgroundColor: COLORS.grayscale_100,
   },
   cardContent: {
     flex: 1,
-    justifyContent: 'space-between',
+    paddingTop: 4,
+    minHeight: 112,
   },
   cardTop: {
     flex: 1,
   },
   partyTitle: {
-    color: COLORS.grayscale_800,
-    lineHeight: 22,
-    marginBottom: 6,
+    color: COLORS.grayscale_900,
+    lineHeight: 24,
+    marginBottom: 4,
   },
   attendanceRow: {
     flexDirection: 'row',
@@ -66,26 +70,28 @@ export default StyleSheet.create({
   },
   attendanceText: {
     color: COLORS.grayscale_500,
-    marginLeft: 4,
+    marginLeft: 6,
   },
   cardBottom: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     alignItems: 'center',
+    marginTop: 24,
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: COLORS.grayscale_100,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    borderRadius: 20,
-    marginLeft: 8,
+    borderRadius: 100,
+    marginLeft: 12,
   },
   actionButtonText: {
-    color: COLORS.grayscale_600,
+    color: COLORS.grayscale_800,
   },
   actionIcon: {
-    marginLeft: 4,
+    marginLeft: 8,
   },
 });

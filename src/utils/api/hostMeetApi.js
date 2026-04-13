@@ -9,17 +9,21 @@ const hostMeetApi = {
   getPartyDetail: (partyId) =>
     api.get(`/host/parties/daily/${partyId}`),
 
+  // 파티 템플릿 상세 조회
+  getPartyTemplateDetail: (templateId) =>
+    api.get(`/host/parties/templates/${templateId}`),
+
   // 파티 공고 등록
   createParty: (data) =>
     api.post('/host/parties/templates', data),
 
-  // 파티 공고 단건 수정
-  updateParty: (partyId, data) =>
-    api.put(`/host/parties/${partyId}`, data),
+  // 파티 공고 수정
+  updateParty: (templateId, data) =>
+    api.put(`/host/parties/templates/${templateId}`, data),
 
-  // 파티 공고 단건 삭제
-  deleteParty: (partyId) =>
-    api.delete(`/host/parties/${partyId}`),
+  // 파티 공고 삭제
+  deleteParty: (templateId) =>
+    api.delete(`/host/parties/templates/${templateId}`),
 
   // 파티 해시태그 (시설/서비스) 리스트 조회
   getPartyFacilities: () =>

@@ -1,9 +1,10 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 import {useNavigation, useRoute} from '@react-navigation/native';
@@ -29,10 +30,13 @@ import CheckOrange from '@assets/images/check_orange.svg';
 const MyMeetAdd = () => {
   const navigation = useNavigation();
   const route = useRoute();
+  const templateId = Number(route.params?.templateId);
+  const isEditMode = Number.isFinite(templateId) && templateId > 0;
   const routeGuesthouseId = Number(route.params?.guesthouseId);
   const initialGuesthouseId = Number.isFinite(routeGuesthouseId) && routeGuesthouseId > 0
     ? routeGuesthouseId
     : null;
+  const [loading, setLoading] = useState(isEditMode);
 
   const [party, setParty] = useState({
     // 파티 제목 및 소개
@@ -116,6 +120,117 @@ const MyMeetAdd = () => {
       return true;
     });
   };
+
+  useEffect(() => {
+    if (!isEditMode) return;
+
+    let isMounted = true;
+
+    const normalizePartyImages = images => {
+      if (!Array.isArray(images)) return [];
+
+      return enforceSingleThumbnail(
+        stripDuplicatesByUrl(
+          images
+            .map(item => ({
+              imageUrl: item?.imageUrl ?? item?.partyImageUrl ?? '',
+              isThumbnail: !!item?.isThumbnail,
+            }))
+            .filter(item => item.imageUrl),
+        ),
+      );
+    };
+
+    const fetchTemplateDetail = async () => {
+      try {
+        setLoading(true);
+        const {data} = await hostMeetApi.getPartyTemplateDetail(templateId);
+
+        if (!isMounted) return;
+
+        setParty(prev => ({
+          ...prev,
+          partyTitle: data?.partyTitle ?? '',
+          tags: data?.tags ?? '',
+          partyImages: normalizePartyImages(data?.partyImages),
+          guesthouseId:
+            Number(data?.guesthouseId) > 0
+              ? Number(data.guesthouseId)
+              : prev.guesthouseId,
+          partyStartTime: data?.partyStartTime ?? prev.partyStartTime,
+          partyEndTime: data?.partyEndTime ?? prev.partyEndTime,
+          minAttendees: data?.minAttendees ?? data?.minAttendance ?? prev.minAttendees,
+          maxAttendees: data?.maxAttendees ?? data?.maxAttendance ?? prev.maxAttendees,
+          isGuest: data?.isGuest ?? prev.isGuest,
+          amount: data?.amount ?? prev.amount,
+          femaleAmount: data?.femaleAmount ?? prev.femaleAmount,
+          maleNonAmount: data?.maleNonAmount ?? prev.maleNonAmount,
+          femaleNonAmount: data?.femaleNonAmount ?? prev.femaleNonAmount,
+          partyAnnouncements: Array.isArray(data?.partyAnnouncements)
+            ? data.partyAnnouncements.map(item => ({
+                announcement: item?.announcement ?? '',
+              }))
+            : [],
+          partyEvents: Array.isArray(data?.partyEvents)
+            ? data.partyEvents.map(item => ({
+                eventName: item?.eventName ?? '',
+                eventDescription: item?.eventDescription ?? '',
+                partyEventImageUrls: Array.isArray(item?.partyEventImageUrls)
+                  ? item.partyEventImageUrls
+                  : [],
+              }))
+            : Array.isArray(data?.events)
+              ? data.events.map(item => ({
+                  eventName: item?.eventName ?? item?.title ?? '',
+                  eventDescription:
+                    item?.eventDescription ?? item?.description ?? '',
+                  partyEventImageUrls: Array.isArray(item?.partyEventImageUrls)
+                    ? item.partyEventImageUrls
+                    : Array.isArray(item?.imageUrls)
+                      ? item.imageUrls
+                      : [],
+                }))
+            : [],
+          detailSchedule: data?.detailSchedule ?? data?.partySchedule ?? '',
+          snackTagList: Array.isArray(data?.snackTagList)
+            ? data.snackTagList
+            : Array.isArray(data?.snackTags)
+              ? data.snackTags
+              : [],
+          snacks: data?.snacks ?? data?.snackInfo ?? '',
+          extraInfo: data?.extraInfo ?? '',
+          rules: Array.isArray(data?.rules)
+            ? data.rules.map(rule => ({
+                title: rule?.title ?? '',
+                content: rule?.content ?? '',
+              }))
+            : [],
+          meetingPlace: data?.meetingPlace ?? '',
+          trafficInfo: data?.trafficInfo ?? '',
+          parkingInfo: data?.parkingInfo ?? '',
+          parkingTag: Array.isArray(data?.parkingTag) ? data.parkingTag : [],
+        }));
+      } catch (err) {
+        Toast.show({
+          type: 'error',
+          text1: err?.response?.data?.message || err.message,
+          position: 'top',
+          visibilityTime: 2000,
+        });
+        navigation.goBack();
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchTemplateDetail();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isEditMode, navigation, templateId]);
 
   const onSelectTitleIntro = payload => {
     if (!payload) return;
@@ -373,14 +488,27 @@ const MyMeetAdd = () => {
 
   const handleSubmit = async () => {
     if (!isSubmitReady) {
-      Toast.show({type: 'error', text1: '필수 항목을 채워주세요.', position: 'top'});
+      Toast.show({
+        type: 'error',
+        text1: `필수 항목을 채워주시면 ${isEditMode ? '수정' : '등록'}할 수 있어요.`,
+        position: 'top',
+      });
       return;
     }
     const payload = buildPayload();
 
     try {
-      await hostMeetApi.createParty(payload);
-      Toast.show({type: 'success', text1: '이벤트가 등록되었습니다!', position: 'top', visibilityTime: 1200});
+      if (isEditMode) {
+        await hostMeetApi.updateParty(templateId, payload);
+      } else {
+        await hostMeetApi.createParty(payload);
+      }
+      Toast.show({
+        type: 'success',
+        text1: `파티가 ${isEditMode ? '수정' : '등록'}되었습니다!`,
+        position: 'top',
+        visibilityTime: 1200,
+      });
       navigation.goBack();
     } catch (err) {
       Toast.show({
@@ -424,18 +552,26 @@ const MyMeetAdd = () => {
     </TouchableOpacity>
   );
 
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Header title={isEditMode ? '파티 수정' : '파티 등록'} />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="small" color="#FF6A13" />
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <Header title="파티 등록" />
+      <Header title={isEditMode ? '파티 수정' : '파티 등록'} />
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
+      <View style={styles.scrollContent}>
         <View style={styles.bodyContainer}>
           {renderSectionRow({
             title: '파티 제목 및 소개',
-            description: party.partyTitle || '파티 제목 · 사진 · 태그 입력',
+            description: '',
             required: true,
             done: isTitleIntroDone,
             onPress: () => setTitleIntroModalVisible(true),
@@ -443,7 +579,7 @@ const MyMeetAdd = () => {
 
           {renderSectionRow({
             title: '기본 정보',
-            description: '시간 · 참여 인원 · 숙박 여부',
+            description: '시간 · 참여 인원 · 금액 등',
             required: true,
             done: isBasicDone,
             onPress: () => setBasicModalVisible(true),
@@ -451,7 +587,7 @@ const MyMeetAdd = () => {
 
           {renderSectionRow({
             title: '필수 안내사항',
-            description: '파티 전 꼭 전달해야 할 내용을 작성해 주세요',
+            description: '',
             required: true,
             done: isAnnouncementsDone,
             onPress: () => setAnnouncementsModalVisible(true),
@@ -491,7 +627,7 @@ const MyMeetAdd = () => {
           필수 항목을 입력하셔야 등록이 완료됩니다.
         </Text>
 
-      </ScrollView>
+      </View>
 
       <View style={styles.bottomContainer}>
         {/* <TouchableOpacity style={styles.saveButton}>
@@ -507,7 +643,7 @@ const MyMeetAdd = () => {
               styles.submitText,
               !isSubmitReady && styles.submitTextDisabled,
             ]}>
-            등록하기
+            {isEditMode ? '수정하기' : '등록하기'}
           </Text>
           {isSubmitReady ? (
             <CheckWhite width={24} height={24} />
@@ -594,6 +730,7 @@ const MyMeetAdd = () => {
         shouldResetOnClose={eventModalReset}
         onClose={() => setEventModalVisible(false)}
         onSelect={onSelectEvent}
+        initialEvents={party.partyEvents}
       />
     </View>
   );

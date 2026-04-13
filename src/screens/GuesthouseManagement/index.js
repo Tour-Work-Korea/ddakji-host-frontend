@@ -282,7 +282,7 @@ const GuesthouseManagement = () => {
       ) : activeTab === tabs[2] ? (
         <PartyInfo guesthouseId={effectiveGuesthouseId} />
       ) : (
-        <PartyReservation />
+        <PartyReservation guesthouseId={effectiveGuesthouseId} />
       )}
 
       <GuesthouseProfileList

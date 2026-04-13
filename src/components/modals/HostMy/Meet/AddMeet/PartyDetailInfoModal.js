@@ -8,13 +8,14 @@ import {
   Dimensions,
   TextInput,
   ScrollView,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 
 import {FONTS} from '@constants/fonts';
 import {COLORS} from '@constants/colors';
+import useKeyboardAwareScrollView from '@hooks/useKeyboardAwareScrollView';
 
 import CheckWhite from '@assets/images/check_white.svg';
 import XBtn from '@assets/images/x_gray.svg';
@@ -44,8 +45,8 @@ const PillSubmitButton = ({disabled, onPress}) => (
     style={[styles.submitButton, disabled && styles.submitButtonDisabled]}
     disabled={disabled}
     onPress={onPress}>
-    <Text style={[FONTS.fs_16_semibold, styles.submitButtonText]}>적용하기</Text>
-    <CheckWhite width={22} height={22} />
+    <Text style={[FONTS.fs_14_medium, styles.submitButtonText]}>적용하기</Text>
+    <CheckWhite width={20} height={20} />
   </TouchableOpacity>
 );
 
@@ -56,6 +57,8 @@ const PartyDetailInfoModal = ({
   shouldResetOnClose,
   initialValues,
 }) => {
+  const {keyboardHeight} = useKeyboardAwareScrollView({iosOnly: false});
+  const isKeyboardVisible = keyboardHeight > 0;
   const [form, setForm] = useState(normalize(initialValues));
   const [appliedData, setAppliedData] = useState(null);
 
@@ -97,24 +100,30 @@ const PartyDetailInfoModal = ({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleModalClose}>
-      <View style={styles.overlay}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={handleModalClose} />
-        <KeyboardAvoidingView
-          style={{width: '100%'}}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <View style={styles.modalContainer}>
+      <TouchableWithoutFeedback
+        onPress={() => (isKeyboardVisible ? Keyboard.dismiss() : handleModalClose())}>
+        <View style={styles.overlay}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => {}} />
+          <TouchableWithoutFeedback onPress={() => {}}>
+            <View style={styles.modalContainer}>
             <View style={styles.header}>
+              <Text style={[FONTS.fs_20_semibold, styles.modalTitle]}>상세 안내</Text>
               <TouchableOpacity onPress={handleModalClose} style={styles.closeButton}>
                 <XBtn width={24} height={24} />
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.body} keyboardShouldPersistTaps="handled">
+            <ScrollView
+              style={styles.body}
+              contentContainerStyle={{
+                paddingBottom: keyboardHeight + 96,
+              }}
+              keyboardShouldPersistTaps="handled">
               <View style={styles.sectionTopRow}>
-                <Text style={[FONTS.fs_20_semibold, styles.sectionTitle]}>
+                <Text style={[FONTS.fs_16_medium, styles.sectionTitle]}>
                   파티 세부 일정에 대해 작성해 주세요
                 </Text>
-                <Text style={[FONTS.fs_14_medium, styles.counterText]}>
+                <Text style={[FONTS.fs_12_light, styles.counterText]}>
                   <Text style={styles.counterAccent}>{form.detailSchedule.length}</Text>/{DETAIL_MAX.toLocaleString()}
                 </Text>
               </View>
@@ -125,17 +134,17 @@ const PartyDetailInfoModal = ({
                 }
                 placeholder=""
                 placeholderTextColor={COLORS.grayscale_400}
-                style={[styles.largeTextArea, FONTS.fs_16_regular]}
+                style={[styles.largeTextArea, FONTS.fs_14_regular]}
                 multiline
                 textAlignVertical="top"
               />
               <TouchableOpacity
                 style={styles.rewriteButton}
                 onPress={() => setForm(prev => ({...prev, detailSchedule: ''}))}>
-                <Text style={[FONTS.fs_14_medium, styles.rewriteText]}>다시쓰기</Text>
+                <Text style={[FONTS.fs_12_medium, styles.rewriteText]}>다시쓰기</Text>
               </TouchableOpacity>
 
-              <Text style={[FONTS.fs_20_semibold, styles.sectionTitle, {marginTop: 8}]}>
+                <Text style={[FONTS.fs_16_medium, styles.sectionTitle, {marginTop: 8}]}>
                 음식 · 음료 제공 여부
               </Text>
               <View style={styles.tagGrid}>
@@ -148,7 +157,7 @@ const PartyDetailInfoModal = ({
                       onPress={() => toggleSnackTag(item.key)}>
                       <Text
                         style={[
-                          FONTS.fs_16_medium,
+                          FONTS.fs_14_medium,
                           selected ? styles.tagTextSelected : styles.tagText,
                         ]}>
                         {item.label}
@@ -159,10 +168,10 @@ const PartyDetailInfoModal = ({
               </View>
 
               <View style={[styles.sectionTopRow, {marginTop: 20}]}>
-                <Text style={[FONTS.fs_20_semibold, styles.sectionTitle]}>
+                <Text style={[FONTS.fs_16_medium, styles.sectionTitle]}>
                   제공량/준비량 관련 안내
                 </Text>
-                <Text style={[FONTS.fs_14_medium, styles.counterText]}>
+                <Text style={[FONTS.fs_12_light, styles.counterText]}>
                   <Text style={styles.counterAccent}>{form.extraInfo.length}</Text>/{EXTRA_MAX}
                 </Text>
               </View>
@@ -177,7 +186,7 @@ const PartyDetailInfoModal = ({
                 }
                 placeholder="본인이 드실 음료랑 주류를 사전에 준비해 주세요."
                 placeholderTextColor={COLORS.grayscale_400}
-                style={[styles.mediumTextArea, FONTS.fs_16_regular]}
+                style={[styles.mediumTextArea, FONTS.fs_14_regular]}
                 multiline
                 textAlignVertical="top"
               />
@@ -186,16 +195,20 @@ const PartyDetailInfoModal = ({
                 onPress={() =>
                   setForm(prev => ({...prev, extraInfo: '', snacks: ''}))
                 }>
-                <Text style={[FONTS.fs_14_medium, styles.rewriteText]}>다시쓰기</Text>
+                <Text style={[FONTS.fs_12_medium, styles.rewriteText]}>다시쓰기</Text>
               </TouchableOpacity>
             </ScrollView>
-
-            <View style={styles.footer}>
+            <View
+              style={[
+                styles.footer,
+                {bottom: keyboardHeight > 0 ? keyboardHeight + 12 : 24},
+              ]}>
               <PillSubmitButton disabled={isDisabled} onPress={handleConfirm} />
             </View>
           </View>
-        </KeyboardAvoidingView>
-      </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };
@@ -213,23 +226,28 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.grayscale_0,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    paddingHorizontal: 14,
+    paddingHorizontal: 20,
     paddingTop: 14,
   },
   header: {
     height: 28,
     justifyContent: 'center',
+    alignItems: 'center',
   },
   closeButton: {
-    alignSelf: 'flex-end',
+    position: 'absolute',
+    right: 0,
     padding: 2,
+  },
+  modalTitle: {
+    color: COLORS.grayscale_900,
   },
   body: {
     flex: 1,
-    paddingTop: 4,
+    paddingTop: 10,
   },
   sectionTopRow: {
-    marginBottom: 10,
+    marginBottom: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -244,21 +262,23 @@ const styles = StyleSheet.create({
     color: COLORS.primary_orange,
   },
   largeTextArea: {
-    minHeight: 104,
+    minHeight: 102,
+    maxHeight: 200,
     borderWidth: 1,
     borderColor: COLORS.grayscale_200,
-    borderRadius: 22,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
     color: COLORS.grayscale_900,
   },
   mediumTextArea: {
     minHeight: 126,
+    maxHeight: 340,
     borderWidth: 1,
     borderColor: COLORS.grayscale_200,
-    borderRadius: 22,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
     color: COLORS.grayscale_900,
   },
   rewriteButton: {
@@ -271,21 +291,19 @@ const styles = StyleSheet.create({
   tagGrid: {
     marginTop: 8,
     backgroundColor: COLORS.grayscale_100,
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
+    borderRadius: 4,
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
   tagButton: {
-    width: '33.33%',
-    height: 44,
+    width: '48%',
+    paddingHorizontal: 8,
+    paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 8,
   },
   tagButtonSelected: {
-    backgroundColor: COLORS.grayscale_0,
   },
   tagText: {
     color: COLORS.grayscale_400,
@@ -294,14 +312,14 @@ const styles = StyleSheet.create({
     color: COLORS.primary_orange,
   },
   footer: {
-    paddingTop: 12,
-    paddingBottom: 16,
+    position: 'absolute',
+    right: 20,
     alignItems: 'flex-end',
   },
   submitButton: {
-    height: 50,
-    paddingHorizontal: 22,
-    borderRadius: 25,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 100,
     backgroundColor: COLORS.primary_orange,
     flexDirection: 'row',
     alignItems: 'center',
