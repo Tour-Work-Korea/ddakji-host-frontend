@@ -1,30 +1,53 @@
 import api from './axiosInstance';
 
 const hostMeetApi = {
+  // 오늘 파티 전체 조회
+  getTodayParties: () =>
+    api.get('/host/parties/daily'),
+
   // 사장님 파티 공고 전체 조회
   getMyParties: () =>
-    api.get('/host/parties'),
+    api.get('/host/parties/templates'),
 
-  // 파티 공고 상세 조회
+  // 오늘 파티 상세 조회
   getPartyDetail: (partyId) =>
-    api.get(`/host/parties/${partyId}`),
+    api.get(`/host/parties/daily/${partyId}`),
+
+  // 개별 파티 전체(히스토리) 조회
+  getAllParties: () =>
+    api.get('/host/parties/all'),
+
+  // 파티 템플릿 상세 조회
+  getPartyTemplateDetail: (templateId) =>
+    api.get(`/host/parties/templates/${templateId}`),
 
   // 파티 공고 등록
   createParty: (data) =>
-    api.post('/host/parties', data),
+    api.post('/host/parties/templates', data),
 
-  // 파티 공고 단건 수정
-  updateParty: (partyId, data) =>
-    api.put(`/host/parties/${partyId}`, data),
+  // 파티 공고 수정
+  updateParty: (templateId, data) =>
+    api.put(`/host/parties/templates/${templateId}`, data),
 
-  // 파티 공고 단건 삭제
-  deleteParty: (partyId) =>
-    api.delete(`/host/parties/${partyId}`),
+  // 파티 공고 삭제
+  deleteParty: (templateId) =>
+    api.delete(`/host/parties/templates/${templateId}`),
 
-  // 파티 해시태그 (시설/서비스) 리스트 조회
-  getPartyFacilities: () =>
-    api.get('/host/parties/facilities'),
+  // 오늘 파티 노출 여부 수정
+  updatePartyVisibility: (partyId, isVisible) =>
+    api.patch(`/host/parties/daily/${partyId}/visibility`, {
+      isVisible,
+    }),
 
+  // 오늘 파티 최대 인원 수정
+  updatePartyMaxAttendees: (partyId, maxAttendees) =>
+    api.patch(`/host/parties/daily/${partyId}/max-attendees`, {
+      maxAttendees,
+    }),
+
+  // 오늘 파티 취소
+  cancelParty: (partyId) =>
+    api.patch(`/host/parties/daily/${partyId}/cancel`),
 
 };
 

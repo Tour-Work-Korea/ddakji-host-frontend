@@ -11,8 +11,14 @@ const hostGuesthouseApi = {
   // 특정 게스트하우스 상세 조회
   getGuesthouseDetail: guesthouseId =>
     api.get(`/host/guesthouses/${guesthouseId}`),
+
+  // 게스트하우스 환불 정책 조회
   getGuesthouseRefundPolicies: guesthouseId =>
-    api.get(`/host/guesthouses/${guesthouseId}/refund-policies`),
+    api.get(`/host/guesthouses/${guesthouseId}/refund-policy-settings`),
+
+  // 게스트하우스 환불 정책 수정
+  updateGuesthouseRefundPolicies: (guesthouseId, payload) =>
+    api.put(`/host/guesthouses/${guesthouseId}/refund-policy-settings`, payload),
 
   // 게스트하우스 최종 등록
   finalizeGuesthouse: (guesthouseId, dto) =>
@@ -50,8 +56,6 @@ const hostGuesthouseApi = {
    */
   updateGuesthouseAmenities: (guesthouseId, amenities) =>
     api.put(`/host/guesthouses/${guesthouseId}/amenities`, amenities),
-  updateGuesthouseRefundPolicies: (guesthouseId, policies) =>
-    api.put(`/host/guesthouses/${guesthouseId}/refund-policies`, {policies}),
 
   /** 객실 기본 정보 수정
    * body {
@@ -108,7 +112,7 @@ const hostGuesthouseApi = {
     api.delete(`/host/guesthouses/${guesthouseId}`),
 
   // 특정 게스트하우스 리뷰 목록 조회
-  getGuesthouseReviews: ({guesthouseId, page, size, sort}) =>
+  getGuesthouseReviews: ({ guesthouseId, page, size, sort }) =>
     api.get(`/${guesthouseId}/reviews`, {
       params: {
         page,
@@ -119,7 +123,7 @@ const hostGuesthouseApi = {
 
   // 리뷰에 대한 답글 작성
   postReviewReply: (reviewId, reply) =>
-    api.post(`/host/reviews/${reviewId}/replies`, {reply}),
+    api.post(`/host/reviews/${reviewId}/replies`, { reply }),
 
   // 리뷰 삭제 요청
   deleteReview: (reviewId, reason) =>
@@ -209,7 +213,7 @@ const hostGuesthouseApi = {
   // 게하 예약 취소
   cancelGuesthouseReservation: (reservationId) =>
     api.delete(`/order/reservation/${reservationId}`, {
-      data: {type: 'GUESTHOUSE'},
+      data: { type: 'GUESTHOUSE' },
     }),
 };
 

@@ -1,13 +1,13 @@
-import React, {useMemo, useState} from 'react';
-import {Pressable, ScrollView, Text, TouchableOpacity, View} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import React, { useMemo, useState } from 'react';
+import { Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 import Avatar from '@components/Avatar';
 import AlertModal from '@components/modals/AlertModal';
-import {FONTS} from '@constants/fonts';
+import { FONTS } from '@constants/fonts';
 import useUserStore from '@stores/userStore';
 import authApi from '@utils/api/authApi';
-import {tryLogout} from '@utils/auth/login';
+import { tryLogout } from '@utils/auth/login';
 
 import LogoIcon from '@assets/images/logo_orange.svg';
 import CloseIcon from '@assets/images/x_gray.svg';
@@ -102,7 +102,7 @@ const HostHomeMenu = () => {
     await tryLogout();
     navigation.reset({
       index: 0,
-      routes: [{name: 'Login'}],
+      routes: [{ name: 'Login' }],
     });
   };
 
@@ -122,7 +122,7 @@ const HostHomeMenu = () => {
     } finally {
       navigation.reset({
         index: 0,
-        routes: [{name: 'Login'}],
+        routes: [{ name: 'Login' }],
       });
       setIsWithdrawing(false);
     }
@@ -161,12 +161,12 @@ const HostHomeMenu = () => {
           <TouchableOpacity
             style={styles.topActionButton}
             activeOpacity={0.85}
-            onPress={() => navigation.navigate('StoreRegisterList')}>
+            onPress={() => navigation.navigate('StoreRegisterForm1')}>
             <Text style={[FONTS.fs_14_medium, styles.topActionText]}>
               게스트하우스 등록
             </Text>
           </TouchableOpacity>
-          <View style={styles.topActionDivide}/>
+          <View style={styles.topActionDivide} />
           <TouchableOpacity style={styles.topActionButton} activeOpacity={0.85}>
             <Text style={[FONTS.fs_14_medium, styles.topActionText]}>
               이용방법 안내
@@ -199,6 +199,12 @@ const HostHomeMenu = () => {
                     {item.label}
                   </Text>
                 </View>
+                {item.key === 'guesthouse' && (
+                  <Text style={[FONTS.fs_16_medium, styles.myBusinessCount]}>
+                    {' '}
+                    {hostProfile?.guesthouseProfiles?.length ?? 0}
+                  </Text>
+                )}
                 <RightArrowIcon width={24} height={24} />
               </Pressable>
             );

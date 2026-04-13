@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 
 import {FONTS} from '@constants/fonts';
+import {COLORS} from '@constants/colors';
 import Avatar from '@components/Avatar';
 import useUserStore from '@stores/userStore';
 import adminApi from '@utils/api/adminApi';
@@ -201,40 +202,60 @@ const HostHome = () => {
               </TouchableOpacity>
 
               <View style={styles.myBusinessList}>
-                {guesthouseProfiles.map((guesthouse, index) => (
-                  <TouchableOpacity
-                    key={String(guesthouse?.profileKey ?? guesthouse?.guesthouseId ?? `guesthouse-${index}`)}
-                    style={styles.myBusinessCard}
-                    activeOpacity={0.85}
-                    onPress={() =>
-                      navigateWithLoginGuard('GuesthouseManagement', {
-                        profileKey:
-                          guesthouse?.profileKey ??
-                          String(guesthouse?.guesthouseId ?? `guesthouse-${index}`),
-                        businessName: guesthouse?.guesthouseName || '게스트하우스',
-                        guesthouseId: guesthouse?.guesthouseId ?? null,
-                      })
-                    }>
-                    <View style={styles.myBusinessCardLeft}>
-                      <Avatar
-                        uri={guesthouse?.profileImageUrl || null}
-                        size={60}
-                        borderRadius={10}
-                      />
-                      <Text
-                        style={[FONTS.fs_18_semibold, styles.myBusinessName]}
-                        numberOfLines={1}>
-                        {guesthouse?.guesthouseName || '게스트하우스'}
-                      </Text>
-                    </View>
+                {guesthouseProfiles.map((guesthouse, index) => {
+                  // status나 applicationStatus가 있고, 그 값이 '승인 완료'나 'APPROVED'가 아니면 심사중으로 간주
+                  const isPending =
+                    guesthouse?.applicationStatus === 'PENDING' ||
+                    guesthouse?.status === '심사중' ||
+                    guesthouse?.status === '등록 심사중';
 
-                    <View style={styles.myBusinessBadge}>
-                      <Text style={[FONTS.fs_14_semibold, styles.myBusinessBadgeText]}>
-                        운영자
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
+                  return (
+                    <TouchableOpacity
+                      key={String(
+                        guesthouse?.profileKey ?? guesthouse?.guesthouseId ?? `guesthouse-${index}`,
+                      )}
+                      style={styles.myBusinessCard}
+                      activeOpacity={isPending ? 1 : 0.85}
+                      disabled={isPending}
+                      onPress={() =>
+                        navigateWithLoginGuard('GuesthouseManagement', {
+                          profileKey:
+                            guesthouse?.profileKey ??
+                            String(guesthouse?.guesthouseId ?? `guesthouse-${index}`),
+                          businessName: guesthouse?.guesthouseName || '게스트하우스',
+                          guesthouseId: guesthouse?.guesthouseId ?? null,
+                        })
+                      }>
+                      <View style={styles.myBusinessCardLeft}>
+                        <Avatar
+                          uri={guesthouse?.profileImageUrl || null}
+                          size={60}
+                          borderRadius={10}
+                        />
+                        <View style={styles.myBusinessName}>
+                          <Text
+                            style={FONTS.fs_18_semibold}
+                            numberOfLines={1}>
+                            {guesthouse?.guesthouseName || '게스트하우스'}
+                          </Text>
+                          {isPending && (
+                            <Text style={[FONTS.fs_14_medium, {color: COLORS.semantic_red, marginTop: 4}]}>
+                              등록 심사중
+                            </Text>
+                          )}
+                        </View>
+                      </View>
+
+                      {!isPending && (
+                        <View style={styles.myBusinessBadge}>
+                          <Text style={[FONTS.fs_14_semibold, styles.myBusinessBadgeText]}>
+                            운영자
+                          </Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
           </View>

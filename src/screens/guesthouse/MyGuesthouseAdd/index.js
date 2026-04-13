@@ -48,6 +48,7 @@ const MyGuesthouseAdd = () => {
     guesthouseImages: [],
     roomInfos: [],
     refundPolicies: [],
+    refundPolicyAdditionalNotice: '',
     amenities: [],
     hashtagIds: [],
     rules: '',
@@ -113,10 +114,11 @@ const MyGuesthouseAdd = () => {
   };
 
   // 취소 및 환불규정 모달에서 "적용" 눌렀을 때
-  const handleRefundPolicySelect = (refundPolicies) => {
+  const handleRefundPolicySelect = ({refundPolicies, refundNotice}) => {
     setGuesthouse(prev => ({
       ...prev,
       refundPolicies,
+      refundPolicyAdditionalNotice: refundNotice,
     }));
     setRefundModalReset(false);
     setRefundModalVisible(false);
@@ -245,6 +247,7 @@ const MyGuesthouseAdd = () => {
         guesthouseImages: guesthouse.guesthouseImages,
         roomInfos: guesthouse.roomInfos.map(normalizeRoom),
         refundPolicies: guesthouse.refundPolicies,
+        refundPolicyAdditionalNotice: guesthouse.refundPolicyAdditionalNotice,
         guesthouseLongDesc: guesthouse.guesthouseLongDesc,
         rules: guesthouse.rules,
         amenities: guesthouse.amenities,
@@ -328,6 +331,7 @@ const MyGuesthouseAdd = () => {
         guesthouseImages: guesthouse.guesthouseImages,
         roomInfos: guesthouse.roomInfos,
         refundPolicies: guesthouse.refundPolicies,
+        refundPolicyAdditionalNotice: guesthouse.refundPolicyAdditionalNotice,
         amenities: previewAmenities,
         hashtags: previewHashtags,
         rules: guesthouse.rules,

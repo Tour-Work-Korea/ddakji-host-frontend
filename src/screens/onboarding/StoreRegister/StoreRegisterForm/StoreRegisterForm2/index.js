@@ -136,12 +136,7 @@ const StoreRegisterForm2 = ({route}) => {
       await hostGuesthouseApi.tempCreateGuesthouse({
         applicationId,
         guesthouseName: formData.guesthouseName.trim(),
-        guesthouseImages: [
-          {
-            guesthouseImageUrl: formData.profileImg,
-            isThumbnail: true,
-          },
-        ],
+        guesthouseProfileImage: formData.profileImg,
       });
 
       await syncHostProfile();
