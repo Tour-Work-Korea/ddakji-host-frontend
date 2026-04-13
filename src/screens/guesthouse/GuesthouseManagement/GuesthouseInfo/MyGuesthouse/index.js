@@ -18,7 +18,7 @@ const MyGuesthouse = ({
 }) => {
   const navigation = useNavigation();
 
-  if (!guesthouseDetail) {
+  if (!guesthouseDetail || guesthouseDetail.status === 'INACTIVE') {
     return (
       <View style={styles.emptyState}>
         <Text style={[FONTS.fs_20_semibold, styles.emptyTitle]}>

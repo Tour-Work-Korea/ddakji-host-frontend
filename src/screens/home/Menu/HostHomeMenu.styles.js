@@ -1,6 +1,6 @@
-import {StyleSheet} from 'react-native';
+import { StyleSheet } from 'react-native';
 
-import {COLORS} from '@constants/colors';
+import { COLORS } from '@constants/colors';
 
 export default StyleSheet.create({
   container: {
@@ -67,6 +67,11 @@ export default StyleSheet.create({
 
   // 메뉴
   menuList: {
+    paddingHorizontal: 4,
+  },
+  myBusinessCount: {
+    color: COLORS.primary_orange,
+    marginHorizontal: 4,
   },
   menuItem: {
     flexDirection: 'row',

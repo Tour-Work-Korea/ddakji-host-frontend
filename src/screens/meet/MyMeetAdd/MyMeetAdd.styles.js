@@ -4,13 +4,18 @@ import {COLORS} from '@constants/colors';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.grayscale_100,
+    backgroundColor: COLORS.grayscale_0,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 140,
   },
 
-  // 등록 폼
   bodyContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 24,
     gap: 16,
   },
   section: {
@@ -19,40 +24,65 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.grayscale_0,
     paddingVertical: 12,
     paddingHorizontal: 8,
-    borderRadius: 8,
     justifyContent: 'space-between',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.grayscale_200,
   },
-  titleSection: {
-    gap: 4,
+  titleCard: {
+    backgroundColor: COLORS.grayscale_0,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.grayscale_200,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
   },
-  titleRow: {
+  sectionContent: {
+    flex: 1,
+  },
+  sectionTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 6,
   },
-  title: {
-    color: COLORS.grayscale_900,
-    marginRight: 8,
+  sectionTitle: {
+    flexShrink: 1,
   },
-  subTitle: {
+  sectionTitlePending: {
     color: COLORS.grayscale_500,
   },
-  disabled: {
-    color: COLORS.grayscale_500,
-  },
-
-  // 설명 텍스트
-  explainText: {
+  sectionTitleDone: {
     color: COLORS.primary_orange,
-    textAlign: 'center',
+  },
+  sectionDescription: {
+    color: COLORS.grayscale_500,
+    marginTop: 4,
+  },
+  titleValue: {
+    color: COLORS.grayscale_900,
+    marginTop: 4,
+  },
+  sectionIconWrap: {
+    marginLeft: 12,
   },
 
-  // 하단 버튼
+  explainText: {
+    color: COLORS.semantic_red,
+    textAlign: 'center',
+    marginTop: 18,
+  },
+  requiredText: {
+    color: COLORS.semantic_red,
+  },
+
   bottomContainer: {
     flexDirection: 'row',
+    justifyContent: 'flex-end',
     gap: 10,
-    position: 'absolute',
-    right: 20,
-    bottom: 40,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 24,
+    backgroundColor: COLORS.grayscale_0,
   },
   saveButton: {
     flexDirection: 'row',
@@ -83,7 +113,6 @@ const styles = StyleSheet.create({
     color: COLORS.grayscale_800,
   },
 
-  // 이벤트 제목
   sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -91,15 +120,17 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   inlinePanel: {
-    marginTop: 20,
-    borderRadius: 20,
+    marginTop: 12,
+    borderRadius: 8,
     padding: 12,
     borderWidth: 1,
     borderColor: COLORS.grayscale_200,
     width: '100%',
+    backgroundColor: COLORS.grayscale_100,
   },
   titleInput: {
     color: COLORS.grayscale_900,
+    padding: 0,
   },
 });
 

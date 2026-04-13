@@ -61,9 +61,6 @@ export {default as MyRecruitmentList} from './recruitment/MyRecruitmentList';
 export {default as RecruitmentForm} from './recruitment/RecruitmentForm';
 export {default as ResumeDetail} from './recruitment/ResumeDetail';
 
-export {default as MyMeetList} from './meet/Meet/MyMeetList';
-export {default as MyMeetDetail} from './meet/Meet/MyMeetDetail';
-export {default as MyMeetAdd} from './meet/Meet/MyMeetAdd';
-export {default as MeetBasics} from './meet/Meet/MyMeetAdd/MeetBasics';
-export {default as MeetDetails} from './meet/Meet/MyMeetAdd/MeetDetails';
-export {default as MeetDirections} from './meet/Meet/MyMeetAdd/MeetDirections';
+export {default as MyMeetList} from './meet/MyMeetList';
+export {default as MyMeetDetail} from './meet/MyMeetDetail';
+export {default as MyMeetAdd} from './meet/MyMeetAdd';

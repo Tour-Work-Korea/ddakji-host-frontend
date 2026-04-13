@@ -1,8 +1,8 @@
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {Alert, Text, TouchableOpacity, View} from 'react-native';
-import {useFocusEffect, useNavigation, useRoute} from '@react-navigation/native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Alert, Text, TouchableOpacity, View } from 'react-native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 
-import {FONTS} from '@constants/fonts';
+import { FONTS } from '@constants/fonts';
 import useUserStore from '@stores/userStore';
 import AlertModal from '@components/modals/AlertModal';
 import GuesthouseProfileList from '@components/modals/HostMy/Guesthouse/GuesthouseProfileList';
@@ -44,15 +44,22 @@ const GuesthouseManagement = () => {
   const guesthouseProfiles = useMemo(
     () =>
       Array.isArray(hostProfile?.guesthouseProfiles)
-        ? hostProfile.guesthouseProfiles.map((item, index) => ({
-            id: String(
-              item?.profileKey ?? item?.guesthouseId ?? `guesthouse-${index}`,
-            ),
-            guesthouseId: item?.guesthouseId ?? null,
-            name: item?.guesthouseName || '이름 없음',
-            photoUrl: item?.profileImageUrl || null,
-            noticeCount: 0,
-          }))
+        ? hostProfile.guesthouseProfiles
+            .filter(
+              item =>
+                item?.applicationStatus !== 'PENDING' &&
+                item?.status !== '심사중' &&
+                item?.status !== '등록 심사중',
+            )
+            .map((item, index) => ({
+              id: String(
+                item?.profileKey ?? item?.guesthouseId ?? `guesthouse-${index}`,
+              ),
+              guesthouseId: item?.guesthouseId ?? null,
+              name: item?.guesthouseName || '이름 없음',
+              photoUrl: item?.profileImageUrl || null,
+              noticeCount: 0,
+            }))
         : [],
     [hostProfile?.guesthouseProfiles],
   );
@@ -199,7 +206,7 @@ const GuesthouseManagement = () => {
       <View style={styles.header}>
         <TouchableOpacity
           activeOpacity={0.8}
-          onPress={() => navigation.navigate('MainTabs', {screen: '홈'})}>
+          onPress={() => navigation.navigate('MainTabs', { screen: '홈' })}>
           <LogoIcon width={60} height={28} />
         </TouchableOpacity>
 
@@ -210,7 +217,7 @@ const GuesthouseManagement = () => {
           <TouchableOpacity
             style={styles.headerIconButton}
             activeOpacity={0.8}
-            onPress={() => navigation.navigate('MainTabs', {screen: '마이'})}>
+            onPress={() => navigation.navigate('MainTabs', { screen: '마이' })}>
             <MenuIcon width={18} height={18} />
           </TouchableOpacity>
         </View>
@@ -236,25 +243,26 @@ const GuesthouseManagement = () => {
 
       <View style={styles.tabRow}>
         {tabs.map(tab => {
-          const isDisabled = !guesthouseDetail && tab !== tabs[0];
+          const isInactive = guesthouseDetail?.status === 'INACTIVE';
+          const isDisabled = (!guesthouseDetail || isInactive) && tab !== tabs[0];
 
           return (
-          <TouchableOpacity
-            key={tab}
-            activeOpacity={isDisabled ? 1 : 0.8}
-            disabled={isDisabled}
-            style={[styles.tabItem, activeTab === tab && styles.tabItemActive]}
-            onPress={() => setActiveTab(tab)}>
-            <Text
-              style={[
-                FONTS.fs_14_medium,
-                styles.tabText,
-                isDisabled && styles.tabText,
-                activeTab === tab && styles.tabTextActive,
-              ]}>
-              {tab}
-            </Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              key={tab}
+              activeOpacity={isDisabled ? 1 : 0.8}
+              disabled={isDisabled}
+              style={[styles.tabItem, activeTab === tab && styles.tabItemActive]}
+              onPress={() => setActiveTab(tab)}>
+              <Text
+                style={[
+                  FONTS.fs_14_medium,
+                  styles.tabText,
+                  isDisabled && styles.tabText,
+                  activeTab === tab && styles.tabTextActive,
+                ]}>
+                {tab}
+              </Text>
+            </TouchableOpacity>
           );
         })}
       </View>
@@ -272,7 +280,7 @@ const GuesthouseManagement = () => {
       ) : activeTab === tabs[1] ? (
         <RoomReservation guesthouseId={effectiveGuesthouseId} />
       ) : activeTab === tabs[2] ? (
-        <PartyInfo />
+        <PartyInfo guesthouseId={effectiveGuesthouseId} />
       ) : (
         <PartyReservation />
       )}

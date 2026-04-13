@@ -1,14 +1,14 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import {PanResponder, ScrollView, Switch, Text, TouchableOpacity, View} from 'react-native';
-import {Calendar} from 'react-native-calendars';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { PanResponder, ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Calendar } from 'react-native-calendars';
 import Toast from 'react-native-toast-message';
 
 import AlertModal from '@components/modals/AlertModal';
-import {CALENDAR_COMMON_PROPS, CALENDAR_THEME} from '@constants/calendarConfig';
-import {COLORS} from '@constants/colors';
-import {FONTS} from '@constants/fonts';
+import { CALENDAR_COMMON_PROPS, CALENDAR_THEME } from '@constants/calendarConfig';
+import { COLORS } from '@constants/colors';
+import { FONTS } from '@constants/fonts';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
-import {formatLocalDateToDotWithDay} from '@utils/formatDate';
+import { formatLocalDateToDotWithDay } from '@utils/formatDate';
 import styles from './RoomManagement.styles';
 
 import ChevronRight from '@assets/images/chevron_right_black.svg';
@@ -52,19 +52,8 @@ const normalizeInventory = (inventory = {}, fallbackRoom = {}) => ({
   ),
 });
 
-const buildRoomStateMap = (rooms = []) =>
-  rooms.reduce((acc, room) => {
-    const roomId = room?.roomId;
-    if (roomId == null) return acc;
 
-    acc[String(roomId)] = {
-      isClosed: Boolean(room?.isClosed),
-      displayBeds: Number(room?.displayBeds ?? 0),
-    };
-    return acc;
-  }, {});
-
-const RoomManagement = ({guesthouseId}) => {
+const RoomManagement = ({ guesthouseId }) => {
   const getTodayLocalDate = () => {
     const today = new Date();
     const year = today.getFullYear();
@@ -87,10 +76,8 @@ const RoomManagement = ({guesthouseId}) => {
   const [guesthouses, setGuesthouses] = useState([]);
   const [isInventoryLoading, setIsInventoryLoading] = useState(true);
   const [inventoryErrorMessage, setInventoryErrorMessage] = useState('');
-  const [isApplying, setIsApplying] = useState(false);
   const [dormitoryRooms, setDormitoryRooms] = useState([]);
   const [normalRooms, setNormalRooms] = useState([]);
-  const [initialRoomStates, setInitialRoomStates] = useState({});
   const [errorModal, setErrorModal] = useState({
     visible: false,
     message: '',
@@ -126,7 +113,6 @@ const RoomManagement = ({guesthouseId}) => {
     if (!guesthouseId || normalizedRooms.length === 0) {
       setDormitoryRooms([]);
       setNormalRooms([]);
-      setInitialRoomStates({});
       setInventoryErrorMessage('');
       setIsInventoryLoading(false);
       return;
@@ -178,7 +164,6 @@ const RoomManagement = ({guesthouseId}) => {
       if (successfulRooms.length === 0 && failedResults.length > 0) {
         setDormitoryRooms([]);
         setNormalRooms([]);
-        setInitialRoomStates({});
         setInventoryErrorMessage(
           failedResults[0]?.message ?? '객실 정보를 불러오지 못했습니다.',
         );
@@ -191,7 +176,6 @@ const RoomManagement = ({guesthouseId}) => {
       setNormalRooms(
         successfulRooms.filter(room => room.roomType !== 'DORMITORY'),
       );
-      setInitialRoomStates(buildRoomStateMap(successfulRooms));
 
       if (failedResults.length > 0) {
         setInventoryErrorMessage(
@@ -237,94 +221,77 @@ const RoomManagement = ({guesthouseId}) => {
     },
   };
 
-  const handleToggleDormitoryRoom = (roomId, nextValue) => {
+  const handleToggleDormitoryRoom = async (roomId, nextValue) => {
+    const nextIsClosed = !nextValue;
     setDormitoryRooms(prev =>
-      prev.map(room => (room.roomId === roomId ? {...room, isClosed: !nextValue} : room)),
+      prev.map(room => (room.roomId === roomId ? { ...room, isClosed: nextIsClosed } : room)),
     );
-  };
-
-  const handleToggleNormalRoom = (roomId, nextValue) => {
-    setNormalRooms(prev =>
-      prev.map(room => (room.roomId === roomId ? {...room, isClosed: !nextValue} : room)),
-    );
-  };
-
-  const handleChangeDormitoryBeds = (roomId, diff) => {
-    setDormitoryRooms(prev =>
-      prev.map(room => {
-        if (room.roomId !== roomId) return room;
-        const maxCapacity = Number(room?.roomMaxCapacity ?? 0);
-        const reservedBeds = Number(room?.reservedBeds ?? 0);
-        const maxSellableBeds =
-          maxCapacity > 0 ? Math.max(0, maxCapacity - reservedBeds) : Number.MAX_SAFE_INTEGER;
-        const nextBeds = Math.min(maxSellableBeds, Math.max(0, room.displayBeds + diff));
-        return {...room, displayBeds: nextBeds};
-      }),
-    );
-  };
-
-  const handleApplyChanges = async () => {
-    if (!guesthouseId || isApplying) return;
-
-    const allRooms = [...dormitoryRooms, ...normalRooms];
-    const statusTasks = [];
-    const availableBedsTasks = [];
-
-    allRooms.forEach(room => {
-      const roomId = room?.roomId;
-      if (roomId == null) return;
-
-      const previous = initialRoomStates[String(roomId)];
-      if (!previous) return;
-
-      const nextIsClosed = Boolean(room?.isClosed);
-      const prevIsClosed = Boolean(previous?.isClosed);
-
-      if (nextIsClosed !== prevIsClosed) {
-        statusTasks.push(
-          hostGuesthouseApi.updateRoomStatusByDate(guesthouseId, roomId, {
-            date: selectedDate,
-            isClosed: nextIsClosed,
-          }),
-        );
-      }
-
-      if (room?.roomType === 'DORMITORY') {
-        const nextDisplayBeds = Number(room?.displayBeds ?? 0);
-        const prevDisplayBeds = Number(previous?.displayBeds ?? 0);
-
-        if (nextDisplayBeds !== prevDisplayBeds) {
-          availableBedsTasks.push(
-            hostGuesthouseApi.updateAvailableBeds(guesthouseId, roomId, {
-              date: selectedDate,
-              availableBeds: nextDisplayBeds,
-            }),
-          );
-        }
-      }
-    });
-
-    const tasks = [...statusTasks, ...availableBedsTasks];
-    if (tasks.length === 0) return;
-
-    setIsApplying(true);
     try {
-      await Promise.all(tasks);
-      setInitialRoomStates(buildRoomStateMap(allRooms));
+      await hostGuesthouseApi.updateRoomStatusByDate(guesthouseId, roomId, {
+        date: selectedDate,
+        isClosed: nextIsClosed,
+      });
       Toast.show({
         type: 'success',
         text1: '변경 내용이 저장되었어요.',
         position: 'top',
       });
     } catch (error) {
-      const message =
-        error?.response?.data?.message ?? '변경 내용을 저장하지 못했습니다. 다시 시도해 주세요.';
-      setErrorModal({
-        visible: true,
-        message,
+      setErrorModal({ visible: true, message: '저장에 실패했습니다. 다시 시도해 주세요.' });
+      fetchInventoryBySelectedDate();
+    }
+  };
+
+  const handleToggleNormalRoom = async (roomId, nextValue) => {
+    const nextIsClosed = !nextValue;
+    setNormalRooms(prev =>
+      prev.map(room => (room.roomId === roomId ? { ...room, isClosed: nextIsClosed } : room)),
+    );
+    try {
+      await hostGuesthouseApi.updateRoomStatusByDate(guesthouseId, roomId, {
+        date: selectedDate,
+        isClosed: nextIsClosed,
       });
-    } finally {
-      setIsApplying(false);
+      Toast.show({
+        type: 'success',
+        text1: '변경 내용이 저장되었어요.',
+        position: 'top',
+      });
+    } catch (error) {
+      setErrorModal({ visible: true, message: '저장에 실패했습니다. 다시 시도해 주세요.' });
+      fetchInventoryBySelectedDate();
+    }
+  };
+
+  const handleChangeDormitoryBeds = async (roomId, diff) => {
+    const room = dormitoryRooms.find(r => r.roomId === roomId);
+    if (!room) return;
+
+    const maxCapacity = Number(room?.roomMaxCapacity ?? 0);
+    const reservedBeds = Number(room?.reservedBeds ?? 0);
+    const maxSellableBeds =
+      maxCapacity > 0 ? Math.max(0, maxCapacity - reservedBeds) : Number.MAX_SAFE_INTEGER;
+    const nextBeds = Math.min(maxSellableBeds, Math.max(0, room.displayBeds + diff));
+
+    if (nextBeds === room.displayBeds) return;
+
+    setDormitoryRooms(prev =>
+      prev.map(r => (r.roomId === roomId ? { ...r, displayBeds: nextBeds } : r)),
+    );
+
+    try {
+      await hostGuesthouseApi.updateAvailableBeds(guesthouseId, roomId, {
+        date: selectedDate,
+        availableBeds: nextBeds,
+      });
+      Toast.show({
+        type: 'success',
+        text1: '변경 내용이 저장되었어요.',
+        position: 'top',
+      });
+    } catch (error) {
+      setErrorModal({ visible: true, message: '저장에 실패했습니다. 다시 시도해 주세요.' });
+      fetchInventoryBySelectedDate();
     }
   };
 
@@ -465,7 +432,7 @@ const RoomManagement = ({guesthouseId}) => {
                     </Text>
                     <TouchableOpacity
                       activeOpacity={canIncreaseBeds ? 0.8 : 1}
-                      style={[styles.bedControlButton, !canIncreaseBeds ? {opacity: 0.35} : null]}
+                      style={[styles.bedControlButton, !canIncreaseBeds ? { opacity: 0.35 } : null]}
                       onPress={() => {
                         if (canIncreaseBeds) {
                           handleChangeDormitoryBeds(room.roomId, 1);
@@ -553,24 +520,12 @@ const RoomManagement = ({guesthouseId}) => {
         </View>
       </ScrollView>
 
-      <TouchableOpacity
-        style={[styles.addButton, isApplying ? {opacity: 0.6} : null]}
-        onPress={handleApplyChanges}
-        disabled={
-          isApplying ||
-          isInventoryLoading ||
-          !guesthouseId ||
-          Boolean(inventoryErrorMessage)
-        }>
-        <Text style={[FONTS.fs_14_medium, styles.addButtonText]}>적용하기</Text>
-      </TouchableOpacity>
-
       <AlertModal
         visible={errorModal.visible}
         message={errorModal.message}
         buttonText="확인"
         onPress={async () => {
-          setErrorModal({visible: false, message: ''});
+          setErrorModal({ visible: false, message: '' });
           await fetchInventoryBySelectedDate();
         }}
       />
@@ -580,7 +535,7 @@ const RoomManagement = ({guesthouseId}) => {
         message={limitModal.message}
         buttonText="확인"
         onPress={() => {
-          setLimitModal({visible: false, message: ''});
+          setLimitModal({ visible: false, message: '' });
         }}
       />
     </View>

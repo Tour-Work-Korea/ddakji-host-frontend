@@ -50,9 +50,6 @@ import {
   GuesthousePost,
   MyGuesthouseIntroList,
   MyGuesthouseIntroForm,
-  MeetBasics,
-  MeetDetails,
-  MeetDirections,
   MyGuesthouseReservationCalendar,
   MyRoomManage,
   CustomerNotificationSettings,
@@ -179,9 +176,6 @@ const RootNavigation = () => {
       <Stack.Screen name="MyMeetList" component={MyMeetList} />
       <Stack.Screen name="MyMeetDetail" component={MyMeetDetail} />
       <Stack.Screen name="MyMeetAdd" component={MyMeetAdd} />
-      <Stack.Screen name="MeetBasics" component={MeetBasics} />
-      <Stack.Screen name="MeetDetails" component={MeetDetails} />
-      <Stack.Screen name="MeetDirections" component={MeetDirections} />
       <Stack.Screen name="HostProfilePage" component={HostProfilePage} />
 
       {/* 이벤트화면 */}

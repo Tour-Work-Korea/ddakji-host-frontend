@@ -3,15 +3,15 @@ import api from './axiosInstance';
 const hostMeetApi = {
   // 사장님 파티 공고 전체 조회
   getMyParties: () =>
-    api.get('/host/parties'),
+    api.get('/host/parties/templates'),
 
   // 파티 공고 상세 조회
   getPartyDetail: (partyId) =>
-    api.get(`/host/parties/${partyId}`),
+    api.get(`/host/parties/daily/${partyId}`),
 
   // 파티 공고 등록
   createParty: (data) =>
-    api.post('/host/parties', data),
+    api.post('/host/parties/templates', data),
 
   // 파티 공고 단건 수정
   updateParty: (partyId, data) =>

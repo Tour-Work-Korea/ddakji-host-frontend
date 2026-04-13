@@ -37,11 +37,13 @@ const StoreRegisterList = () => {
         styles.listItem,
         index !== storeRegisters.length - 1 && styles.listItemBorder,
       ]}
-      activeOpacity={0.8}
+      activeOpacity={item.status === '승인 완료' ? 0.8 : 1}
+      disabled={item.status !== '승인 완료'}
       onPress={() =>
         navigation.navigate('GuesthouseManagement', {
           businessName: item.businessName,
-          storeRegisterId: item.id,
+          guesthouseId: item.guesthouseId ?? null,
+          profileKey: item.guesthouseId ? String(item.guesthouseId) : String(item.id),
         })
       }>
       <View style={styles.listItemLeft}>
