@@ -1,102 +1,256 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Switch, Text, TouchableOpacity, View} from 'react-native';
+import Toast from 'react-native-toast-message';
 
+import AlertModal from '@components/modals/AlertModal';
 import {COLORS} from '@constants/colors';
 import {FONTS} from '@constants/fonts';
+import hostMeetApi from '@utils/api/hostMeetApi';
 import styles from './Settings.styles';
 
-import CancelReservationIcon from '@assets/images/cancel_reservation.svg';
+import CancelReservationIcon from '@assets/images/unbooked_orange.svg';
 import MinusIcon from '@assets/images/minus_black.svg';
 import PlusIcon from '@assets/images/plus_black.svg';
 
-const Settings = () => {
+const Settings = ({guesthouseId}) => {
+  const [dailyParty, setDailyParty] = useState(null);
+  const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const [isExposed, setIsExposed] = useState(true);
   const [maxCapacity, setMaxCapacity] = useState(20);
 
+  useEffect(() => {
+    const fetchDailyParty = async () => {
+      if (!guesthouseId) {
+        setDailyParty(null);
+        return;
+      }
+
+      try {
+        const response = await hostMeetApi.getTodayParties();
+        const parties = Array.isArray(response?.data) ? response.data : [];
+        const matchedParty =
+          parties.find(
+            item => String(item?.guesthouseId) === String(guesthouseId),
+          ) || null;
+
+        setDailyParty(matchedParty);
+
+        if (matchedParty) {
+          setIsExposed(Boolean(matchedParty.isVisible));
+          setMaxCapacity(Number(matchedParty.maxAttendance) || 20);
+        }
+      } catch (error) {
+        setDailyParty(null);
+      }
+    };
+
+    fetchDailyParty();
+  }, [guesthouseId]);
+
+  const currentAttendees = Number(dailyParty?.numOfAttendance) || 0;
+  const partyTitle = dailyParty?.partyTitle || '파티 이름 없음';
+  const exposureLabel = isExposed ? '노출중' : '미노출';
+  const exposureDescription = isExposed
+    ? '현재 유저에게 노출 중입니다'
+    : '현재 유저에게 노출되지 않고 있습니다';
+
   const handleChangeCapacity = diff => {
-    setMaxCapacity(prev => Math.max(1, prev + diff));
+    setMaxCapacity(prev => Math.max(currentAttendees, prev + diff));
+  };
+
+  const handleToggleVisibility = async nextValue => {
+    const partyId = dailyParty?.partyId;
+
+    if (!partyId) {
+      Toast.show({
+        type: 'error',
+        text1: '노출 상태를 변경할 파티 정보가 없어요.',
+        position: 'top',
+      });
+      return;
+    }
+
+    try {
+      await hostMeetApi.updatePartyVisibility(partyId, nextValue);
+      setIsExposed(nextValue);
+      Toast.show({
+        type: 'success',
+        text1: nextValue
+          ? '파티가 노출 상태로 변경되었어요.'
+          : '파티가 미노출 상태로 변경되었어요.',
+        position: 'top',
+      });
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: '노출 상태 변경 중 오류가 발생했어요.',
+        position: 'top',
+      });
+    }
+  };
+
+  const handleCancelParty = async () => {
+    const partyId = dailyParty?.partyId;
+
+    if (!partyId) {
+      setCancelModalVisible(false);
+      Toast.show({
+        type: 'error',
+        text1: '취소할 파티 정보가 없어요.',
+        position: 'top',
+      });
+      return;
+    }
+
+    try {
+      await hostMeetApi.cancelParty(partyId);
+      setCancelModalVisible(false);
+      Toast.show({
+        type: 'success',
+        text1: '오늘 파티가 취소되었어요.',
+        position: 'top',
+      });
+    } catch (error) {
+      setCancelModalVisible(false);
+      Toast.show({
+        type: 'error',
+        text1: '파티 취소 중 오류가 발생했어요.',
+        position: 'top',
+      });
+    }
+  };
+
+  const handleApplyMaxAttendees = async () => {
+    const partyId = dailyParty?.partyId;
+
+    if (!partyId) {
+      Toast.show({
+        type: 'error',
+        text1: '인원을 변경할 파티 정보가 없어요.',
+        position: 'top',
+      });
+      return;
+    }
+
+    try {
+      await hostMeetApi.updatePartyMaxAttendees(partyId, maxCapacity);
+      Toast.show({
+        type: 'success',
+        text1: '최대 인원이 적용되었어요.',
+        position: 'top',
+      });
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: '최대 인원 변경 중 오류가 발생했어요.',
+        position: 'top',
+      });
+    }
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.sectionCard}>
-        <View style={styles.cancelTitleRow}>
-          <CancelReservationIcon width={24} height={24} />
-          <Text style={[FONTS.fs_20_semibold, styles.cancelTitle]}>
-            오늘의 파티 취소
-          </Text>
+        <View style={styles.cancelContentRow}>
+          <CancelReservationIcon width={20} height={20} />
+          <View style={styles.cancelTitleRow}>
+            <Text style={[FONTS.fs_16_medium, styles.cancelTitle]}>
+              오늘의 파티 취소
+            </Text>
+            <Text style={[FONTS.fs_12_medium, styles.cancelDescription]}>
+              예기치 못한 상황으로 오늘 파티를 진행할 수 없는 경우 사용하세요. 모든
+              예약자에게 즉시 알림이 발송됩니다.
+            </Text>
+          </View>
         </View>
 
-        <Text style={[FONTS.fs_14_regular, styles.cancelDescription]}>
-          예기치 못한 상황으로 오늘 파티를 진행할 수 없는 경우 사용하세요. 모든
-          예약자에게 즉시 알림이 발송됩니다.
-        </Text>
-
-        <TouchableOpacity activeOpacity={0.8} style={styles.cancelButton}>
-          <Text style={[FONTS.fs_16_medium, styles.cancelButtonText]}>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          style={styles.cancelButton}
+          onPress={() => setCancelModalVisible(true)}>
+          <Text style={[FONTS.fs_12_medium, styles.cancelButtonText]}>
             오늘 파티 취소하기
           </Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.section}>
-        <Text style={[FONTS.fs_20_semibold, styles.sectionTitle]}>
+        <Text style={[FONTS.fs_14_semibold, styles.sectionTitle]}>
           파티 노출 상태
         </Text>
 
         <View style={styles.sectionCard}>
           <View style={styles.exposureRow}>
-            <View style={styles.exposureInfo}>
-              <View style={styles.exposureTitleRow}>
-                <Text style={[FONTS.fs_20_semibold, styles.partyTitle]}>
-                  524 포틀럭 파티
-                </Text>
-                <View style={styles.exposureBadge}>
-                  <Text style={[FONTS.fs_14_medium, styles.exposureBadgeText]}>
-                    노출중
+            <View style={styles.exposureTopRow}>
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={[FONTS.fs_16_semibold, styles.partyTitle]}>
+                {partyTitle}
+              </Text>
+
+              <View style={styles.exposureRightGroup}>
+                <View
+                  style={[
+                    styles.exposureBadge,
+                    isExposed
+                      ? styles.exposureBadgeVisible
+                      : styles.exposureBadgeHidden,
+                  ]}>
+                  <Text
+                    style={[
+                      FONTS.fs_12_medium,
+                      isExposed
+                        ? styles.exposureBadgeTextVisible
+                        : styles.exposureBadgeTextHidden,
+                    ]}>
+                    {exposureLabel}
                   </Text>
                 </View>
-              </View>
 
-              <Text style={[FONTS.fs_16_regular, styles.exposureDescription]}>
-                현재 유저에게 노출 중입니다
-              </Text>
+                <Switch
+                  value={isExposed}
+                  onValueChange={handleToggleVisibility}
+                  trackColor={{
+                    false: COLORS.grayscale_300,
+                    true: COLORS.primary_orange,
+                  }}
+                  thumbColor={COLORS.grayscale_0}
+                  ios_backgroundColor={COLORS.grayscale_300}
+                />
+              </View>
             </View>
 
-            <Switch
-              value={isExposed}
-              onValueChange={setIsExposed}
-              trackColor={{
-                false: COLORS.grayscale_300,
-                true: COLORS.primary_orange,
-              }}
-              thumbColor={COLORS.grayscale_0}
-              ios_backgroundColor={COLORS.grayscale_300}
-            />
+            <Text style={[FONTS.fs_12_medium, styles.exposureDescription]}>
+              {exposureDescription}
+            </Text>
           </View>
         </View>
       </View>
 
       <View style={styles.section}>
-        <Text style={[FONTS.fs_20_semibold, styles.sectionTitle]}>
+        <Text style={[FONTS.fs_14_semibold, styles.sectionTitle]}>
           파티 최대 인원
         </Text>
 
         <View style={styles.sectionCard}>
-          <Text style={[FONTS.fs_16_semibold, styles.capacityLabel]}>
-            현재 신청: <Text style={styles.capacityValue}>8명</Text>
+          <Text style={[FONTS.fs_14_medium, styles.capacityLabel]}>
+            현재 신청: <Text style={styles.capacityValue}>{currentAttendees}</Text>명
           </Text>
 
           <View style={styles.capacityControlRow}>
             <TouchableOpacity
-              activeOpacity={0.8}
-              style={styles.capacityButton}
+              activeOpacity={maxCapacity <= currentAttendees ? 1 : 0.8}
+              style={[
+                styles.capacityButton,
+                maxCapacity <= currentAttendees && styles.capacityButtonDisabled,
+              ]}
               onPress={() => handleChangeCapacity(-1)}>
-              <MinusIcon width={18} height={18} />
+              <MinusIcon width={16} height={16} />
             </TouchableOpacity>
 
             <View style={styles.capacityInputBox}>
-              <Text style={[FONTS.fs_20_medium, styles.capacityInputText]}>
+              <Text style={[FONTS.fs_16_regular, styles.capacityInputText]}>
                 {maxCapacity}
               </Text>
             </View>
@@ -105,11 +259,32 @@ const Settings = () => {
               activeOpacity={0.8}
               style={styles.capacityButton}
               onPress={() => handleChangeCapacity(1)}>
-              <PlusIcon width={18} height={18} />
+              <PlusIcon width={16} height={16} />
             </TouchableOpacity>
           </View>
+
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={styles.applyButton}
+            onPress={handleApplyMaxAttendees}>
+            <Text style={[FONTS.fs_12_medium, styles.applyButtonText]}>
+              인원 적용하기
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
+
+      <AlertModal
+        visible={cancelModalVisible}
+        title="정말로 오늘 파티를 취소하시겠어요?"
+        message={
+          `현재 신청자: ${currentAttendees}명\n취소 시 모든 예약이 자동으로 취소되며,\n신청자에게 알림이 발송됩니다.`
+        }
+        buttonText="취소하기"
+        buttonText2="돌아가기"
+        onPress={handleCancelParty}
+        onPress2={() => setCancelModalVisible(false)}
+      />
     </View>
   );
 };

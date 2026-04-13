@@ -44,6 +44,8 @@ import {
   MyMeetList,
   MyMeetDetail,
   MyMeetAdd,
+  ReservationCancelList,
+  PastReservationList,
   FindPassword,
   VerifyPhone,
   FindIntro,
@@ -176,6 +178,14 @@ const RootNavigation = () => {
       <Stack.Screen name="MyMeetList" component={MyMeetList} />
       <Stack.Screen name="MyMeetDetail" component={MyMeetDetail} />
       <Stack.Screen name="MyMeetAdd" component={MyMeetAdd} />
+      <Stack.Screen
+        name="ReservationCancelList"
+        component={ReservationCancelList}
+      />
+      <Stack.Screen
+        name="PastReservationList"
+        component={PastReservationList}
+      />
       <Stack.Screen name="HostProfilePage" component={HostProfilePage} />
 
       {/* 이벤트화면 */}

@@ -10,79 +10,95 @@ export default StyleSheet.create({
     paddingTop: 14,
   },
   section: {
-    marginTop: 10,
+    marginTop: 20,
   },
   sectionTitle: {
-    color: COLORS.grayscale_700,
-    marginBottom: 12,
+    color: COLORS.grayscale_500,
+    marginBottom: 8,
   },
   sectionCard: {
     borderWidth: 1,
     borderColor: COLORS.grayscale_200,
-    borderRadius: 18,
+    borderRadius: 16,
     backgroundColor: COLORS.grayscale_0,
-    paddingHorizontal: 20,
-    paddingVertical: 20,
+    padding: 20,
+  },
+  cancelContentRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
   },
   cancelTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 10,
+    flex: 1,
+    minWidth: 0,
+    gap: 4,
+    marginLeft: 12,
   },
   cancelTitle: {
     color: COLORS.grayscale_700,
   },
   cancelDescription: {
+    flexShrink: 1,
     color: COLORS.grayscale_500,
-    lineHeight: 22,
+    lineHeight: 16,
   },
   cancelButton: {
     alignSelf: 'flex-end',
-    marginTop: 20,
+    marginTop: 12,
     backgroundColor: COLORS.primary_orange,
-    borderRadius: 14,
-    paddingHorizontal: 18,
-    paddingVertical: 13,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   cancelButtonText: {
     color: COLORS.grayscale_0,
   },
+
   exposureRow: {
+    gap: 4,
+  },
+  exposureTopRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 12,
-  },
-  exposureInfo: {
-    flex: 1,
-  },
-  exposureTitleRow: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 10,
+    gap: 8,
   },
   partyTitle: {
     color: COLORS.grayscale_700,
+    flex: 1,
+    minWidth: 0,
+  },
+  exposureRightGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    flexShrink: 0,
+    marginLeft: 8,
   },
   exposureBadge: {
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 10,
+    paddingVertical: 4,
+    borderRadius: 4,
     borderWidth: 1,
-    borderColor: COLORS.primary_orange,
-    backgroundColor: '#FFF4EF',
   },
-  exposureBadgeText: {
+  exposureBadgeVisible: {
+    borderColor: COLORS.primary_orange,
+  },
+  exposureBadgeHidden: {
+    borderColor: COLORS.grayscale_300,
+  },
+  exposureBadgeTextVisible: {
     color: COLORS.primary_orange,
+  },
+  exposureBadgeTextHidden: {
+    color: COLORS.grayscale_400,
   },
   exposureDescription: {
     color: COLORS.grayscale_500,
   },
+
   capacityLabel: {
     color: COLORS.grayscale_700,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   capacityValue: {
     color: COLORS.primary_orange,
@@ -95,20 +111,34 @@ export default StyleSheet.create({
   capacityButton: {
     width: 40,
     height: 40,
-    borderRadius: 10,
+    borderRadius: 8,
     backgroundColor: COLORS.grayscale_100,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  capacityButtonDisabled: {
+    opacity: 0.35,
+  },
   capacityInputBox: {
     flex: 1,
-    height: 44,
-    borderRadius: 10,
-    backgroundColor: '#F2F6FC',
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: COLORS.grayscale_100,
     alignItems: 'center',
     justifyContent: 'center',
   },
   capacityInputText: {
     color: COLORS.grayscale_700,
+  },
+  applyButton: {
+    alignSelf: 'flex-end',
+    marginTop: 14,
+    backgroundColor: COLORS.primary_orange,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  applyButtonText: {
+    color: COLORS.grayscale_0,
   },
 });

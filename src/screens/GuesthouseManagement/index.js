@@ -8,6 +8,7 @@ import AlertModal from '@components/modals/AlertModal';
 import GuesthouseProfileList from '@components/modals/HostMy/Guesthouse/GuesthouseProfileList';
 import GuesthouseInfo from './GuesthouseInfo';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
+import hostMeetApi from '@utils/api/hostMeetApi';
 import PartyInfo from './PartyInfo';
 import PartyReservation from './PartyReservation';
 import RoomReservation from './RoomReservation';
@@ -36,6 +37,7 @@ const GuesthouseManagement = () => {
   const setHostProfile = useUserStore(state => state.setHostProfile);
   const [isGuesthouseListVisible, setIsGuesthouseListVisible] = useState(false);
   const [guesthouseDetail, setGuesthouseDetail] = useState(null);
+  const [hasPartyTemplate, setHasPartyTemplate] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [activeTab, setActiveTab] = useState(tabs[0]);
   const [selectedProfileKey, setSelectedProfileKey] = useState(initialProfileKey);
@@ -133,10 +135,30 @@ const GuesthouseManagement = () => {
     }
   }, [effectiveGuesthouseId]);
 
+  const fetchPartyTemplates = useCallback(async () => {
+    if (!effectiveGuesthouseId) {
+      setHasPartyTemplate(false);
+      return;
+    }
+
+    try {
+      const response = await hostMeetApi.getMyParties();
+      const templates = Array.isArray(response?.data) ? response.data : [];
+      const matchedTemplate = templates.some(
+        item => String(item?.guesthouseId) === String(effectiveGuesthouseId),
+      );
+
+      setHasPartyTemplate(matchedTemplate);
+    } catch (error) {
+      setHasPartyTemplate(false);
+    }
+  }, [effectiveGuesthouseId]);
+
   useFocusEffect(
     useCallback(() => {
       fetchGuesthouseDetail();
-    }, [fetchGuesthouseDetail]),
+      fetchPartyTemplates();
+    }, [fetchGuesthouseDetail, fetchPartyTemplates]),
   );
 
   useEffect(() => {
@@ -144,6 +166,12 @@ const GuesthouseManagement = () => {
       setActiveTab(tabs[0]);
     }
   }, [activeTab, guesthouseDetail]);
+
+  useEffect(() => {
+    if (activeTab === tabs[3] && !hasPartyTemplate) {
+      setActiveTab(tabs[0]);
+    }
+  }, [activeTab, hasPartyTemplate]);
 
   const businessName = selectedGuesthouse?.name || routeBusinessName;
   const thumbnailImage =
@@ -244,7 +272,10 @@ const GuesthouseManagement = () => {
       <View style={styles.tabRow}>
         {tabs.map(tab => {
           const isInactive = guesthouseDetail?.status === 'INACTIVE';
-          const isDisabled = (!guesthouseDetail || isInactive) && tab !== tabs[0];
+          const isPartyReservationTab = tab === tabs[3];
+          const isDisabled =
+            (((!guesthouseDetail || isInactive) && tab !== tabs[0]) ||
+              (isPartyReservationTab && !hasPartyTemplate));
 
           return (
             <TouchableOpacity

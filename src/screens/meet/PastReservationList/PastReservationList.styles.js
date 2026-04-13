@@ -11,21 +11,40 @@ export default StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 12,
-    paddingTop: 14,
+    paddingHorizontal: 16,
+    paddingTop: 12,
     paddingBottom: 28,
   },
-  headerRow: {
+  dateSelectContainer: {
+    marginBottom: 12,
+  },
+  dateSelectBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 14,
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: COLORS.grayscale_200,
+    borderRadius: 12,
+    backgroundColor: COLORS.grayscale_0,
   },
-  headerTitle: {
-    color: COLORS.grayscale_900,
+  calendarContainer: {
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: COLORS.grayscale_200,
+    borderRadius: 12,
+    backgroundColor: COLORS.grayscale_0,
+    overflow: 'hidden',
   },
-  headerDate: {
-    color: COLORS.grayscale_600,
+  dateText: {
+    color: COLORS.grayscale_700,
+  },
+  disabledArrowButton: {
+    opacity: 0.35,
+  },
+  disabledArrowIcon: {
+    opacity: 0.35,
   },
   summaryCard: {
     flexDirection: 'row',
@@ -85,25 +104,18 @@ export default StyleSheet.create({
   listCount: {
     color: COLORS.primary_orange,
   },
-  sortButton: {
-    alignSelf: 'flex-start',
-    marginBottom: 12,
-  },
-  sortButtonText: {
-    color: COLORS.grayscale_600,
-  },
   listSection: {
     gap: 12,
-    marginBottom: 32,
   },
   reservationCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     paddingVertical: 16,
     borderWidth: 1,
     borderColor: COLORS.grayscale_200,
-    borderRadius: 16,
+    borderRadius: 18,
+    backgroundColor: COLORS.grayscale_0,
   },
   reservationInfo: {
     flex: 1,
@@ -112,15 +124,15 @@ export default StyleSheet.create({
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   },
   nameText: {
     color: COLORS.grayscale_700,
   },
   genderBadge: {
-    paddingVertical: 2,
-    paddingHorizontal: 8,
-    borderRadius: 100,
+    width: 20,
+    height: 20,
+    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -136,15 +148,8 @@ export default StyleSheet.create({
   genderFemaleText: {
     color: COLORS.semantic_pink,
   },
-  birthdayBadge: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  birthdayText: {
-    color: COLORS.primary_orange,
-  },
   birthText: {
-    color: COLORS.grayscale_500,
+    color: COLORS.grayscale_400,
   },
   metaRow: {
     flexDirection: 'row',
@@ -155,11 +160,11 @@ export default StyleSheet.create({
     color: COLORS.grayscale_500,
   },
   metaDivider: {
-    backgroundColor: COLORS.grayscale_500,
     width: 2,
     height: 2,
-    borderRadius: 100,
+    borderRadius: 999,
     marginHorizontal: 2,
+    backgroundColor: COLORS.grayscale_500,
   },
   callButton: {
     padding: 8,
@@ -168,19 +173,5 @@ export default StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 12,
-  },
-  historyButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    borderWidth: 1,
-    borderColor: COLORS.grayscale_200,
-    borderRadius: 16,
-    paddingVertical: 16,
-    backgroundColor: COLORS.grayscale_0,
-  },
-  historyButtonText: {
-    color: COLORS.grayscale_600,
   },
 });
