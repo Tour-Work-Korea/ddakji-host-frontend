@@ -28,6 +28,8 @@ import {
   MyRecruitmentList,
   RecruitmentForm,
   HostEditInfo,
+  HostAgreementStatus,
+  HostDocumentViewer,
   ApplicantList,
   ApplicantListByRecruit,
   Setting,
@@ -39,6 +41,7 @@ import {
   MyRoomDetail,
   StoreRegisterForm1,
   StoreRegisterForm2,
+  StoreRegisterEditForm,
   StoreRegisterComplete,
   GuesthouseManagement,
   MyMeetList,
@@ -140,9 +143,21 @@ const RootNavigation = () => {
       <Stack.Screen name="FindPassword" component={FindPassword} />
       {/* 사장님 마이페이지 하단바 없는 화면 */}
       <Stack.Screen name="HostEditInfo" component={HostEditInfo} />
+      <Stack.Screen
+        name="HostAgreementStatus"
+        component={HostAgreementStatus}
+      />
+      <Stack.Screen
+        name="HostDocumentViewer"
+        component={HostDocumentViewer}
+      />
       <Stack.Screen name="HostEditProfile" component={HostEditProfile} />
       <Stack.Screen name="StoreRegisterForm1" component={StoreRegisterForm1} />
       <Stack.Screen name="StoreRegisterForm2" component={StoreRegisterForm2} />
+      <Stack.Screen
+        name="StoreRegisterEditForm"
+        component={StoreRegisterEditForm}
+      />
       <Stack.Screen
         name="StoreRegisterComplete"
         component={StoreRegisterComplete}

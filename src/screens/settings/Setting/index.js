@@ -1,13 +1,17 @@
 import React, {useState} from 'react';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
+import Toast from 'react-native-toast-message';
 
+import Avatar from '@components/Avatar';
 import Header from '@components/Header';
 import AlertModal from '@components/modals/AlertModal';
 import useUserStore from '@stores/userStore';
 
 import authApi from '@utils/api/authApi';
+import hostMyApi from '@utils/api/hostMyApi';
 import {tryLogout} from '@utils/auth/login';
+import {uploadSingleImage} from '@utils/imageUploadHandler';
 import {COLORS} from '@constants/colors';
 import {FONTS} from '@constants/fonts';
 import RightArrow from '@assets/images/chevron_right_gray.svg';
@@ -16,7 +20,9 @@ const Settings = () => {
   const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [isUpdatingPhoto, setIsUpdatingPhoto] = useState(false);
   const hostProfile = useUserStore(state => state.hostProfile);
+  const setHostProfile = useUserStore(state => state.setHostProfile);
   const accountName = hostProfile.name;
   const accountEmail = hostProfile.email;
   const accountPhone = hostProfile.phone;
@@ -52,11 +58,67 @@ const Settings = () => {
     }
   };
 
+  const handleEditPhoto = async () => {
+    if (isUpdatingPhoto) return;
+
+    try {
+      setIsUpdatingPhoto(true);
+      const uploadedUrl = await uploadSingleImage();
+
+      if (!uploadedUrl) {
+        return;
+      }
+
+      await hostMyApi.updatePhoto({photoUrl: uploadedUrl});
+      setHostProfile({
+        ...hostProfile,
+        photoUrl: uploadedUrl,
+      });
+
+      Toast.show({
+        type: 'success',
+        text1: '프로필 사진이 수정되었어요',
+        position: 'top',
+        visibilityTime: 2000,
+      });
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1:
+          error?.response?.data?.message ||
+          '프로필 사진 수정 중 오류가 발생했어요',
+        position: 'top',
+        visibilityTime: 2000,
+      });
+    } finally {
+      setIsUpdatingPhoto(false);
+    }
+  };
+
   return (
     <View style={styles.background}>
       <Header title={'설정'} />
 
       <View style={styles.container}>
+        <View>
+          <Text style={styles.menuHeader}>개인 프로필</Text>
+          <View style={styles.menuContainer}>
+            <TouchableOpacity
+              style={styles.menuRow}
+              onPress={handleEditPhoto}
+              activeOpacity={0.8}>
+              <Text style={styles.menuText}>프로필 사진</Text>
+              <View style={styles.profileButtonRow}>
+                <Avatar uri={hostProfile.photoUrl} size={40} iconSize={16} />
+                <Text style={styles.versionText}>
+                  {isUpdatingPhoto ? '업로드 중...' : '수정하기'}
+                </Text>
+                <RightArrow width={20} height={20} />
+              </View>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         <View>
           <Text style={styles.menuHeader}>계정 정보</Text>
           <View style={styles.menuContainer}>
@@ -162,6 +224,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+  },
+  profileButtonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   menuText: {
     ...FONTS.fs_16_medium,

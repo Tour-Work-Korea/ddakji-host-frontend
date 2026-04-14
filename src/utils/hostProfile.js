@@ -33,7 +33,10 @@ const normalizeGuesthouseProfiles = data => {
       applicationId: application?.applicationId ?? null,
       guesthouseId: application?.guesthouseId ?? null,
       guesthouseName: application?.businessName ?? '게스트하우스',
-      profileImageUrl: normalizeProfileImageUrl(application?.profileImageUrl),
+      profileImageUrl: normalizeProfileImageUrl(
+        application?.guesthouseProfileImageUrl ??
+          application?.profileImageUrl,
+      ),
       guesthouseStatus: application?.guesthouseStatus ?? null,
       applicationStatus: application?.applicationStatus ?? null,
       isDraftExists: Boolean(application?.isDraftExists),

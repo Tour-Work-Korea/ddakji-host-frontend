@@ -45,7 +45,7 @@ const menuSections = [
     key: 'contract',
     label: '계약서 및 개인정보 동의 현황',
     icon: ContractIcon,
-    routeName: 'StoreRegisterList',
+    routeName: 'HostAgreementStatus',
   },
   {
     key: 'alarm',

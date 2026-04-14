@@ -134,6 +134,14 @@ const hostGuesthouseApi = {
   // 사장님 입점신청서 조회
   getHostApplications: () => api.get('/host/my/application'),
 
+  // 사장님 입점신청서 삭제
+  deleteHostApplication: applicationId =>
+    api.delete(`/host/my/application/${applicationId}`),
+
+  // 게스트하우스 프로필 수정
+  updateGuesthouseProfile: (guesthouseId, payload) =>
+    api.put(`/host/guesthouses/${guesthouseId}/profile`, payload),
+
   // 사장님 입점 신청서 등록
   postHostApplication: formData =>
     api.post('/host/my/application', formData, {
