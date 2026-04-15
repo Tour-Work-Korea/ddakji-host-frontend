@@ -151,7 +151,7 @@ const MyMeetAdd = () => {
         setParty(prev => ({
           ...prev,
           partyTitle: data?.partyTitle ?? '',
-          tags: data?.tags ?? '',
+          tags: data?.partyTags ?? data?.tags ?? '',
           partyImages: normalizePartyImages(data?.partyImages),
           guesthouseId:
             Number(data?.guesthouseId) > 0
@@ -245,6 +245,7 @@ const MyMeetAdd = () => {
       return {
         ...prev,
         partyTitle: payload.partyTitle ?? prev.partyTitle,
+        // Keep local state key stable while accepting API's partyTags field on read/write.
         tags: payload.tags ?? prev.tags,
         partyImages: nextImages,
       };
@@ -418,7 +419,7 @@ const MyMeetAdd = () => {
         imageUrl: img.imageUrl,
         isThumbnail: !!img.isThumbnail,
       })),
-      tags: isNonEmpty(party.tags) ? String(party.tags).trim() : undefined,
+      partyTags: isNonEmpty(party.tags) ? String(party.tags).trim() : undefined,
 
       // 기본 정보
       guesthouseId: Number(party.guesthouseId),

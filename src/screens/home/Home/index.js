@@ -121,6 +121,10 @@ const HostHome = () => {
     navigate('NoticeList');
   };
 
+  const handlePressNotificationCenter = () => {
+    navigate('NotificationCenter');
+  };
+
   const handlePressNoticeDetail = notice => {
     navigate('NoticeDetail', {
       noticeId: notice?.id,
@@ -138,7 +142,10 @@ const HostHome = () => {
           <LogoIcon width={60} height={28} />
 
           <View style={styles.headerActions}>
-            <TouchableOpacity style={styles.headerIconButton} activeOpacity={0.8}>
+            <TouchableOpacity
+              style={styles.headerIconButton}
+              activeOpacity={0.8}
+              onPress={handlePressNotificationCenter}>
               <BellIcon width={18} height={18} />
             </TouchableOpacity>
             <TouchableOpacity

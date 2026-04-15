@@ -19,10 +19,12 @@ export {default as Result} from './auth/Register/Result';
 
 export {default as HostHome} from './home/Home';
 export {default as HostHomeMenu} from './home/Menu';
+export {default as NotificationCenter} from './notice/NotificationCenter';
 export {default as NoticeList} from './notice/NoticeList';
 export {default as NoticeDetail} from './notice/NoticeDetail';
 
 export {default as Setting} from './settings/Setting';
+export {default as NotificationSettings} from './settings/NotificationSettings';
 export {default as Terms} from './settings/Setting/Terms';
 
 export {default as HostMyPage} from './profile/MyPage';

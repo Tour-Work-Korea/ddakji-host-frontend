@@ -107,6 +107,14 @@ export default StyleSheet.create({
   listSection: {
     gap: 12,
   },
+  feedbackContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 32,
+  },
+  feedbackText: {
+    color: COLORS.grayscale_500,
+  },
   reservationCard: {
     flexDirection: 'row',
     alignItems: 'center',

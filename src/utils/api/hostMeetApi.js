@@ -35,14 +35,26 @@ const hostMeetApi = {
 
   // 오늘 파티 노출 여부 수정
   updatePartyVisibility: (partyId, isVisible) =>
-    api.patch(`/host/parties/daily/${partyId}/visibility`, {
-      isVisible,
+    api.patch(`/host/parties/daily/${partyId}/visibility`, null, {
+      params: {
+        isVisible,
+      },
     }),
 
   // 오늘 파티 최대 인원 수정
   updatePartyMaxAttendees: (partyId, maxAttendees) =>
-    api.patch(`/host/parties/daily/${partyId}/max-attendees`, {
-      maxAttendees,
+    api.patch(`/host/parties/daily/${partyId}/max-attendees`, null, {
+      params: {
+        maxAttendees,
+      },
+    }),
+
+  // 날짜별 파티 예약 요약 조회
+  getPartyReservationSummary: (guesthouseId, date) =>
+    api.get(`/host/parties/daily/${guesthouseId}/reservations/summary`, {
+      params: {
+        date,
+      },
     }),
 
   // 오늘 파티 취소

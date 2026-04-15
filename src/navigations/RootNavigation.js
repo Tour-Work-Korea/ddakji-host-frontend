@@ -33,6 +33,8 @@ import {
   ApplicantList,
   ApplicantListByRecruit,
   Setting,
+  NotificationSettings,
+  NotificationCenter,
   Terms,
   MyGuesthouseList,
   MyGuesthouseReview,
@@ -123,6 +125,14 @@ const RootNavigation = () => {
       <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="undefined" component={undefinedStack} />
       <Stack.Screen name="Setting" component={Setting} />
+      <Stack.Screen
+        name="NotificationSettings"
+        component={NotificationSettings}
+      />
+      <Stack.Screen
+        name="NotificationCenter"
+        component={NotificationCenter}
+      />
       <Stack.Screen name="Terms" component={Terms} />
       <Stack.Screen name="NoticeList" component={NoticeList} />
       <Stack.Screen name="NoticeDetail" component={NoticeDetail} />

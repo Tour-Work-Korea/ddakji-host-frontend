@@ -12,6 +12,7 @@ import authApi from '@utils/api/authApi';
 import hostMyApi from '@utils/api/hostMyApi';
 import {tryLogout} from '@utils/auth/login';
 import {uploadSingleImage} from '@utils/imageUploadHandler';
+import {APP_VERSION} from '@constants/appVersion';
 import {COLORS} from '@constants/colors';
 import {FONTS} from '@constants/fonts';
 import RightArrow from '@assets/images/chevron_right_gray.svg';
@@ -156,7 +157,7 @@ const Settings = () => {
           <View style={styles.menuContainer}>
             <View style={styles.menuRow}>
               <Text style={styles.menuText}>버전 정보</Text>
-              <Text style={styles.versionText}>ver.1</Text>
+              <Text style={styles.versionText}>{`ver.${APP_VERSION}`}</Text>
             </View>
             <TouchableOpacity
               style={styles.menuRow}
