@@ -7,6 +7,7 @@ import hostMyApi from '@utils/api/hostMyApi';
 import {normalizeHostProfile} from '@utils/hostProfile';
 import {log, mask} from '@utils/logger';
 import {navigate} from '@utils/navigationService';
+import {syncDeviceToken, unmapDeviceToken} from '@utils/notifications';
 
 const REFRESH_KEY = 'refresh-token';
 
@@ -15,14 +16,19 @@ export const tryAutoLogin = async () => {
   try {
     const storedRefresh = await EncryptedStorage.getItem(REFRESH_KEY);
     log.info('🔐 has refreshToken?', !!storedRefresh);
-    if (!storedRefresh) return false;
+    if (!storedRefresh) {
+      return false;
+    }
 
     const ok = await tryRefresh({silent: true});
     log.info('🚪 tryAutoLogin: refresh result =', ok);
     if (ok) {
-      const {userRole} = useUserStore.getState();
+      const {userRole, accessToken} = useUserStore.getState();
       log.info('👤 tryAutoLogin: userRole =', userRole);
-      if (userRole) await updateProfile(userRole);
+      await syncDeviceToken(accessToken);
+      if (userRole) {
+        await updateProfile(userRole);
+      }
     }
     return ok;
   } catch (err) {
@@ -35,7 +41,7 @@ export const storeLoginTokens = async ({
   accessToken,
   refreshToken,
   userRole,
-  needVerification
+  needVerification,
 }) => {
   log.info(
     '✅ login success: accessToken=',
@@ -60,6 +66,7 @@ export const storeLoginTokens = async ({
   const check = await EncryptedStorage.getItem(REFRESH_KEY);
   log.info('🔐 saved refresh?', !!check);
 
+  await syncDeviceToken(accessToken);
   await updateProfile('HOST');
 };
 
@@ -130,7 +137,10 @@ export const tryRefresh = async ({silent = false} = {}) => {
 
 export const tryLogout = async () => {
   log.info('🚪 tryLogout');
+  const {accessToken} = useUserStore.getState();
+
   try {
+    await unmapDeviceToken(accessToken);
     const storedRefresh = await EncryptedStorage.getItem(REFRESH_KEY);
     await authApi.logout(storedRefresh);
     await EncryptedStorage.removeItem(REFRESH_KEY);
@@ -159,7 +169,9 @@ const updateProfile = async role => {
 };
 
 export function calculateAge(birthDateString) {
-  if (!birthDateString) return '00';
+  if (!birthDateString) {
+    return '00';
+  }
   const today = new Date();
   const birthDate = new Date(birthDateString);
   let age = today.getFullYear() - birthDate.getFullYear();

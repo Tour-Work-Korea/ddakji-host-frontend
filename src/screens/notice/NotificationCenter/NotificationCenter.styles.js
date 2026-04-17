@@ -26,6 +26,15 @@ export default StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  actionButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 100,
+    backgroundColor: COLORS.grayscale_100,
+  },
+  actionButtonText: {
+    color: COLORS.grayscale_700,
+  },
   selectorButton: {
     marginLeft: 4,
     flexDirection: 'row',
@@ -40,8 +49,14 @@ export default StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    marginVertical: 12,
+    marginTop: 12,
     gap: 8,
+  },
+  actionRow: {
+    alignItems: 'flex-end',
+    paddingHorizontal: 16,
+    marginTop: 10,
+    marginBottom: 2,
   },
   chip: {
     paddingVertical: 8,
@@ -77,9 +92,7 @@ export default StyleSheet.create({
     marginBottom: 34,
   },
   iconWrap: {
-    width: 28,
-    height: 28,
-    marginRight: 14,
+    marginRight: 12,
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
@@ -109,17 +122,36 @@ export default StyleSheet.create({
     lineHeight: 26,
     marginBottom: 4,
   },
+  notificationTitleRead: {
+    color: COLORS.grayscale_400,
+  },
   notificationLine: {
     color: COLORS.grayscale_700,
-    lineHeight: 24,
+    lineHeight: 20,
   },
   noticeLine: {
     color: COLORS.grayscale_600,
-    lineHeight: 22,
+    lineHeight: 20,
   },
   notificationDate: {
     color: COLORS.grayscale_500,
-    lineHeight: 20,
     marginTop: 6,
+  },
+  notificationTextRead: {
+    color: COLORS.grayscale_400,
+  },
+  emptyWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  emptyText: {
+    color: COLORS.grayscale_500,
+  },
+  loadingWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

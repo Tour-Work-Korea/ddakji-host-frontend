@@ -41,6 +41,7 @@ export {default as StoreRegisterEditForm} from './onboarding/StoreRegister/Store
 export {default as StoreRegisterList} from './onboarding/StoreRegister/StoreRegisterList';
 export {default as StoreRegisterComplete} from './onboarding/StoreRegister/StoreRegisterComplete';
 export {default as GuesthouseManagement} from './GuesthouseManagement';
+export {default as ReservationMethodSettings} from './GuesthouseManagement/Home/ReservationMethodSettings';
 
 export {default as GuesthousePost} from './guesthouse/GuesthousePost';
 export {default as MyGuesthouseIntroList} from './guesthouse/IntroList';

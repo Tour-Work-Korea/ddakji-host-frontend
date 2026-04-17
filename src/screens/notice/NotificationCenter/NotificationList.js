@@ -1,21 +1,23 @@
 import React from 'react';
-import {ScrollView, Text, View} from 'react-native';
+import {Pressable, ScrollView, Text, View} from 'react-native';
 
 import {FONTS} from '@constants/fonts';
 
-import CalendarIcon from '@assets/images/calendar_gray.svg';
-import MenuNoticeIcon from '@assets/images/menu_notice.svg';
-import HostMeetReservationIcon from '@assets/images/host-meet-reservation-icon.svg';
-import CheckWhiteIcon from '@assets/images/check_white.svg';
-import XGrayIcon from '@assets/images/x_gray.svg';
+import GuesthouseConfirmedIcon from '@assets/images/noti_guesthouse_confirmed.svg';
+import GuesthouseCancelledIcon from '@assets/images/noti_guesthouse_cancelled.svg';
+import NoticeIcon from '@assets/images/noti_notice.svg';
+import PartyConfirmedIcon from '@assets/images/noti_party_confirmed.svg';
+import PartyCancelledIcon from '@assets/images/noti_party_cancelled.svg';
 
 import styles from './NotificationCenter.styles';
 
 const renderLeadingIcon = item => {
+  const isCancelled = item.status === 'cancelled';
+
   if (item.type === 'notice') {
     return (
       <View style={styles.iconWrap}>
-        <MenuNoticeIcon width={20} height={20} />
+        <NoticeIcon width={24} height={24} />
       </View>
     );
   }
@@ -23,47 +25,35 @@ const renderLeadingIcon = item => {
   if (item.type === 'partyReservation') {
     return (
       <View style={styles.iconWrap}>
-        <HostMeetReservationIcon width={20} height={20} />
-        <View
-          style={[
-            styles.statusBadge,
-            item.status === 'cancelled'
-              ? styles.statusBadgeCancel
-              : styles.statusBadgeConfirm,
-          ]}>
-          {item.status === 'cancelled' ? (
-            <XGrayIcon width={10} height={10} />
-          ) : (
-            <CheckWhiteIcon width={10} height={10} />
-          )}
-        </View>
+        {isCancelled ? (
+          <PartyCancelledIcon width={24} height={24} />
+        ) : (
+          <PartyConfirmedIcon width={24} height={24} />
+        )}
       </View>
     );
   }
 
   return (
     <View style={styles.iconWrap}>
-      <CalendarIcon width={20} height={20} />
-      <View
-        style={[
-          styles.statusBadge,
-          item.status === 'cancelled'
-            ? styles.statusBadgeCancel
-            : styles.statusBadgeConfirm,
-        ]}>
-        {item.status === 'cancelled' ? (
-          <XGrayIcon width={10} height={10} />
-        ) : (
-          <CheckWhiteIcon width={10} height={10} />
-        )}
-      </View>
+      {isCancelled ? (
+        <GuesthouseCancelledIcon width={24} height={24} />
+      ) : (
+        <GuesthouseConfirmedIcon width={24} height={24} />
+      )}
     </View>
   );
 };
 
 const NotificationList = ({items = []}) => {
   if (!items.length) {
-    return <View style={styles.listContainer} />;
+    return (
+      <View style={styles.emptyWrap}>
+        <Text style={[FONTS.fs_16_medium, styles.emptyText]}>
+          받은 알림이 없습니다.
+        </Text>
+      </View>
+    );
   }
 
   return (
@@ -72,11 +62,19 @@ const NotificationList = ({items = []}) => {
       contentContainerStyle={styles.listContainer}
       showsVerticalScrollIndicator={false}>
       {items.map(item => (
-        <View key={item.id} style={styles.notificationItem}>
+        <Pressable
+          key={item.id}
+          style={styles.notificationItem}
+          onPress={() => {}}>
           {renderLeadingIcon(item)}
 
           <View style={styles.notificationContent}>
-            <Text style={[FONTS.fs_18_semibold, styles.notificationTitle]}>
+            <Text
+              style={[
+                FONTS.fs_16_semibold,
+                styles.notificationTitle,
+                item.isRead && styles.notificationTitleRead,
+              ]}>
               {item.title}
             </Text>
 
@@ -85,22 +83,28 @@ const NotificationList = ({items = []}) => {
                 key={`${item.id}-${line}`}
                 style={[
                   index === item.lines.length - 1 && item.type !== 'notice'
-                    ? FONTS.fs_16_semibold
+                    ? FONTS.fs_14_medium
                     : item.type === 'notice'
-                      ? FONTS.fs_14_regular
-                      : FONTS.fs_16_medium,
+                      ? FONTS.fs_14_medium
+                      : FONTS.fs_14_medium,
                   styles.notificationLine,
                   item.type === 'notice' && styles.noticeLine,
+                  item.isRead && styles.notificationTextRead,
                 ]}>
                 {line}
               </Text>
             ))}
 
-            <Text style={[FONTS.fs_14_medium, styles.notificationDate]}>
+            <Text
+              style={[
+                FONTS.fs_12_medium,
+                styles.notificationDate,
+                item.isRead && styles.notificationTextRead,
+              ]}>
               {item.date}
             </Text>
           </View>
-        </View>
+        </Pressable>
       ))}
     </ScrollView>
   );
