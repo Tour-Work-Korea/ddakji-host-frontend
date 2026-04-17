@@ -57,9 +57,6 @@ yarn-error.log
 android/app/release-test-key.jks
 android/app/ddakji-host-release-key.jks
 
-# firebase
-android/app/google-services.json
-
 # Bundle artifact
 *.jsbundle
 
