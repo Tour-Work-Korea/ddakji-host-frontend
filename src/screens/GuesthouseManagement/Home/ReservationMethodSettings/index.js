@@ -1,6 +1,6 @@
 import React, {useMemo, useState} from 'react';
 import {Text, TouchableOpacity, View} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import {CommonActions, useNavigation, useRoute} from '@react-navigation/native';
 
 import Header from '@components/Header';
 import ButtonScarlet from '@components/ButtonScarlet';
@@ -20,6 +20,10 @@ import TrendingIcon from '@assets/images/trending_red.svg';
 const RESERVATION_OPTIONS = [
   {
     key: 'closed',
+    icons: {
+      selected: UnbookedOrange,
+      default: UnbookedBlack,
+    },
     title: '예약 마감',
     description: [
       '현재 예약을 받지 않아요.',
@@ -28,6 +32,10 @@ const RESERVATION_OPTIONS = [
   },
   {
     key: 'request',
+    icons: {
+      selected: ReservationRequestOrange,
+      default: ReservationRequestBlack,
+    },
     title: '예약 요청 후 확정',
     description: [
       '요청을 확인하고 수락해야 예약이 확정돼요.',
@@ -37,6 +45,10 @@ const RESERVATION_OPTIONS = [
   },
   {
     key: 'instant',
+    icons: {
+      selected: ReservationInstantOrange,
+      default: ReservationInstantBlack,
+    },
     title: '즉시 예약 확정',
     description: [
       '결제 시 자동으로 예약이 확정돼요.',
@@ -49,7 +61,10 @@ const RESERVATION_OPTIONS = [
 
 const ReservationMethodSettings = () => {
   const navigation = useNavigation();
-  const [selectedOption, setSelectedOption] = useState('instant');
+  const route = useRoute();
+  const [selectedOption, setSelectedOption] = useState(
+    route.params?.selectedOption || 'instant',
+  );
 
   const selectedItem = useMemo(
     () =>
@@ -59,6 +74,18 @@ const ReservationMethodSettings = () => {
   );
 
   const handleApply = () => {
+    const state = navigation.getState();
+    const previousRoute = state.routes[state.index - 1];
+
+    if (previousRoute) {
+      navigation.dispatch({
+        ...CommonActions.setParams({
+          reservationMethod: selectedOption,
+        }),
+        source: previousRoute.key,
+      });
+    }
+
     navigation.goBack();
   };
 
@@ -80,6 +107,9 @@ const ReservationMethodSettings = () => {
             const RadioIcon = isSelected
               ? EnabledRadioButton
               : DisabledRadioButton;
+            const OptionIcon = isSelected
+              ? option.icons.selected
+              : option.icons.default;
 
             return (
               <TouchableOpacity
@@ -91,30 +121,34 @@ const ReservationMethodSettings = () => {
                 ]}
                 onPress={() => setSelectedOption(option.key)}>
                 <View style={styles.optionHeader}>
-                  <View style={styles.optionTitleRow}>
-                    <Text
-                      style={[
-                        FONTS.fs_16_semibold,
-                        styles.optionTitle,
-                        isSelected && styles.optionTitleSelected,
-                      ]}>
-                      {option.title}
-                    </Text>
+                  <View style={styles.optionContent}>
+                    <OptionIcon width={20} height={20} />
 
-                    {option.recommended ? (
-                      <View style={styles.recommendedBadge}>
-                        <Text
-                          style={[
-                            FONTS.fs_12_semibold,
-                            styles.recommendedBadgeText,
-                          ]}>
-                          RECOMMENDED
-                        </Text>
-                      </View>
-                    ) : null}
+                    <View style={styles.optionTitleRow}>
+                      <Text
+                        style={[
+                          FONTS.fs_16_medium,
+                          styles.optionTitle,
+                          isSelected && styles.optionTitleSelected,
+                        ]}>
+                        {option.title}
+                      </Text>
+
+                      {option.recommended ? (
+                        <View style={styles.recommendedBadge}>
+                          <Text
+                            style={[
+                              FONTS.fs_12_medium,
+                              styles.recommendedBadgeText,
+                            ]}>
+                            RECOMMENDED
+                          </Text>
+                        </View>
+                      ) : null}
+                    </View>
                   </View>
 
-                  <RadioIcon width={24} height={24} />
+                  <RadioIcon width={20} height={20} />
                 </View>
 
                 <View style={styles.descriptionWrap}>
@@ -133,6 +167,7 @@ const ReservationMethodSettings = () => {
 
                 {option.notice ? (
                   <View style={styles.noticeBox}>
+                    <TrendingIcon width={16} height={16} />
                     <Text style={[FONTS.fs_12_medium, styles.noticeText]}>
                       {option.notice}
                     </Text>
@@ -149,7 +184,6 @@ const ReservationMethodSettings = () => {
           title="적용하기"
           onPress={handleApply}
           disabled={!selectedItem}
-          style={styles.applyButton}
         />
       </View>
     </View>

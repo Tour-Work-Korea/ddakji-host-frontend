@@ -4,6 +4,8 @@
 <dict>
 	<key>application-identifier</key>
 	<string>$(AppIdentifierPrefix)com.example.ddakjihostapp</string>
+	<key>aps-environment</key>
+	<string>development</string>
 	<key>keychain-access-groups</key>
 	<array>
 		<string>$(AppIdentifierPrefix)com.example.ddakjihostapp</string>

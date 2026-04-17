@@ -41,6 +41,7 @@ const GuesthouseManagement = () => {
   const routeGuesthouseId = route.params?.guesthouseId;
   const routeProfileKey = route.params?.profileKey;
   const routeBusinessName = route.params?.businessName || '게스트하우스';
+  const reservationMethod = route.params?.reservationMethod || 'closed';
   const initialProfileKey =
     routeProfileKey != null
       ? String(routeProfileKey)
@@ -357,6 +358,7 @@ const GuesthouseManagement = () => {
           guesthouseAddress={guesthouseAddress}
           guesthouseDetail={guesthouseDetail}
           hasPartyTemplate={hasPartyTemplate}
+          reservationMethod={reservationMethod}
           onMoveTab={setActiveTab}
         />
       ) : activeTab === INFO_TAB ? (

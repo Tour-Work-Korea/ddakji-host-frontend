@@ -25,6 +25,7 @@ export default StyleSheet.create({
   },
   cardDescription: {
     color: COLORS.grayscale_600,
+    lineHeight: 20,
   },
   actionButton: {
     alignSelf: 'flex-end',

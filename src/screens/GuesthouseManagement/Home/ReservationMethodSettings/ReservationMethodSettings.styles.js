@@ -9,11 +9,11 @@ export default StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 10,
+    paddingHorizontal: 16,
   },
   title: {
     color: COLORS.grayscale_800,
-    marginTop: 4,
+    marginTop: 20,
     marginBottom: 8,
   },
   subtitle: {
@@ -26,9 +26,8 @@ export default StyleSheet.create({
   optionCard: {
     borderWidth: 1,
     borderColor: COLORS.grayscale_200,
-    borderRadius: 12,
+    borderRadius: 8,
     padding: 20,
-    backgroundColor: COLORS.grayscale_0,
   },
   optionCardSelected: {
     borderWidth: 2,
@@ -41,11 +40,17 @@ export default StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 14,
   },
-  optionTitleRow: {
+  optionContent: {
     flexDirection: 'row',
     alignItems: 'center',
     flexShrink: 1,
     paddingRight: 12,
+  },
+  optionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 1,
+    marginLeft: 8,
   },
   optionTitle: {
     color: COLORS.grayscale_800,
@@ -69,7 +74,7 @@ export default StyleSheet.create({
   },
   optionDescription: {
     color: COLORS.grayscale_600,
-    lineHeight: 21,
+    lineHeight: 16,
   },
   optionDescriptionSelected: {
     color: COLORS.grayscale_700,
@@ -77,21 +82,17 @@ export default StyleSheet.create({
   noticeBox: {
     marginTop: 16,
     borderRadius: 8,
-    backgroundColor: '#FFF2EE',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    backgroundColor: COLORS.secondary_red,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   noticeText: {
-    color: '#FF6E57',
-    lineHeight: 18,
+    color: COLORS.semantic_red,
   },
   buttonContainer: {
-    paddingHorizontal: 10,
-    paddingTop: 12,
-    paddingBottom: 28,
-  },
-  applyButton: {
-    height: 48,
-    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingBottom: 24,
   },
 });
