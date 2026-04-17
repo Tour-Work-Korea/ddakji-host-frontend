@@ -19,23 +19,29 @@ export {default as Result} from './auth/Register/Result';
 
 export {default as HostHome} from './home/Home';
 export {default as HostHomeMenu} from './home/Menu';
+export {default as NotificationCenter} from './notice/NotificationCenter';
 export {default as NoticeList} from './notice/NoticeList';
 export {default as NoticeDetail} from './notice/NoticeDetail';
 
 export {default as Setting} from './settings/Setting';
+export {default as NotificationSettings} from './settings/NotificationSettings';
 export {default as Terms} from './settings/Setting/Terms';
 
 export {default as HostMyPage} from './profile/MyPage';
 export {default as HostEditInfo} from './profile/MyPage/HostEditInfo';
+export {default as HostAgreementStatus} from './profile/MyPage/HostAgreementStatus';
+export {default as HostDocumentViewer} from './profile/MyPage/HostDocumentViewer';
 export {default as HostProfilePage} from './profile/ProfilePage';
 export {default as HostEditProfile} from './profile/EditProfile';
 
 export {default as HostRegisterInfo} from './onboarding/HostRegisterInfo';
 export {default as StoreRegisterForm1} from './onboarding/StoreRegister/StoreRegisterForm/StoreRegisterForm1';
 export {default as StoreRegisterForm2} from './onboarding/StoreRegister/StoreRegisterForm/StoreRegisterForm2';
+export {default as StoreRegisterEditForm} from './onboarding/StoreRegister/StoreRegisterForm/StoreRegisterEditForm';
 export {default as StoreRegisterList} from './onboarding/StoreRegister/StoreRegisterList';
 export {default as StoreRegisterComplete} from './onboarding/StoreRegister/StoreRegisterComplete';
 export {default as GuesthouseManagement} from './GuesthouseManagement';
+export {default as ReservationMethodSettings} from './GuesthouseManagement/Home/ReservationMethodSettings';
 
 export {default as GuesthousePost} from './guesthouse/GuesthousePost';
 export {default as MyGuesthouseIntroList} from './guesthouse/IntroList';

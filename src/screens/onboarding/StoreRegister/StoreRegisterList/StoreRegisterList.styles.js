@@ -56,6 +56,10 @@ export default StyleSheet.create({
     marginLeft: 16,
     flexShrink: 1,
   },
+  listItemRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   roleBadge: {
     borderRadius: 100,
     borderWidth: 1,
@@ -67,6 +71,32 @@ export default StyleSheet.create({
   },
   roleBadgeText: {
     color: COLORS.primary_blue,
+  },
+  moreButton: {
+  },
+  menuOverlay: {
+    flex: 1,
+  },
+  actionMenu: {
+    position: 'absolute',
+    backgroundColor: COLORS.grayscale_0,
+    borderRadius: 12,
+    paddingVertical:8,
+    shadowColor: COLORS.grayscale_900,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  actionMenuButton: {
+    paddingHorizontal: 28,
+    paddingVertical: 12,
+  },
+  actionMenuText: {
+    color: COLORS.grayscale_600,
   },
   pendingText: {
     color: COLORS.primary_orange,

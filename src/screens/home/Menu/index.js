@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import Avatar from '@components/Avatar';
 import AlertModal from '@components/modals/AlertModal';
 import { FONTS } from '@constants/fonts';
+import {APP_VERSION} from '@constants/appVersion';
 import useUserStore from '@stores/userStore';
 import authApi from '@utils/api/authApi';
 import { tryLogout } from '@utils/auth/login';
@@ -45,13 +46,13 @@ const menuSections = [
     key: 'contract',
     label: '계약서 및 개인정보 동의 현황',
     icon: ContractIcon,
-    routeName: 'StoreRegisterList',
+    routeName: 'HostAgreementStatus',
   },
   {
     key: 'alarm',
     label: '알림 설정',
     icon: AlarmIcon,
-    // routeName: 'CustomerNotificationSettings',
+    routeName: 'NotificationSettings',
   },
   {
     key: 'setting',
@@ -67,7 +68,7 @@ const menuSections = [
   },
   {
     key: 'version',
-    label: '버전 정보  2.0',
+    label: `버전 정보  ${APP_VERSION}`,
     icon: VersionIcon,
   },
 ];
@@ -205,7 +206,7 @@ const HostHomeMenu = () => {
                     {hostProfile?.guesthouseProfiles?.length ?? 0}
                   </Text>
                 )}
-                <RightArrowIcon width={24} height={24} />
+                {isNavigable ? <RightArrowIcon width={24} height={24} /> : null}
               </Pressable>
             );
           })}

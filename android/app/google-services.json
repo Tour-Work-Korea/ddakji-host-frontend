@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1073020172136",
+    "project_id": "orbital-concord-466116-i5",
+    "storage_bucket": "orbital-concord-466116-i5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1073020172136:android:bbdfe08aac93394908c8dd",
+        "android_client_info": {
+          "package_name": "com.ddakjihostapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCSn-SCPdAxA_AyyEsQ-_lh_BV8tMXpsfo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1073020172136:android:4d42b984a1ff9f4408c8dd",
+        "android_client_info": {
+          "package_name": "com.triofrontendapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCSn-SCPdAxA_AyyEsQ-_lh_BV8tMXpsfo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

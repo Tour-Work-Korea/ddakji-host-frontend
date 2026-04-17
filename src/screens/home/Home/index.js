@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   Image,
   Linking,
@@ -16,6 +16,8 @@ import useUserStore from '@stores/userStore';
 import adminApi from '@utils/api/adminApi';
 import {navigateWithLoginGuard} from '@utils/auth/requireLogin';
 import {navigate} from '@utils/navigationService';
+import notificationApi from '@utils/api/notificationApi';
+import {useFocusEffect} from '@react-navigation/native';
 
 import LogoIcon from '@assets/images/logo_orange.svg';
 import BellIcon from '@assets/images/bell_gray.svg';
@@ -71,6 +73,7 @@ const HostHome = () => {
   const heroBackgroundHeight = 436;
   const hostProfile = useUserStore(state => state.hostProfile);
   const [homeNotices, setHomeNotices] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const guesthouseProfiles = hostProfile?.guesthouseProfiles ?? [];
   const hasGuesthouseProfiles = guesthouseProfiles.length > 0;
@@ -109,6 +112,25 @@ const HostHome = () => {
     };
   }, []);
 
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const {data} = await notificationApi.getUnreadCount();
+      const count = Number(
+        data?.unreadCount ?? data?.count ?? data?.data ?? data ?? 0,
+      );
+      setUnreadCount(Number.isNaN(count) ? 0 : count);
+    } catch (error) {
+      console.warn('[HostHome] failed to fetch unread count:', error?.message);
+      setUnreadCount(0);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchUnreadCount();
+    }, [fetchUnreadCount]),
+  );
+
   const handlePressInstagramLink = async () => {
     try {
       await Linking.openURL(INSTAGRAM_URL);
@@ -119,6 +141,10 @@ const HostHome = () => {
 
   const handlePressNoticeList = () => {
     navigate('NoticeList');
+  };
+
+  const handlePressNotificationCenter = () => {
+    navigate('NotificationCenter');
   };
 
   const handlePressNoticeDetail = notice => {
@@ -138,8 +164,18 @@ const HostHome = () => {
           <LogoIcon width={60} height={28} />
 
           <View style={styles.headerActions}>
-            <TouchableOpacity style={styles.headerIconButton} activeOpacity={0.8}>
+            <TouchableOpacity
+              style={styles.headerIconButton}
+              activeOpacity={0.8}
+              onPress={handlePressNotificationCenter}>
               <BellIcon width={18} height={18} />
+              {unreadCount > 0 ? (
+                <View style={styles.unreadBadge}>
+                  <Text style={[FONTS.fs_12_medium, styles.unreadBadgeText]}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </Text>
+                </View>
+              ) : null}
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.headerIconButton}

@@ -96,6 +96,15 @@ export default StyleSheet.create({
     gap: 12,
     marginBottom: 32,
   },
+  feedbackContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 32,
+    marginBottom: 32,
+  },
+  feedbackText: {
+    color: COLORS.grayscale_500,
+  },
   reservationCard: {
     flexDirection: 'row',
     alignItems: 'center',

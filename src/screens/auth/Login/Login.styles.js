@@ -26,6 +26,15 @@ export default StyleSheet.create({
     paddingHorizontal: 20,
     justifyContent: 'space-between',
   },
+  topActionRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginBottom: 24,
+  },
+  closeButton: {
+    padding: 4,
+    alignSelf: 'flex-end',
+  },
   groupParent: {
     paddingVertical: 0,
     gap: 12,

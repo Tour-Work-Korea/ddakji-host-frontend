@@ -28,9 +28,13 @@ import {
   MyRecruitmentList,
   RecruitmentForm,
   HostEditInfo,
+  HostAgreementStatus,
+  HostDocumentViewer,
   ApplicantList,
   ApplicantListByRecruit,
   Setting,
+  NotificationSettings,
+  NotificationCenter,
   Terms,
   MyGuesthouseList,
   MyGuesthouseReview,
@@ -39,8 +43,10 @@ import {
   MyRoomDetail,
   StoreRegisterForm1,
   StoreRegisterForm2,
+  StoreRegisterEditForm,
   StoreRegisterComplete,
   GuesthouseManagement,
+  ReservationMethodSettings,
   MyMeetList,
   MyMeetDetail,
   MyMeetAdd,
@@ -120,6 +126,14 @@ const RootNavigation = () => {
       <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="undefined" component={undefinedStack} />
       <Stack.Screen name="Setting" component={Setting} />
+      <Stack.Screen
+        name="NotificationSettings"
+        component={NotificationSettings}
+      />
+      <Stack.Screen
+        name="NotificationCenter"
+        component={NotificationCenter}
+      />
       <Stack.Screen name="Terms" component={Terms} />
       <Stack.Screen name="NoticeList" component={NoticeList} />
       <Stack.Screen name="NoticeDetail" component={NoticeDetail} />
@@ -140,9 +154,21 @@ const RootNavigation = () => {
       <Stack.Screen name="FindPassword" component={FindPassword} />
       {/* 사장님 마이페이지 하단바 없는 화면 */}
       <Stack.Screen name="HostEditInfo" component={HostEditInfo} />
+      <Stack.Screen
+        name="HostAgreementStatus"
+        component={HostAgreementStatus}
+      />
+      <Stack.Screen
+        name="HostDocumentViewer"
+        component={HostDocumentViewer}
+      />
       <Stack.Screen name="HostEditProfile" component={HostEditProfile} />
       <Stack.Screen name="StoreRegisterForm1" component={StoreRegisterForm1} />
       <Stack.Screen name="StoreRegisterForm2" component={StoreRegisterForm2} />
+      <Stack.Screen
+        name="StoreRegisterEditForm"
+        component={StoreRegisterEditForm}
+      />
       <Stack.Screen
         name="StoreRegisterComplete"
         component={StoreRegisterComplete}
@@ -150,6 +176,10 @@ const RootNavigation = () => {
       <Stack.Screen
         name="GuesthouseManagement"
         component={GuesthouseManagement}
+      />
+      <Stack.Screen
+        name="ReservationMethodSettings"
+        component={ReservationMethodSettings}
       />
       <Stack.Screen name="MyGuesthouseList" component={MyGuesthouseList} />
       <Stack.Screen name="MyGuesthouseAdd" component={MyGuesthouseAdd} />

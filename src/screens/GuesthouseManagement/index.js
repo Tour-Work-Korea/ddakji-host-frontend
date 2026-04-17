@@ -6,9 +6,11 @@ import { FONTS } from '@constants/fonts';
 import useUserStore from '@stores/userStore';
 import AlertModal from '@components/modals/AlertModal';
 import GuesthouseProfileList from '@components/modals/HostMy/Guesthouse/GuesthouseProfileList';
+import Home from './Home';
 import GuesthouseInfo from './GuesthouseInfo';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
 import hostMeetApi from '@utils/api/hostMeetApi';
+import notificationApi from '@utils/api/notificationApi';
 import PartyInfo from './PartyInfo';
 import PartyReservation from './PartyReservation';
 import RoomReservation from './RoomReservation';
@@ -19,7 +21,19 @@ import ChevronDownIcon from '@assets/images/chevron_down_gray.svg';
 import ChevronUpIcon from '@assets/images/chevron_up_gray.svg';
 import styles from './GuesthouseManagement.styles';
 
-const tabs = ['게하 정보', '객실 예약', '파티 정보', '파티 예약'];
+const HOME_TAB = '홈';
+const INFO_TAB = '게하 정보';
+const ROOM_RESERVATION_TAB = '객실 예약';
+const PARTY_INFO_TAB = '파티 정보';
+const PARTY_RESERVATION_TAB = '파티 예약';
+
+const tabs = [
+  HOME_TAB,
+  INFO_TAB,
+  ROOM_RESERVATION_TAB,
+  PARTY_INFO_TAB,
+  PARTY_RESERVATION_TAB,
+];
 
 const GuesthouseManagement = () => {
   const navigation = useNavigation();
@@ -27,6 +41,7 @@ const GuesthouseManagement = () => {
   const routeGuesthouseId = route.params?.guesthouseId;
   const routeProfileKey = route.params?.profileKey;
   const routeBusinessName = route.params?.businessName || '게스트하우스';
+  const reservationMethod = route.params?.reservationMethod || 'closed';
   const initialProfileKey =
     routeProfileKey != null
       ? String(routeProfileKey)
@@ -39,9 +54,10 @@ const GuesthouseManagement = () => {
   const [guesthouseDetail, setGuesthouseDetail] = useState(null);
   const [hasPartyTemplate, setHasPartyTemplate] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [activeTab, setActiveTab] = useState(tabs[0]);
+  const [activeTab, setActiveTab] = useState(HOME_TAB);
   const [selectedProfileKey, setSelectedProfileKey] = useState(initialProfileKey);
   const lastSyncedRouteProfileKeyRef = useRef(initialProfileKey);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const guesthouseProfiles = useMemo(
     () =>
@@ -80,7 +96,7 @@ const GuesthouseManagement = () => {
     lastSyncedRouteProfileKeyRef.current = nextRouteProfileKey;
     setSelectedProfileKey(nextRouteProfileKey);
 
-    setActiveTab(tabs[0]);
+    setActiveTab(HOME_TAB);
   }, [initialProfileKey]);
 
   useEffect(() => {
@@ -161,15 +177,41 @@ const GuesthouseManagement = () => {
     }, [fetchGuesthouseDetail, fetchPartyTemplates]),
   );
 
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const {data} = await notificationApi.getUnreadCount();
+      const count = Number(
+        data?.unreadCount ?? data?.count ?? data?.data ?? data ?? 0,
+      );
+      setUnreadCount(Number.isNaN(count) ? 0 : count);
+    } catch (error) {
+      console.warn(
+        '[GuesthouseManagement] failed to fetch unread count:',
+        error?.message,
+      );
+      setUnreadCount(0);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchUnreadCount();
+    }, [fetchUnreadCount]),
+  );
+
   useEffect(() => {
-    if (!guesthouseDetail && activeTab !== tabs[0]) {
-      setActiveTab(tabs[0]);
+    if (
+      !guesthouseDetail &&
+      activeTab !== HOME_TAB &&
+      activeTab !== INFO_TAB
+    ) {
+      setActiveTab(HOME_TAB);
     }
   }, [activeTab, guesthouseDetail]);
 
   useEffect(() => {
-    if (activeTab === tabs[3] && !hasPartyTemplate) {
-      setActiveTab(tabs[0]);
+    if (activeTab === PARTY_RESERVATION_TAB && !hasPartyTemplate) {
+      setActiveTab(HOME_TAB);
     }
   }, [activeTab, hasPartyTemplate]);
 
@@ -239,8 +281,18 @@ const GuesthouseManagement = () => {
         </TouchableOpacity>
 
         <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.headerIconButton} activeOpacity={0.8}>
+          <TouchableOpacity
+            style={styles.headerIconButton}
+            activeOpacity={0.8}
+            onPress={() => navigation.navigate('NotificationCenter')}>
             <BellIcon width={18} height={18} />
+            {unreadCount > 0 ? (
+              <View style={styles.unreadBadge}>
+                <Text style={[FONTS.fs_12_medium, styles.unreadBadgeText]}>
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </Text>
+              </View>
+            ) : null}
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerIconButton}
@@ -272,9 +324,11 @@ const GuesthouseManagement = () => {
       <View style={styles.tabRow}>
         {tabs.map(tab => {
           const isInactive = guesthouseDetail?.status === 'INACTIVE';
-          const isPartyReservationTab = tab === tabs[3];
+          const isPartyReservationTab = tab === PARTY_RESERVATION_TAB;
           const isDisabled =
-            (((!guesthouseDetail || isInactive) && tab !== tabs[0]) ||
+            (((!guesthouseDetail || isInactive) &&
+              tab !== HOME_TAB &&
+              tab !== INFO_TAB) ||
               (isPartyReservationTab && !hasPartyTemplate));
 
           return (
@@ -298,7 +352,16 @@ const GuesthouseManagement = () => {
         })}
       </View>
 
-      {activeTab === tabs[0] ? (
+      {activeTab === HOME_TAB ? (
+        <Home
+          businessName={businessName}
+          guesthouseAddress={guesthouseAddress}
+          guesthouseDetail={guesthouseDetail}
+          hasPartyTemplate={hasPartyTemplate}
+          reservationMethod={reservationMethod}
+          onMoveTab={setActiveTab}
+        />
+      ) : activeTab === INFO_TAB ? (
         <GuesthouseInfo
           guesthouseDetail={guesthouseDetail}
           thumbnailImage={thumbnailImage}
@@ -308,9 +371,9 @@ const GuesthouseManagement = () => {
           effectiveGuesthouseId={effectiveGuesthouseId}
           onDelete={handleDelete}
         />
-      ) : activeTab === tabs[1] ? (
+      ) : activeTab === ROOM_RESERVATION_TAB ? (
         <RoomReservation guesthouseId={effectiveGuesthouseId} />
-      ) : activeTab === tabs[2] ? (
+      ) : activeTab === PARTY_INFO_TAB ? (
         <PartyInfo guesthouseId={effectiveGuesthouseId} />
       ) : (
         <PartyReservation guesthouseId={effectiveGuesthouseId} />
@@ -323,7 +386,7 @@ const GuesthouseManagement = () => {
         selectedId={selectedProfileKey ?? selectedGuesthouse?.id ?? null}
         onSelect={item => {
           setSelectedProfileKey(item.id);
-          setActiveTab(tabs[0]);
+          setActiveTab(HOME_TAB);
           setIsGuesthouseListVisible(false);
         }}
         onAdd={() => {

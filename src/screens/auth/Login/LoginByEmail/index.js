@@ -17,6 +17,7 @@ import styles from '../Login.styles';
 import ShowPassword from '@assets/images/show_password.svg';
 import HidePassword from '@assets/images/hide_password.svg';
 import LogoBlue from '@assets/images/logo_blue.svg';
+import XGray from '@assets/images/x_gray.svg';
 import {COLORS} from '@constants/colors';
 
 export default function LoginByEmail({route}) {
@@ -45,6 +46,23 @@ export default function LoginByEmail({route}) {
     navigation.navigate('FindIntro', {find: 'password', userRole});
   };
 
+  const handleClose = () => {
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [
+          {
+            name: 'MainTabs',
+            state: {
+              index: 0,
+              routes: [{name: '홈'}],
+            },
+          },
+        ],
+      }),
+    );
+  };
+
   const handleLogin = async () => {
     try {
       await tryLogin(email, password, userRole);
@@ -70,6 +88,14 @@ export default function LoginByEmail({route}) {
       <View style={styles.container}>
         <View style={styles.viewFlexBox}>
           <View>
+            <View style={styles.topActionRow}>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={handleClose}
+                hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}>
+                <XGray width={24} height={24} />
+              </TouchableOpacity>
+            </View>
             {/* 로고 및 문구 */}
             <View style={styles.groupParent}>
               <LogoBlue width={60} height={29} />

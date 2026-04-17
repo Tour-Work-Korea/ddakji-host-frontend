@@ -7,11 +7,13 @@ import RootNavigation from '@navigations/RootNavigation';
 import Toast from 'react-native-toast-message';
 import BasicToast from '@components/toasts/BasicToast';
 import ErrorToast from '@components/toasts/ErrorToast';
+import InAppNotificationBanner from '@components/notifications/InAppNotificationBanner';
 import AlertModal from '@components/modals/AlertModal';
 import DeeplinkHandler from '@utils/deeplinkHandler';
 import {COLORS} from '@constants/colors';
 import {tryAutoLogin} from '@utils/auth/login';
 import {subscribe} from '@utils/loginModalHub';
+import {initializeNotifications} from '@utils/notifications';
 import LottieView from 'lottie-react-native';
 import {navigationRef} from '@utils/navigationService';
 import {
@@ -22,6 +24,7 @@ import {
 const toastConfig = {
   success: props => <BasicToast {...props} />,
   error: props => <ErrorToast {...props} />,
+  notification: props => <BasicToast {...props} />,
 };
 
 function SplashOverlay({onFinish}) {
@@ -75,6 +78,20 @@ function AppContent() {
   }, []);
 
   useEffect(() => {
+    let unsubscribeNotifications = () => {};
+
+    const setupNotifications = async () => {
+      unsubscribeNotifications = (await initializeNotifications()) || (() => {});
+    };
+
+    setupNotifications();
+
+    return () => {
+      unsubscribeNotifications();
+    };
+  }, []);
+
+  useEffect(() => {
     const unsub = subscribe(updater => setLoginModal(updater));
     return unsub;
   }, []);
@@ -105,6 +122,7 @@ function AppContent() {
 
         <RootNavigation />
         <DeeplinkHandler />
+        <InAppNotificationBanner />
       </SafeAreaView>
 
       {!appLoaded && (
