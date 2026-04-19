@@ -3,12 +3,12 @@
 <plist version="1.0">
 <dict>
 	<key>application-identifier</key>
-	<string>$(AppIdentifierPrefix)com.example.ddakjihostapp</string>
+	<string>$(AppIdentifierPrefix)kr.ddakji.partnercenter</string>
 	<key>aps-environment</key>
 	<string>development</string>
 	<key>keychain-access-groups</key>
 	<array>
-		<string>$(AppIdentifierPrefix)com.example.ddakjihostapp</string>
+		<string>$(AppIdentifierPrefix)kr.ddakji.partnercenter</string>
 	</array>
 </dict>
 </plist>
