@@ -1,13 +1,14 @@
-import React, {useMemo, useState} from 'react';
-import {Pressable, ScrollView, Text, TouchableOpacity, View} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import React, { useMemo, useState } from 'react';
+import { Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 import Avatar from '@components/Avatar';
 import AlertModal from '@components/modals/AlertModal';
-import {FONTS} from '@constants/fonts';
+import { FONTS } from '@constants/fonts';
+import {APP_VERSION} from '@constants/appVersion';
 import useUserStore from '@stores/userStore';
 import authApi from '@utils/api/authApi';
-import {tryLogout} from '@utils/auth/login';
+import { tryLogout } from '@utils/auth/login';
 
 import LogoIcon from '@assets/images/logo_orange.svg';
 import CloseIcon from '@assets/images/x_gray.svg';
@@ -45,13 +46,13 @@ const menuSections = [
     key: 'contract',
     label: '계약서 및 개인정보 동의 현황',
     icon: ContractIcon,
-    routeName: 'StoreRegisterList',
+    routeName: 'HostAgreementStatus',
   },
   {
     key: 'alarm',
     label: '알림 설정',
     icon: AlarmIcon,
-    routeName: 'CustomerNotificationSettings',
+    routeName: 'NotificationSettings',
   },
   {
     key: 'setting',
@@ -67,7 +68,7 @@ const menuSections = [
   },
   {
     key: 'version',
-    label: '버전 정보  2.0',
+    label: `버전 정보  ${APP_VERSION}`,
     icon: VersionIcon,
   },
 ];
@@ -77,21 +78,14 @@ const HostHomeMenu = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const hostProfile = useUserStore(state => state.hostProfile);
-  const selectedProfileId = useUserStore(
-    state => state.selectedHostGuesthouseId,
-  );
 
   const selectedGuesthouse = useMemo(
     () => {
       const guesthouseProfiles = hostProfile?.guesthouseProfiles ?? [];
 
-      return (
-      guesthouseProfiles.find(
-        item => String(item.guesthouseId) === selectedProfileId,
-      ) || guesthouseProfiles[0]
-      );
+      return guesthouseProfiles[0];
     },
-    [hostProfile?.guesthouseProfiles, selectedProfileId],
+    [hostProfile?.guesthouseProfiles],
   );
 
   const profileName = hostProfile?.name || '';
@@ -109,7 +103,7 @@ const HostHomeMenu = () => {
     await tryLogout();
     navigation.reset({
       index: 0,
-      routes: [{name: 'Login'}],
+      routes: [{ name: 'Login' }],
     });
   };
 
@@ -129,7 +123,7 @@ const HostHomeMenu = () => {
     } finally {
       navigation.reset({
         index: 0,
-        routes: [{name: 'Login'}],
+        routes: [{ name: 'Login' }],
       });
       setIsWithdrawing(false);
     }
@@ -152,7 +146,7 @@ const HostHomeMenu = () => {
 
         {/* 프로필 */}
         <View style={styles.profileSection}>
-          <Avatar uri={profileImage} size={52} iconSize={52} />
+          <Avatar uri={profileImage} size={52} iconSize={24} />
           <View style={styles.profileTextWrap}>
             <Text style={[FONTS.fs_18_semibold, styles.profileName]}>
               {profileName}
@@ -168,12 +162,12 @@ const HostHomeMenu = () => {
           <TouchableOpacity
             style={styles.topActionButton}
             activeOpacity={0.85}
-            onPress={() => navigation.navigate('StoreRegisterList')}>
+            onPress={() => navigation.navigate('StoreRegisterForm1')}>
             <Text style={[FONTS.fs_14_medium, styles.topActionText]}>
               게스트하우스 등록
             </Text>
           </TouchableOpacity>
-          <View style={styles.topActionDivide}/>
+          <View style={styles.topActionDivide} />
           <TouchableOpacity style={styles.topActionButton} activeOpacity={0.85}>
             <Text style={[FONTS.fs_14_medium, styles.topActionText]}>
               이용방법 안내
@@ -206,7 +200,13 @@ const HostHomeMenu = () => {
                     {item.label}
                   </Text>
                 </View>
-                <RightArrowIcon width={24} height={24} />
+                {item.key === 'guesthouse' && (
+                  <Text style={[FONTS.fs_16_medium, styles.myBusinessCount]}>
+                    {' '}
+                    {hostProfile?.guesthouseProfiles?.length ?? 0}
+                  </Text>
+                )}
+                {isNavigable ? <RightArrowIcon width={24} height={24} /> : null}
               </Pressable>
             );
           })}

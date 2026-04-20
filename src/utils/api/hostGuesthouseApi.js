@@ -11,8 +11,14 @@ const hostGuesthouseApi = {
   // 특정 게스트하우스 상세 조회
   getGuesthouseDetail: guesthouseId =>
     api.get(`/host/guesthouses/${guesthouseId}`),
+
+  // 게스트하우스 환불 정책 조회
   getGuesthouseRefundPolicies: guesthouseId =>
-    api.get(`/host/guesthouses/${guesthouseId}/refund-policies`),
+    api.get(`/host/guesthouses/${guesthouseId}/refund-policy-settings`),
+
+  // 게스트하우스 환불 정책 수정
+  updateGuesthouseRefundPolicies: (guesthouseId, payload) =>
+    api.put(`/host/guesthouses/${guesthouseId}/refund-policy-settings`, payload),
 
   // 게스트하우스 최종 등록
   finalizeGuesthouse: (guesthouseId, dto) =>
@@ -50,8 +56,6 @@ const hostGuesthouseApi = {
    */
   updateGuesthouseAmenities: (guesthouseId, amenities) =>
     api.put(`/host/guesthouses/${guesthouseId}/amenities`, amenities),
-  updateGuesthouseRefundPolicies: (guesthouseId, policies) =>
-    api.put(`/host/guesthouses/${guesthouseId}/refund-policies`, {policies}),
 
   /** 객실 기본 정보 수정
    * body {
@@ -89,12 +93,26 @@ const hostGuesthouseApi = {
   deleteRoom: (guesthouseId, roomId) =>
     api.delete(`/host/guesthouses/${guesthouseId}/rooms/${roomId}`),
 
+  // 게스트하우스 전체 객실 예약 상태 변경(예약버튼)
+  // body: { roomStatus: 'OPEN' | 'CLOSED' }
+  updateRoomsReservationStatus: (guesthouseId, roomStatus) =>
+    api.patch(`/host/guesthouses/${guesthouseId}/rooms/reservation-status`, {
+      roomStatus,
+    }),
+
+  // 객실 고객 노출 여부 변경(노출)
+  // body: { isVisible: boolean }
+  updateRoomVisibility: (guesthouseId, roomId, isVisible) =>
+    api.patch(`/host/guesthouses/${guesthouseId}/rooms/${roomId}/visibility`, {
+      isVisible,
+    }),
+
   // 게스트하우스 삭제
   deleteGuesthouse: guesthouseId =>
     api.delete(`/host/guesthouses/${guesthouseId}`),
 
   // 특정 게스트하우스 리뷰 목록 조회
-  getGuesthouseReviews: ({guesthouseId, page, size, sort}) =>
+  getGuesthouseReviews: ({ guesthouseId, page, size, sort }) =>
     api.get(`/${guesthouseId}/reviews`, {
       params: {
         page,
@@ -105,7 +123,7 @@ const hostGuesthouseApi = {
 
   // 리뷰에 대한 답글 작성
   postReviewReply: (reviewId, reply) =>
-    api.post(`/host/reviews/${reviewId}/replies`, {reply}),
+    api.post(`/host/reviews/${reviewId}/replies`, { reply }),
 
   // 리뷰 삭제 요청
   deleteReview: (reviewId, reason) =>
@@ -115,6 +133,14 @@ const hostGuesthouseApi = {
 
   // 사장님 입점신청서 조회
   getHostApplications: () => api.get('/host/my/application'),
+
+  // 사장님 입점신청서 삭제
+  deleteHostApplication: applicationId =>
+    api.delete(`/host/my/application/${applicationId}`),
+
+  // 게스트하우스 프로필 수정
+  updateGuesthouseProfile: (guesthouseId, payload) =>
+    api.put(`/host/guesthouses/${guesthouseId}/profile`, payload),
 
   // 사장님 입점 신청서 등록
   postHostApplication: formData =>
@@ -163,10 +189,10 @@ const hostGuesthouseApi = {
   updateRoomStatusByDate: (guesthouseId, roomId, payload) =>
     api.put(`/host/guesthouses/${guesthouseId}/rooms/${roomId}/status`, payload),
 
-  // 객실 날짜별 운영 상태 변경 (여러개 동시)
+  // 객실 날짜별 운영 상태 변경 (여러개 동시) -> 웹용
   // body: [{ date: 'YYYY-MM-DD', isClosed: boolean }, ...]
-  updateRoomStatusesByDates: (guesthouseId, roomId, payload) =>
-    api.put(`/host/guesthouses/${guesthouseId}/rooms/${roomId}/statuses`, payload),
+  // updateRoomStatusesByDates: (guesthouseId, roomId, payload) =>
+  //   api.put(`/host/guesthouses/${guesthouseId}/rooms/${roomId}/statuses`, payload),
 
   // 객실 체크인 안내문 조회
   getRoomCheckinNotice: (guesthouseId, roomId) =>
@@ -195,7 +221,7 @@ const hostGuesthouseApi = {
   // 게하 예약 취소
   cancelGuesthouseReservation: (reservationId) =>
     api.delete(`/order/reservation/${reservationId}`, {
-      data: {type: 'GUESTHOUSE'},
+      data: { type: 'GUESTHOUSE' },
     }),
 };
 

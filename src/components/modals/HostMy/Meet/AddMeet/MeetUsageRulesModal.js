@@ -8,26 +8,35 @@ import {
   Dimensions,
   TouchableWithoutFeedback,
   ScrollView,
-  KeyboardAvoidingView,
   Keyboard,
-  Platform,
   TextInput,
 } from 'react-native';
 
 import {FONTS} from '@constants/fonts';
 import {COLORS} from '@constants/colors';
-import ButtonScarlet from '@components/ButtonScarlet';
+import useKeyboardAwareScrollView from '@hooks/useKeyboardAwareScrollView';
 
 import XBtn from '@assets/images/x_gray.svg';
 import PlusIcon from '@assets/images/plus_gray.svg';
 import MinusIcon from '@assets/images/minus_gray.svg';
 import PreviewIcon from '@assets/images/show_password.svg';
 import BackIcon from '@assets/images/chevron_left_gray.svg';
+import CheckWhite from '@assets/images/check_white.svg';
 
 const MODAL_HEIGHT = Math.round(Dimensions.get('window').height * 0.9);
 const TITLE_MAX = 100;
 const DESC_MAX = 5000;
 const MAX_SECTIONS = 10;
+
+const PillSubmitButton = ({disabled, onPress}) => (
+  <TouchableOpacity
+    style={[styles.submitButton, disabled && styles.submitButtonDisabled]}
+    disabled={disabled}
+    onPress={onPress}>
+    <Text style={[FONTS.fs_14_medium, styles.submitText]}>적용하기</Text>
+    <CheckWhite width={20} height={20} />
+  </TouchableOpacity>
+);
 
 const normalizeInitialRules = (arr = []) =>
   (Array.isArray(arr) ? arr : []).map(r => ({
@@ -48,25 +57,13 @@ const MeetUsageRulesModal = ({
   shouldResetOnClose,
   initialRules = [],
 }) => {
-  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const {keyboardHeight} = useKeyboardAwareScrollView({iosOnly: false});
+  const isKeyboardVisible = keyboardHeight > 0;
   const [preview, setPreview] = useState(false);
 
   const [sections, setSections] = useState([]);
   // 마지막 적용값
   const [applied, setApplied] = useState(null);
-
-  useEffect(() => {
-    const showSub = Keyboard.addListener('keyboardDidShow', () =>
-      setIsKeyboardVisible(true),
-    );
-    const hideSub = Keyboard.addListener('keyboardDidHide', () =>
-      setIsKeyboardVisible(false),
-    );
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, []);
 
   // 열릴 때 복원 로직
   useEffect(() => {
@@ -155,7 +152,7 @@ const MeetUsageRulesModal = ({
       <Text style={[FONTS.fs_20_semibold, styles.modalTitle]}>
         이용 규칙
       </Text>
-      <View style={{position: 'absolute', right: 0, flexDirection: 'row', alignItems: 'center'}}>
+      <View style={styles.headerRight}>
         {!preview ? (
           <TouchableOpacity
             onPress={() => setPreview(true)}
@@ -182,25 +179,26 @@ const MeetUsageRulesModal = ({
       transparent
       animationType="slide"
       onRequestClose={handleModalClose}>
-      <KeyboardAvoidingView
-        style={{flex: 1}}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? -200 : 0}>
-        <TouchableWithoutFeedback onPress={() => (isKeyboardVisible ? Keyboard.dismiss() : handleModalClose())}>
-          <View style={styles.overlay}>
-            <TouchableWithoutFeedback onPress={() => {}}>
-              <View style={styles.modalContainer}>
+      <TouchableWithoutFeedback onPress={() => (isKeyboardVisible ? Keyboard.dismiss() : handleModalClose())}>
+        <View style={styles.overlay}>
+          <TouchableWithoutFeedback onPress={() => {}}>
+            <View style={styles.modalContainer}>
                 <HeaderBar />
 
                 {!preview ? (
-                  <ScrollView style={styles.body} keyboardShouldPersistTaps="handled">
+                  <ScrollView
+                    style={styles.body}
+                    contentContainerStyle={{
+                      paddingBottom: keyboardHeight + 96,
+                    }}
+                    keyboardShouldPersistTaps="handled">
                     {/* 상단 설명 + 추가 버튼 */}
                     <View style={styles.topRow}>
-                      <Text style={[FONTS.fs_14_semibold, {color: COLORS.grayscale_800}]}>
+                      <Text style={[FONTS.fs_14_regular, styles.topDescription]}>
                         소등안내 등 이용 규칙에 대해 자유롭게 작성해 주세요
                       </Text>
-                      <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                        <Text style={[FONTS.fs_12_medium, {color: COLORS.grayscale_400, marginRight: 8}]}>
+                      <View style={styles.topRowActions}>
+                        <Text style={[FONTS.fs_12_medium, styles.sectionCount]}>
                           {sections.length}/{MAX_SECTIONS}
                         </Text>
                         <TouchableOpacity onPress={addSection} style={styles.circleBtn}>
@@ -219,7 +217,7 @@ const MeetUsageRulesModal = ({
                           <View key={`sec-${idx}`} style={styles.sectionCard}>
                             {/* 섹션 헤더 */}
                             <View style={styles.sectionHeader}>
-                              <Text style={[FONTS.fs_16_semibold, {color: COLORS.grayscale_900}]}>
+                              <Text style={[FONTS.fs_16_medium, styles.sectionLabel]}>
                                 단락 {order}
                               </Text>
                               <TouchableOpacity onPress={() => removeSection(idx)} style={styles.circleBtnSmall}>
@@ -229,10 +227,10 @@ const MeetUsageRulesModal = ({
 
                             {/* 제목 */}
                             <View style={styles.rowBetween}>
-                              <Text style={[FONTS.fs_14_medium, {color: COLORS.grayscale_600}]}>
+                              <Text style={[FONTS.fs_14_medium, styles.fieldLabel]}>
                                 제목
                               </Text>
-                              <Text style={[FONTS.fs_12_medium, {color: COLORS.grayscale_400}]}>
+                              <Text style={[FONTS.fs_12_medium, styles.fieldCount]}>
                                 {titleLen}/{TITLE_MAX}
                               </Text>
                             </View>
@@ -248,10 +246,10 @@ const MeetUsageRulesModal = ({
 
                             {/* 내용 */}
                             <View style={[styles.rowBetween, {marginTop: 12}]}>
-                              <Text style={[FONTS.fs_14_medium, {color: COLORS.grayscale_600}]}>
+                              <Text style={[FONTS.fs_14_medium, styles.fieldLabel]}>
                                 내용
                               </Text>
-                              <Text style={[FONTS.fs_12_medium, {color: COLORS.grayscale_400}]}>
+                              <Text style={[FONTS.fs_12_medium, styles.fieldCount]}>
                                 {descLen}/{DESC_MAX}
                               </Text>
                             </View>
@@ -272,16 +270,20 @@ const MeetUsageRulesModal = ({
                   </ScrollView>
                 ) : (
                   // 미리보기
-                  <ScrollView style={styles.previewBody}>
-                    <View style={{paddingBottom: 120}}>
+                  <ScrollView
+                    style={styles.previewBody}
+                    contentContainerStyle={{
+                      paddingBottom: keyboardHeight + 96,
+                    }}>
+                    <View>
                       {sections.map((s, idx) => (
                         <View key={`pv-${idx}`} style={styles.previewCard}>
-                          <Text style={[FONTS.fs_12_medium, {color: COLORS.grayscale_500, marginBottom: 8}]}>
+                          <Text style={[FONTS.fs_12_medium, styles.previewLabel]}>
                             규칙 {idx + 1}
                           </Text>
 
                           {!!(s.title || '').trim() && (
-                            <Text style={[FONTS.fs_16_semibold, {color: COLORS.grayscale_900}]}>
+                            <Text style={[FONTS.fs_16_semibold, styles.previewTitle]}>
                               {(s.title || '').trim()}
                             </Text>
                           )}
@@ -290,7 +292,7 @@ const MeetUsageRulesModal = ({
                             <Text
                               style={[
                                 FONTS.fs_14_regular,
-                                {color: COLORS.grayscale_700, marginTop: 8, lineHeight: 22},
+                                styles.previewContent,
                               ]}>
                               {(s.content || '').trim()}
                             </Text>
@@ -300,19 +302,17 @@ const MeetUsageRulesModal = ({
                     </View>
                   </ScrollView>
                 )}
-
-                {/* 적용하기 버튼 */}
-                <ButtonScarlet
-                  title={'적용하기'}
-                  onPress={handleConfirm}
-                  disabled={!allValid}
-                  style={{marginBottom: 16}}
-                />
+                <View
+                  style={[
+                    styles.footer,
+                    {bottom: keyboardHeight > 0 ? keyboardHeight + 12 : 24},
+                  ]}>
+                  <PillSubmitButton disabled={!allValid} onPress={handleConfirm} />
+                </View>
               </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };
@@ -328,14 +328,16 @@ const styles = StyleSheet.create({
   modalContainer: {
     height: MODAL_HEIGHT,
     backgroundColor: COLORS.grayscale_0,
-    borderRadius: 8,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     paddingHorizontal: 20,
-    paddingVertical: 24,
+    paddingTop: 14,
   },
 
   header: {
+    height: 28,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
   },
   modalTitle: {
     color: COLORS.grayscale_900,
@@ -347,23 +349,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconBtn: {
-    padding: 6,
-    borderRadius: 999,
-    backgroundColor: COLORS.grayscale_100,
+    padding: 2,
   },
 
-  body: {flex: 1},
+  body: {flex: 1, paddingTop: 10},
   topRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 10,
+    gap: 12,
+  },
+  topDescription: {
+    flex: 1,
+    color: COLORS.grayscale_800,
+  },
+  topRowActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sectionCount: {
+    color: COLORS.grayscale_400,
+    marginRight: 8,
   },
 
   sectionCard: {
-    marginTop: 16,
+    marginTop: 12,
     padding: 12,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: COLORS.grayscale_200,
     backgroundColor: COLORS.grayscale_0,
@@ -372,7 +385,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
+  },
+  sectionLabel: {
+    color: COLORS.grayscale_900,
   },
 
   rowBetween: {
@@ -383,8 +399,9 @@ const styles = StyleSheet.create({
 
   textInput: {
     marginTop: 6,
-    padding: 12,
-    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: COLORS.grayscale_200,
     backgroundColor: COLORS.grayscale_0,
@@ -392,9 +409,10 @@ const styles = StyleSheet.create({
   },
   textArea: {
     marginTop: 6,
-    padding: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
     minHeight: 140,
-    borderRadius: 12,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: COLORS.grayscale_200,
     backgroundColor: COLORS.grayscale_0,
@@ -407,6 +425,24 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.grayscale_200,
+  },
+  previewLabel: {
+    color: COLORS.grayscale_500,
+    marginBottom: 8,
+  },
+  previewTitle: {
+    color: COLORS.grayscale_900,
+  },
+  previewContent: {
+    color: COLORS.grayscale_700,
+    marginTop: 8,
+    lineHeight: 22,
+  },
+  fieldLabel: {
+    color: COLORS.grayscale_600,
+  },
+  fieldCount: {
+    color: COLORS.grayscale_400,
   },
 
   circleBtn: {
@@ -422,5 +458,25 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.grayscale_100,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  footer: {
+    position: 'absolute',
+    right: 20,
+    alignItems: 'flex-end',
+  },
+  submitButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 100,
+    backgroundColor: COLORS.primary_orange,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  submitButtonDisabled: {
+    backgroundColor: COLORS.grayscale_300,
+  },
+  submitText: {
+    color: COLORS.grayscale_0,
   },
 });

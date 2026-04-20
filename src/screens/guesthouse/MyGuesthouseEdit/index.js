@@ -293,7 +293,7 @@ const MyGuesthouseEdit = () => {
       </ScrollView>
 
       <View style={styles.bottomContainer}>
-        <TouchableOpacity 
+        {/* <TouchableOpacity 
           style={styles.previewButton}
           onPress={() => {
             // 해시태그: 이름 -> {id, hashtag}
@@ -342,7 +342,7 @@ const MyGuesthouseEdit = () => {
           <Text style={[FONTS.fs_14_medium, styles.previewButtonText]}>
             미리보기
           </Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         <TouchableOpacity 
           style={styles.submitButton}
           onPress={handleSubmit}

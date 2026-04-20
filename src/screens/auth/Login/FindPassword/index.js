@@ -148,7 +148,7 @@ const FindPassword = ({route}) => {
     navigation.dispatch(
       CommonActions.reset({
         index: 0,
-        routes: [{name: 'LoginIntro'}],
+        routes: [{name: 'LoginByEmail', params: {userRole: 'HOST'}}],
       }),
     );
   };

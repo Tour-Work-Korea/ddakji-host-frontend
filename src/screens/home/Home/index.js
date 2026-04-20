@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   Image,
   Linking,
@@ -10,11 +10,14 @@ import {
 } from 'react-native';
 
 import {FONTS} from '@constants/fonts';
+import {COLORS} from '@constants/colors';
 import Avatar from '@components/Avatar';
 import useUserStore from '@stores/userStore';
 import adminApi from '@utils/api/adminApi';
 import {navigateWithLoginGuard} from '@utils/auth/requireLogin';
 import {navigate} from '@utils/navigationService';
+import notificationApi from '@utils/api/notificationApi';
+import {useFocusEffect} from '@react-navigation/native';
 
 import LogoIcon from '@assets/images/logo_orange.svg';
 import BellIcon from '@assets/images/bell_gray.svg';
@@ -70,6 +73,7 @@ const HostHome = () => {
   const heroBackgroundHeight = 436;
   const hostProfile = useUserStore(state => state.hostProfile);
   const [homeNotices, setHomeNotices] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const guesthouseProfiles = hostProfile?.guesthouseProfiles ?? [];
   const hasGuesthouseProfiles = guesthouseProfiles.length > 0;
@@ -108,6 +112,25 @@ const HostHome = () => {
     };
   }, []);
 
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const {data} = await notificationApi.getUnreadCount();
+      const count = Number(
+        data?.unreadCount ?? data?.count ?? data?.data ?? data ?? 0,
+      );
+      setUnreadCount(Number.isNaN(count) ? 0 : count);
+    } catch (error) {
+      console.warn('[HostHome] failed to fetch unread count:', error?.message);
+      setUnreadCount(0);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchUnreadCount();
+    }, [fetchUnreadCount]),
+  );
+
   const handlePressInstagramLink = async () => {
     try {
       await Linking.openURL(INSTAGRAM_URL);
@@ -118,6 +141,10 @@ const HostHome = () => {
 
   const handlePressNoticeList = () => {
     navigate('NoticeList');
+  };
+
+  const handlePressNotificationCenter = () => {
+    navigate('NotificationCenter');
   };
 
   const handlePressNoticeDetail = notice => {
@@ -137,8 +164,18 @@ const HostHome = () => {
           <LogoIcon width={60} height={28} />
 
           <View style={styles.headerActions}>
-            <TouchableOpacity style={styles.headerIconButton} activeOpacity={0.8}>
+            <TouchableOpacity
+              style={styles.headerIconButton}
+              activeOpacity={0.8}
+              onPress={handlePressNotificationCenter}>
               <BellIcon width={18} height={18} />
+              {unreadCount > 0 ? (
+                <View style={styles.unreadBadge}>
+                  <Text style={[FONTS.fs_12_medium, styles.unreadBadgeText]}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </Text>
+                </View>
+              ) : null}
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.headerIconButton}
@@ -151,10 +188,7 @@ const HostHome = () => {
 
         {hasGuesthouseProfiles ? (
           <View style={styles.dashboardSection}>
-            <TouchableOpacity
-              style={styles.instaEventCard}
-              activeOpacity={0.9}
-              onPress={() => navigateWithLoginGuard('HostMyPage')}>
+            <View style={styles.instaEventCard}>
               <View style={styles.instaEventContent}>
                 <View style={styles.instaEventTextWrap}>
                   <Text style={[FONTS.fs_16_medium, styles.instaEventTitle]}>
@@ -190,7 +224,7 @@ const HostHome = () => {
                   />
                 </View>
               </View>
-            </TouchableOpacity>
+            </View>
 
             <View style={styles.myBusinessSection}>
               <TouchableOpacity
@@ -204,38 +238,60 @@ const HostHome = () => {
               </TouchableOpacity>
 
               <View style={styles.myBusinessList}>
-                {guesthouseProfiles.map((guesthouse, index) => (
-                  <TouchableOpacity
-                    key={String(guesthouse?.guesthouseId ?? `guesthouse-${index}`)}
-                    style={styles.myBusinessCard}
-                    activeOpacity={0.85}
-                    onPress={() =>
-                      navigateWithLoginGuard('GuesthouseManagement', {
-                        businessName: guesthouse?.guesthouseName || '게스트하우스',
-                        guesthouseId: guesthouse?.guesthouseId ?? null,
-                      })
-                    }>
-                    <View style={styles.myBusinessCardLeft}>
-                      <Avatar
-                        uri={guesthouse?.profileImageUrl || null}
-                        size={60}
-                        borderRadius={10}
-                        iconSize={24}
-                      />
-                      <Text
-                        style={[FONTS.fs_18_semibold, styles.myBusinessName]}
-                        numberOfLines={1}>
-                        {guesthouse?.guesthouseName || '게스트하우스'}
-                      </Text>
-                    </View>
+                {guesthouseProfiles.map((guesthouse, index) => {
+                  // status나 applicationStatus가 있고, 그 값이 '승인 완료'나 'APPROVED'가 아니면 심사중으로 간주
+                  const isPending =
+                    guesthouse?.applicationStatus === 'PENDING' ||
+                    guesthouse?.status === '심사중' ||
+                    guesthouse?.status === '등록 심사중';
 
-                    <View style={styles.myBusinessBadge}>
-                      <Text style={[FONTS.fs_14_semibold, styles.myBusinessBadgeText]}>
-                        운영자
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
+                  return (
+                    <TouchableOpacity
+                      key={String(
+                        guesthouse?.profileKey ?? guesthouse?.guesthouseId ?? `guesthouse-${index}`,
+                      )}
+                      style={styles.myBusinessCard}
+                      activeOpacity={isPending ? 1 : 0.85}
+                      disabled={isPending}
+                      onPress={() =>
+                        navigateWithLoginGuard('GuesthouseManagement', {
+                          profileKey:
+                            guesthouse?.profileKey ??
+                            String(guesthouse?.guesthouseId ?? `guesthouse-${index}`),
+                          businessName: guesthouse?.guesthouseName || '게스트하우스',
+                          guesthouseId: guesthouse?.guesthouseId ?? null,
+                        })
+                      }>
+                      <View style={styles.myBusinessCardLeft}>
+                        <Avatar
+                          uri={guesthouse?.profileImageUrl || null}
+                          size={60}
+                          borderRadius={10}
+                        />
+                        <View style={styles.myBusinessName}>
+                          <Text
+                            style={FONTS.fs_18_semibold}
+                            numberOfLines={1}>
+                            {guesthouse?.guesthouseName || '게스트하우스'}
+                          </Text>
+                          {isPending && (
+                            <Text style={[FONTS.fs_14_medium, {color: COLORS.semantic_red, marginTop: 4}]}>
+                              등록 심사중
+                            </Text>
+                          )}
+                        </View>
+                      </View>
+
+                      {!isPending && (
+                        <View style={styles.myBusinessBadge}>
+                          <Text style={[FONTS.fs_14_semibold, styles.myBusinessBadgeText]}>
+                            운영자
+                          </Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
           </View>

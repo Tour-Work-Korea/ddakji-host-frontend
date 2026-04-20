@@ -19,6 +19,7 @@ import {
 } from '@utils/validation/storeRegisterValidation';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
 import hostMyApi from '@utils/api/hostMyApi';
+import {normalizeHostProfile} from '@utils/hostProfile';
 import AlertModal from '@components/modals/AlertModal';
 import {uploadSingleImage} from '@utils/imageUploadHandler';
 import useUserStore from '@stores/userStore';
@@ -35,12 +36,6 @@ const StoreRegisterForm2 = ({route}) => {
   const {prevData} = route.params;
   const hostProfile = useUserStore(state => state.hostProfile);
   const setHostProfile = useUserStore(state => state.setHostProfile);
-  const selectedHostGuesthouseId = useUserStore(
-    state => state.selectedHostGuesthouseId,
-  );
-  const setSelectedHostGuesthouseId = useUserStore(
-    state => state.setSelectedHostGuesthouseId,
-  );
   const [formData, setFormData] = useState({
     ...prevData,
     guesthouseName: '',
@@ -88,51 +83,9 @@ const StoreRegisterForm2 = ({route}) => {
 
   const syncHostProfile = async () => {
     const response = await hostMyApi.getMyProfile();
-    const {
-      hostId,
-      name,
-      photoUrl,
-      phone,
-      email,
-      businessNum,
-      guesthouseProfiles,
-    } = response?.data ?? {};
+    const normalizedProfile = normalizeHostProfile(response?.data);
 
-    const normalizedGuesthouseProfiles = Array.isArray(guesthouseProfiles)
-      ? guesthouseProfiles.map(guesthouse => ({
-          guesthouseId: guesthouse?.guesthouseId ?? null,
-          guesthouseName: guesthouse?.guesthouseName ?? '',
-          profileImageUrl:
-            guesthouse?.profileImageUrl &&
-            guesthouse.profileImageUrl !== '사진을 추가해주세요'
-              ? guesthouse.profileImageUrl
-              : null,
-        }))
-      : [];
-
-    setHostProfile({
-      hostId: hostId ?? null,
-      name: name ?? '',
-      photoUrl:
-        photoUrl && photoUrl !== '사진을 추가해주세요' ? photoUrl : null,
-      phone: phone ?? '',
-      email: email ?? '',
-      businessNum: businessNum ?? '',
-      guesthouseProfiles: normalizedGuesthouseProfiles,
-    });
-
-    const profileIds = normalizedGuesthouseProfiles.map((guesthouse, index) =>
-      String(guesthouse.guesthouseId ?? `guesthouse-${index}`),
-    );
-
-    if (profileIds.length === 0) {
-      setSelectedHostGuesthouseId(null);
-      return;
-    }
-
-    if (!profileIds.includes(String(selectedHostGuesthouseId))) {
-      setSelectedHostGuesthouseId(profileIds[0]);
-    }
+    setHostProfile(normalizedProfile);
   };
 
   const handleSubmit = async () => {
@@ -183,12 +136,7 @@ const StoreRegisterForm2 = ({route}) => {
       await hostGuesthouseApi.tempCreateGuesthouse({
         applicationId,
         guesthouseName: formData.guesthouseName.trim(),
-        guesthouseImages: [
-          {
-            guesthouseImageUrl: formData.profileImg,
-            isThumbnail: true,
-          },
-        ],
+        guesthouseProfileImage: formData.profileImg,
       });
 
       await syncHostProfile();

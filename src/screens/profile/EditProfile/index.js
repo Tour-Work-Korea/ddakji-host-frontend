@@ -23,9 +23,6 @@ import useUserStore from '@stores/userStore';
 
 const HostEditProfile = () => {
   const hostProfile = useUserStore(state => state.hostProfile);
-  const selectedHostGuesthouseId = useUserStore(
-    state => state.selectedHostGuesthouseId,
-  );
   const setHostProfile = useUserStore(state => state.setHostProfile);
 
   const selectedGuesthouse = useMemo(() => {
@@ -37,23 +34,16 @@ const HostEditProfile = () => {
       return null;
     }
 
-    const current =
-      profiles.find(
-        (item, index) =>
-          String(item?.guesthouseId ?? `guesthouse-${index}`) ===
-          String(selectedHostGuesthouseId),
-      ) || profiles[0];
+    const current = profiles[0];
 
     return {
       guesthouseId: current?.guesthouseId ?? null,
       guesthouseName: current?.guesthouseName || '이름 없음',
       profileImageUrl: current?.profileImageUrl || null,
     };
-  }, [hostProfile?.guesthouseProfiles, selectedHostGuesthouseId]);
+  }, [hostProfile?.guesthouseProfiles]);
   const hostId = hostProfile?.hostId ?? hostProfile?.id ?? undefined;
-  const resolvedGuesthouseId = Number(
-    selectedGuesthouse?.guesthouseId ?? selectedHostGuesthouseId,
-  );
+  const resolvedGuesthouseId = Number(selectedGuesthouse?.guesthouseId);
 
   const initialProfileImageUrl =
     selectedGuesthouse?.profileImageUrl ?? hostProfile?.photoUrl ?? null;

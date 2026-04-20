@@ -11,7 +11,7 @@ import {
   Keyboard,
   Platform,
   TextInput,
-  TouchableWithoutFeedback,
+  Pressable,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 
@@ -26,8 +26,6 @@ import PlusOrange from '@assets/images/plus_orange.svg';
 import DeleteGray from '@assets/images/delete_gray.svg';
 
 const MODAL_HEIGHT = Math.round(Dimensions.get('window').height * 0.9);
-const DEFAULT_POLICY_DAYS = [1, 2, 3];
-
 const normalizePolicies = (policies = []) =>
   [...policies]
     .filter(
@@ -37,8 +35,7 @@ const normalizePolicies = (policies = []) =>
         item?.refundRate !== null &&
         item?.refundRate !== undefined &&
         Number(item?.refundRate) >= 0 &&
-        Number(item?.refundRate) <= 100 &&
-        Number(item?.refundRate) !== 100,
+        Number(item?.refundRate) < 100,
     )
     .map(item => ({
       daysBeforeCheckin: Number(item.daysBeforeCheckin),
@@ -54,9 +51,13 @@ const GuesthouseRefundPolicyModal = ({
   defaultPolicies = [],
   guesthouseId,
 }) => {
+  const [refundNotice, setRefundNotice] = useState('');
+  const [baselineNotice, setBaselineNotice] = useState('');
+
   const [refundPolicies, setRefundPolicies] = useState([]);
   const [appliedData, setAppliedData] = useState([]);
   const [baselinePolicies, setBaselinePolicies] = useState([]);
+  
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [draftDays, setDraftDays] = useState('');
@@ -88,6 +89,8 @@ const GuesthouseRefundPolicyModal = ({
         setRefundPolicies(fallbackPolicies);
         setAppliedData(fallbackPolicies);
         setBaselinePolicies(fallbackPolicies);
+        setRefundNotice('');
+        setBaselineNotice('');
         return;
       }
 
@@ -101,47 +104,40 @@ const GuesthouseRefundPolicyModal = ({
             ? response.data
             : [];
         const normalized = normalizePolicies(serverPolicies);
+        
+        const serverNotice = response?.data?.additionalNotice || '';
+        
         setRefundPolicies(normalized);
         setAppliedData(normalized);
         setBaselinePolicies(normalized);
+        
+        setRefundNotice(serverNotice);
+        setBaselineNotice(serverNotice);
       } catch (error) {
         setRefundPolicies(fallbackPolicies);
         setAppliedData(fallbackPolicies);
         setBaselinePolicies(fallbackPolicies);
+        setRefundNotice('');
+        setBaselineNotice('');
       }
     };
 
     syncRefundPolicies();
   }, [defaultPolicies, guesthouseId, visible]);
 
-  const displayPolicies = useMemo(() => {
-    const dayMap = new Map(
-      refundPolicies.map(item => [
-        Number(item.daysBeforeCheckin),
-        item?.refundRate === null || item?.refundRate === undefined
-          ? ''
-          : String(item.refundRate),
-      ]),
-    );
-    const mergedDays = Array.from(
-      new Set([
-        ...DEFAULT_POLICY_DAYS,
-        ...refundPolicies
-          .map(item => Number(item.daysBeforeCheckin))
-          .filter(day => Number.isInteger(day) && day >= 1),
-      ]),
-    ).sort((a, b) => a - b);
+  const sortedPolicies = useMemo(
+    () => normalizePolicies(refundPolicies),
+    [refundPolicies],
+  );
 
-    return mergedDays.map(daysBeforeCheckin => ({
-      daysBeforeCheckin,
-      refundRate: dayMap.get(daysBeforeCheckin) ?? '',
-      isDefault: DEFAULT_POLICY_DAYS.includes(daysBeforeCheckin),
-    }));
+  const displayPolicies = useMemo(() => {
+    return [...refundPolicies].sort((a, b) => a.daysBeforeCheckin - b.daysBeforeCheckin);
   }, [refundPolicies]);
 
   const handleModalClose = () => {
     if (shouldResetOnClose) {
-      setRefundPolicies(appliedData);
+      setRefundPolicies(baselinePolicies);
+      setRefundNotice(baselineNotice);
     }
     setAddModalVisible(false);
     setDraftDays('');
@@ -205,11 +201,6 @@ const GuesthouseRefundPolicyModal = ({
   };
 
   const handleRemovePolicy = daysBeforeCheckin => {
-    if (DEFAULT_POLICY_DAYS.includes(Number(daysBeforeCheckin))) {
-      handlePolicyRateChange(daysBeforeCheckin, '');
-      return;
-    }
-
     setRefundPolicies(prev =>
       prev.filter(
         item => Number(item.daysBeforeCheckin) !== Number(daysBeforeCheckin),
@@ -220,7 +211,8 @@ const GuesthouseRefundPolicyModal = ({
   const handleConfirm = async () => {
     const nextPolicies = normalizePolicies(refundPolicies);
     const hasChanged =
-      JSON.stringify(nextPolicies) !== JSON.stringify(baselinePolicies);
+      JSON.stringify(nextPolicies) !== JSON.stringify(baselinePolicies) ||
+      refundNotice !== baselineNotice;
 
     if (!guesthouseId) {
       Toast.show({
@@ -233,7 +225,7 @@ const GuesthouseRefundPolicyModal = ({
     }
 
     if (!hasChanged) {
-      onSelect?.(nextPolicies);
+      onSelect?.({ refundPolicies: nextPolicies, refundNotice });
       onClose();
       return;
     }
@@ -241,7 +233,10 @@ const GuesthouseRefundPolicyModal = ({
     try {
       await hostGuesthouseApi.updateGuesthouseRefundPolicies(
         guesthouseId,
-        nextPolicies,
+        {
+          policies: nextPolicies,
+          additionalNotice: refundNotice,
+        }
       );
 
       Toast.show({
@@ -253,7 +248,9 @@ const GuesthouseRefundPolicyModal = ({
       setRefundPolicies(nextPolicies);
       setAppliedData(nextPolicies);
       setBaselinePolicies(nextPolicies);
-      onSelect?.(nextPolicies);
+      setRefundNotice(refundNotice);
+      setBaselineNotice(refundNotice);
+      onSelect?.({ refundPolicies: nextPolicies, refundNotice });
       onClose();
     } catch (error) {
       Toast.show({
@@ -278,195 +275,236 @@ const GuesthouseRefundPolicyModal = ({
       transparent
       animationType="slide"
       onRequestClose={handleModalClose}>
-      <KeyboardAvoidingView
-        style={styles.keyboardAvoidingView}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? -220 : 0}>
-        <TouchableWithoutFeedback onPress={handleOverlayPress}>
-          <View style={styles.overlay}>
-            <TouchableWithoutFeedback onPress={() => {}}>
-              <View style={styles.modalContainer}>
-                <View style={styles.header}>
-                  <Text style={[FONTS.fs_20_semibold, styles.modalTitle]}>
-                    취소 및 환불규정
-                  </Text>
-                  <TouchableOpacity
-                    style={styles.closeButton}
-                    onPress={handleModalClose}>
-                    <XBtn width={24} height={24} />
-                  </TouchableOpacity>
+      <View style={styles.overlay}>
+        <Pressable 
+          style={StyleSheet.absoluteFill} 
+          onPress={handleOverlayPress} 
+        />
+        <KeyboardAvoidingView
+          style={styles.keyboardAvoidingView}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? -220 : 0}>
+          <View style={styles.modalContainer}>
+            <View style={styles.header}>
+              <Text style={[FONTS.fs_20_semibold, styles.modalTitle]}>
+                취소 및 환불규정
+              </Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={handleModalClose}>
+                <XBtn width={24} height={24} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              style={styles.body}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}>
+              
+              <View style={styles.sectionHeader}>
+                <Text style={[FONTS.fs_16_medium, styles.sectionTitle]}>
+                  추가 안내사항 (선택)
+                </Text>
+                <Text style={[FONTS.fs_12_light, styles.countText]}>
+                  <Text style={styles.countTextActive}>{refundNotice.length}</Text>
+                  /5,000
+                </Text>
+              </View>
+
+              <TextInput
+                style={[styles.noticeInput, FONTS.fs_14_regular]}
+                multiline
+                maxLength={5000}
+                placeholder="취소 및 환불 시 안내할 내용을 작성해주세요"
+                placeholderTextColor={COLORS.grayscale_400}
+                value={refundNotice}
+                onChangeText={setRefundNotice}
+                textAlignVertical="top"
+              />
+
+              <TouchableOpacity
+                style={styles.rewriteButton}
+                onPress={() => setRefundNotice('')}>
+                <Text style={[FONTS.fs_12_medium, styles.rewriteText]}>
+                  다시쓰기
+                </Text>
+              </TouchableOpacity>
+
+              <Text style={[FONTS.fs_16_medium, styles.policyTitle]}>
+                환불기준 설정
+              </Text>
+              <Text style={[FONTS.fs_14_medium, styles.policyDescription]}>
+                환불기준을 입력해주세요. 해당 기준에 의해 환불 처리 됩니다.
+                {'\n'}
+                설정하시지 않은 날짜는 <Text style={styles.policyWarning}>100% 환불 </Text>됩니다.
+              </Text>
+
+              <View style={styles.policyList}>
+                <View style={styles.policyRow}>
+                  <View style={styles.policyContent}>
+                    <Text style={[FONTS.fs_14_medium, styles.policyLabel]}>
+                      방문 당일
+                    </Text>
+                    <Text style={[FONTS.fs_14_medium, styles.policyAmountLabel]}>
+                      취소 및 환불 불가
+                    </Text>
+                  </View>
                 </View>
 
-                <ScrollView
-                  style={styles.body}
-                  keyboardShouldPersistTaps="handled"
-                  showsVerticalScrollIndicator={false}>
-                  <Text style={[FONTS.fs_16_medium, styles.policyTitle]}>
-                    환불기준 설정
-                  </Text>
-                  <Text style={[FONTS.fs_14_medium, styles.policyDescription]}>
-                    환불기준을 입력해주세요. 해당 기준에 의해 환불 처리 됩니다.
-                    {'\n'}
-                    입력하지 않거나 <Text style={styles.policyWarning}>100% 환불</Text>인 날짜는 저장되지 않습니다.
-                  </Text>
-
-                  <View style={styles.policyList}>
-                    {displayPolicies.map(policy => (
-                      <View
-                        key={policy.daysBeforeCheckin}
-                        style={styles.policyRow}>
-                        <View style={styles.policyContent}>
-                          <Text style={[FONTS.fs_14_medium, styles.policyLabel]}>
-                            {`방문 ${policy.daysBeforeCheckin}일전`}
-                          </Text>
-                          <Text style={[FONTS.fs_14_medium, styles.policyAmountLabel]}>
-                            총금액의
-                          </Text>
-                          <View style={styles.valueBox}>
-                            <TextInput
-                              value={policy.refundRate}
-                              onChangeText={text =>
-                                handlePolicyRateChange(
-                                  policy.daysBeforeCheckin,
-                                  text,
-                                )
-                              }
-                              keyboardType="number-pad"
-                              style={[FONTS.fs_14_medium, styles.valueInput]}
-                              placeholder="100"
-                              placeholderTextColor={COLORS.grayscale_400}
-                              maxLength={3}
-                            />
-                          </View>
-                          <Text
-                            style={[
-                              FONTS.fs_14_medium,
-                              styles.policyPercentLabel,
-                            ]}>
-                            % 환불
-                          </Text>
-                        </View>
-                        <TouchableOpacity
-                          style={styles.removePolicyButton}
-                          activeOpacity={0.8}
-                          onPress={() =>
-                            handleRemovePolicy(policy.daysBeforeCheckin)
-                          }>
-                          <DeleteGray width={18} height={18} />
-                        </TouchableOpacity>
+                {displayPolicies.map(policy => (
+                  <View
+                    key={policy.daysBeforeCheckin}
+                    style={styles.policyRow}>
+                    <View style={styles.policyContent}>
+                      <Text style={[FONTS.fs_14_medium, styles.policyLabel]}>
+                        {`방문 ${policy.daysBeforeCheckin}일전`}
+                      </Text>
+                      <Text style={[FONTS.fs_14_medium, styles.policyAmountLabel]}>
+                        총금액의
+                      </Text>
+                      <View style={styles.valueBox}>
+                        <TextInput
+                          value={String(policy.refundRate ?? '')}
+                          onChangeText={text =>
+                            handlePolicyRateChange(
+                              policy.daysBeforeCheckin,
+                              text,
+                            )
+                          }
+                          keyboardType="number-pad"
+                          style={[FONTS.fs_14_medium, styles.valueInput]}
+                          placeholder="환불 비율"
+                          placeholderTextColor={COLORS.grayscale_400}
+                          maxLength={3}
+                        />
                       </View>
-                    ))}
-                  </View>
-
-                  <TouchableOpacity
-                    style={styles.addPolicyButton}
-                    activeOpacity={0.8}
-                    onPress={() => setAddModalVisible(true)}>
-                    <View style={styles.plusBtn}>
-                      <PlusOrange width={16} height={16} />
+                      <Text
+                        style={[
+                          FONTS.fs_14_medium,
+                          styles.policyPercentLabel,
+                        ]}>
+                        % 환불
+                      </Text>
                     </View>
+                    <TouchableOpacity
+                      style={styles.removePolicyButton}
+                      activeOpacity={0.8}
+                      onPress={() =>
+                        handleRemovePolicy(policy.daysBeforeCheckin)
+                      }>
+                      <DeleteGray width={18} height={18} />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+
+              <TouchableOpacity
+                style={styles.addPolicyButton}
+                activeOpacity={0.8}
+                onPress={() => setAddModalVisible(true)}>
+                <View style={styles.plusBtn}>
+                  <PlusOrange width={16} height={16} />
+                </View>
+                <Text
+                  style={[
+                    FONTS.fs_14_medium,
+                    styles.addPolicyButtonText,
+                  ]}>
+                  환불기준 추가
+                </Text>
+              </TouchableOpacity>
+            </ScrollView>
+
+            <ButtonScarlet
+              title="적용하기"
+              onPress={handleConfirm}
+              disabled={sortedPolicies.length === 0}
+              style={styles.submitButton}
+            />
+
+            <Modal
+              visible={addModalVisible}
+              transparent
+              onRequestClose={() => setAddModalVisible(false)}>
+              <View style={styles.addOverlay}>
+                <Pressable 
+                  style={StyleSheet.absoluteFill} 
+                  onPress={() => setAddModalVisible(false)} 
+                />
+                <View style={styles.addModalContainer}>
+                  <Text
+                    style={[
+                      FONTS.fs_20_semibold,
+                      styles.addModalTitle,
+                    ]}>
+                    환불기준 추가
+                  </Text>
+
+                  <View style={styles.addFormRow}>
+                    <Text
+                      style={[FONTS.fs_16_medium, styles.addFormLabel]}>
+                      방문
+                    </Text>
+                    <TextInput
+                      value={draftDays}
+                      onChangeText={text =>
+                        setDraftDays(text.replace(/[^0-9]/g, ''))
+                      }
+                      keyboardType="number-pad"
+                      style={[styles.addInput, FONTS.fs_16_medium]}
+                      maxLength={3}
+                    />
                     <Text
                       style={[
-                        FONTS.fs_14_medium,
-                        styles.addPolicyButtonText,
+                        FONTS.fs_16_medium,
+                        styles.addFormSuffix,
                       ]}>
-                      환불기준 추가
+                      일전
                     </Text>
-                  </TouchableOpacity>
-                </ScrollView>
+                    <Text
+                      style={[
+                        FONTS.fs_16_medium,
+                        styles.addFormAmount,
+                      ]}>
+                      총금액의
+                    </Text>
+                    <TextInput
+                      value={draftRate}
+                      onChangeText={text =>
+                        setDraftRate(text.replace(/[^0-9]/g, ''))
+                      }
+                      keyboardType="number-pad"
+                      style={[styles.addInput, FONTS.fs_16_medium]}
+                      maxLength={3}
+                    />
+                    <Text
+                      style={[
+                        FONTS.fs_16_medium,
+                        styles.addFormSuffix,
+                      ]}>
+                      % 환불
+                    </Text>
+                  </View>
 
-                <ButtonScarlet
-                  title="적용하기"
-                  onPress={handleConfirm}
-                  style={styles.submitButton}
-                />
-
-                <Modal
-                  visible={addModalVisible}
-                  transparent
-                  onRequestClose={() => setAddModalVisible(false)}>
-                  <TouchableWithoutFeedback
-                    onPress={() => setAddModalVisible(false)}>
-                    <View style={styles.addOverlay}>
-                      <TouchableWithoutFeedback onPress={() => {}}>
-                        <View style={styles.addModalContainer}>
-                          <Text
-                            style={[
-                              FONTS.fs_20_semibold,
-                              styles.addModalTitle,
-                            ]}>
-                            환불기준 추가
-                          </Text>
-
-                          <View style={styles.addFormRow}>
-                            <Text
-                              style={[FONTS.fs_16_medium, styles.addFormLabel]}>
-                              방문
-                            </Text>
-                            <TextInput
-                              value={draftDays}
-                              onChangeText={text =>
-                                setDraftDays(text.replace(/[^0-9]/g, ''))
-                              }
-                              keyboardType="number-pad"
-                              style={[styles.addInput, FONTS.fs_16_medium]}
-                              maxLength={3}
-                            />
-                            <Text
-                              style={[
-                                FONTS.fs_16_medium,
-                                styles.addFormSuffix,
-                              ]}>
-                              일전
-                            </Text>
-                            <Text
-                              style={[
-                                FONTS.fs_16_medium,
-                                styles.addFormAmount,
-                              ]}>
-                              총금액의
-                            </Text>
-                            <TextInput
-                              value={draftRate}
-                              onChangeText={text =>
-                                setDraftRate(text.replace(/[^0-9]/g, ''))
-                              }
-                              keyboardType="number-pad"
-                              style={[styles.addInput, FONTS.fs_16_medium]}
-                              maxLength={3}
-                            />
-                            <Text
-                              style={[
-                                FONTS.fs_16_medium,
-                                styles.addFormSuffix,
-                              ]}>
-                              % 환불
-                            </Text>
-                          </View>
-
-                          <View style={styles.addButtonRow}>
-                            <ButtonWhite
-                              title="취소"
-                              onPress={() => setAddModalVisible(false)}
-                              style={styles.modalActionButton}
-                            />
-                            <ButtonScarlet
-                              title="추가하기"
-                              onPress={handleAddPolicy}
-                              disabled={isAddDisabled}
-                              style={styles.modalActionButton}
-                            />
-                          </View>
-                        </View>
-                      </TouchableWithoutFeedback>
-                    </View>
-                  </TouchableWithoutFeedback>
-                </Modal>
+                  <View style={styles.addButtonRow}>
+                    <ButtonWhite
+                      title="취소"
+                      onPress={() => setAddModalVisible(false)}
+                      style={styles.modalActionButton}
+                    />
+                    <ButtonScarlet
+                      title="추가하기"
+                      onPress={handleAddPolicy}
+                      disabled={isAddDisabled}
+                      style={styles.modalActionButton}
+                    />
+                  </View>
+                </View>
               </View>
-            </TouchableWithoutFeedback>
+            </Modal>
           </View>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 };
@@ -476,6 +514,7 @@ export default GuesthouseRefundPolicyModal;
 const styles = StyleSheet.create({
   keyboardAvoidingView: {
     flex: 1,
+    justifyContent: 'flex-end',
   },
   overlay: {
     flex: 1,
@@ -504,8 +543,40 @@ const styles = StyleSheet.create({
   body: {
     flex: 1,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  sectionTitle: {
+    color: COLORS.grayscale_800,
+  },
+  countText: {
+    color: COLORS.grayscale_400,
+  },
+  countTextActive: {
+    color: COLORS.primary_orange,
+  },
+  noticeInput: {
+    minHeight: 154,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: COLORS.grayscale_200,
+    color: COLORS.grayscale_800,
+  },
+  rewriteButton: {
+    alignSelf: 'flex-end',
+    marginTop: 6,
+  },
+  rewriteText: {
+    color: COLORS.grayscale_500,
+  },
   policyTitle: {
     color: COLORS.grayscale_800,
+    marginTop: 22,
     marginBottom: 8,
   },
   policyDescription: {
@@ -517,7 +588,7 @@ const styles = StyleSheet.create({
   },
   policyList: {
     marginTop: 18,
-    gap: 14,
+    gap: 24,
   },
   policyRow: {
     flexDirection: 'row',
@@ -528,6 +599,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
   policyLabel: {
     marginRight: 20,
@@ -609,13 +681,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexWrap: 'wrap',
     marginBottom: 20,
+    justifyContent: 'center',
   },
   addFormLabel: {
     color: COLORS.grayscale_800,
     marginRight: 8,
   },
   addInput: {
-    width: 58,
+    width: 52,
     height: 32,
     borderWidth: 1,
     borderColor: COLORS.grayscale_200,
@@ -641,6 +714,5 @@ const styles = StyleSheet.create({
   },
   modalActionButton: {
     flex: 1,
-    height: 48,
   },
 });

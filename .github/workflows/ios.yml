@@ -83,7 +83,8 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: '20'
+          cache: yarn
 
       - name: Install Node dependencies
         run: yarn install
@@ -142,6 +143,10 @@ jobs:
 
           cp ios/.env .env
           echo "LANE=$LANE" >> $GITHUB_ENV
+
+      - name: Decode GoogleService-Info.plist
+        run: |
+          echo "${{ secrets.GOOGLE_SERVICE_INFO_PLIST_BASE64 }}" | base64 --decode > ios/GoogleService-Info.plist
 
       # --------------------------------
       # Build & Upload

@@ -75,7 +75,7 @@ export default function FindId({route}) {
           <ButtonWhite
             title={'로그인하러 가기'}
             onPress={() => {
-              navigation.navigate('LoginIntro');
+              navigation.navigate('LoginByEmail', {userRole: 'HOST'});
             }}
             backgroundColor={mainColor}
             textColor={COLORS.grayscale_0}
