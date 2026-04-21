@@ -32,9 +32,10 @@ const menuSections = [
     routeName: 'StoreRegisterList',
   },
   {
-    key: 'authority',
-    label: '권한관리',
+    key: 'settlement',
+    label: '정산관리',
     icon: MemberIcon,
+    routeName: 'SettlementManagement',
   },
   {
     key: 'notice',
