@@ -32,6 +32,7 @@ const SEARCH_TYPE_MAP = {
   예약번호: 'RESERVATION_CODE',
 };
 const RESERVATION_STATUS_MAP = {
+  대기: 'PENDING',
   확정: 'CONFIRMED',
   취소: 'CANCELLED',
   완료: 'COMPLETED',
@@ -73,7 +74,7 @@ const ReservationManagement = ({guesthouseId}) => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const searchFilterOptions = ['예약자명', '예약자 전화번호', '예약번호'];
-  const reservationStatusOptions = ['전체', '확정', '취소', '완료'];
+  const reservationStatusOptions = ['전체', '대기', '확정', '취소', '완료'];
   const markedDates = {
     [selectedDate]: {
       selected: true,
@@ -231,6 +232,14 @@ const ReservationManagement = ({guesthouseId}) => {
       requestReservationSearch,
     ]),
   );
+
+  const refreshReservations = useCallback(() => {
+    if (!guesthouseId) return;
+
+    requestReservationSearch(buildReservationSearchParams(DEFAULT_PAGE), {
+      append: false,
+    });
+  }, [guesthouseId, buildReservationSearchParams, requestReservationSearch]);
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -394,6 +403,7 @@ const ReservationManagement = ({guesthouseId}) => {
           loading={isReservationsLoading}
           loadingMore={isLoadingMore}
           onEndReached={loadNextPage}
+          onActionComplete={refreshReservations}
         />
       </View>
     </TouchableWithoutFeedback>

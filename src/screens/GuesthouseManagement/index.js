@@ -35,13 +35,19 @@ const tabs = [
   PARTY_RESERVATION_TAB,
 ];
 
+const RESERVATION_POLICY_TO_METHOD = {
+  CLOSED: 'closed',
+  REQUEST_CONFIRMATION: 'request',
+  INSTANT_CONFIRMATION: 'instant',
+};
+
 const GuesthouseManagement = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const routeGuesthouseId = route.params?.guesthouseId;
   const routeProfileKey = route.params?.profileKey;
   const routeBusinessName = route.params?.businessName || '게스트하우스';
-  const reservationMethod = route.params?.reservationMethod || 'closed';
+  const routeReservationMethod = route.params?.reservationMethod;
   const initialProfileKey =
     routeProfileKey != null
       ? String(routeProfileKey)
@@ -58,6 +64,9 @@ const GuesthouseManagement = () => {
   const [selectedProfileKey, setSelectedProfileKey] = useState(initialProfileKey);
   const lastSyncedRouteProfileKeyRef = useRef(initialProfileKey);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [reservationMethod, setReservationMethod] = useState(
+    routeReservationMethod || 'closed',
+  );
 
   const guesthouseProfiles = useMemo(
     () =>
@@ -170,12 +179,48 @@ const GuesthouseManagement = () => {
     }
   }, [effectiveGuesthouseId]);
 
+  const fetchReservationPolicy = useCallback(async () => {
+    if (!effectiveGuesthouseId) {
+      setReservationMethod('closed');
+      return;
+    }
+
+    try {
+      const response = await hostGuesthouseApi.getGuesthouseReservationPolicy(
+        effectiveGuesthouseId,
+      );
+      const reservationPolicy =
+        response?.data?.currentPolicy ??
+        response?.data?.data?.currentPolicy ??
+        response?.data;
+
+      setReservationMethod(
+        RESERVATION_POLICY_TO_METHOD[reservationPolicy] || 'closed',
+      );
+    } catch (error) {
+      console.warn(
+        '[GuesthouseManagement] failed to fetch reservation policy:',
+        error?.message,
+      );
+      setReservationMethod('closed');
+    }
+  }, [effectiveGuesthouseId]);
+
   useFocusEffect(
     useCallback(() => {
       fetchGuesthouseDetail();
       fetchPartyTemplates();
-    }, [fetchGuesthouseDetail, fetchPartyTemplates]),
+      fetchReservationPolicy();
+    }, [fetchGuesthouseDetail, fetchPartyTemplates, fetchReservationPolicy]),
   );
+
+  useEffect(() => {
+    if (!routeReservationMethod) {
+      return;
+    }
+
+    setReservationMethod(routeReservationMethod);
+  }, [routeReservationMethod]);
 
   const fetchUnreadCount = useCallback(async () => {
     try {

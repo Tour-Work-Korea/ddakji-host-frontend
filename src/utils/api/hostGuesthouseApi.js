@@ -20,6 +20,17 @@ const hostGuesthouseApi = {
   updateGuesthouseRefundPolicies: (guesthouseId, payload) =>
     api.put(`/host/guesthouses/${guesthouseId}/refund-policy-settings`, payload),
 
+  // 게스트하우스 예약 정책 조회
+  getGuesthouseReservationPolicy: guesthouseId =>
+    api.get(`/host/guesthouses/${guesthouseId}/reservation-policy`),
+
+  // 게스트하우스 예약 정책 수정
+  // body: { reservationPolicy: 'CLOSED' | 'REQUEST_CONFIRMATION' | 'INSTANT_CONFIRMATION' }
+  updateGuesthouseReservationPolicy: (guesthouseId, reservationPolicy) =>
+    api.put(`/host/guesthouses/${guesthouseId}/reservation-policy`, {
+      reservationPolicy,
+    }),
+
   // 게스트하우스 최종 등록
   finalizeGuesthouse: (guesthouseId, dto) =>
     api.post(`/host/guesthouses/${guesthouseId}/finalize`, dto),
@@ -170,9 +181,21 @@ const hostGuesthouseApi = {
   getGuesthouseReservationCalendar: (formData) =>
     api.get('/order/host/reservation/calendar', { params: formData }),
 
+  // 게하 예약 캘린더 플래그 조회
+  getGuesthouseReservationCalendarFlags: (formData) =>
+    api.get('/order/host/reservation/calendar/flags', { params: formData }),
+
   // 호스트 예약 취소
   cancelGuesthouseReservationByHost: (reservationId, payload) =>
     api.post(`/order/host/reservation/${reservationId}/cancel`, payload),
+
+  // 호스트 예약 확정
+  approveGuesthouseReservationByHost: (reservationId) =>
+    api.post(`/order/host/reservation/${reservationId}/approve`),
+
+  // 호스트 예약 반려
+  rejectGuesthouseReservationByHost: (reservationId, payload) =>
+    api.post(`/order/host/reservation/${reservationId}/reject`, payload),
 
   // 특정 객실 기간별 운영 상태/예약 인원/잔여 인원 조회
   // query: { from: 'YYYY-MM-DD', toInclusive: 'YYYY-MM-DD' }
