@@ -69,11 +69,7 @@ const normalizeType = type => {
     return 'notice';
   }
 
-  if (
-    rawType === 'PARTY_RESERVATION_NEW' ||
-    rawType === 'PARTY_INVITATION' ||
-    rawType === 'PARTY_CHECKIN_INFO'
-  ) {
+  if (rawType.startsWith('PARTY_')) {
     return 'partyReservation';
   }
 
@@ -84,9 +80,8 @@ const normalizeStatus = type => {
   const rawType = String(type || '').toUpperCase();
 
   if (
-    rawType === 'GUESTHOUSE_RESERVATION_CANCELLED' ||
-    rawType === 'GUESTHOUSE_RESERVATION_HOST_REFUND' ||
-    rawType === 'GUESTHOUSE_RESERVATION_USER_REFUND'
+    rawType.includes('CANCELLED') ||
+    rawType.includes('REFUND')
   ) {
     return 'cancelled';
   }

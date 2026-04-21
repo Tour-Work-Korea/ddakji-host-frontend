@@ -23,6 +23,12 @@ export default StyleSheet.create({
   optionList: {
     gap: 16,
   },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
   optionCard: {
     borderWidth: 1,
     borderColor: COLORS.grayscale_200,

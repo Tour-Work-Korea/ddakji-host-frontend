@@ -186,6 +186,7 @@ const Home = ({ reservationMethod = 'closed', guesthouseId }) => {
           onPress={() =>
             navigation.navigate('ReservationMethodSettings', {
               selectedOption: reservationMethod,
+              guesthouseId,
             })
           }>
           <Text style={[FONTS.fs_12_medium, styles.actionButtonText]}>
