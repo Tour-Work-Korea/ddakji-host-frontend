@@ -256,7 +256,15 @@ const Home = ({ reservationMethod = 'closed', guesthouseId }) => {
 
         <View style={styles.reservationListContainer}>
           {itemsToShow.map(reservation => (
-            <View key={reservation.reservationId} style={styles.reservationCard}>
+            <TouchableOpacity 
+              key={reservation.reservationId} 
+              style={styles.reservationCard}
+              activeOpacity={0.8}
+              onPress={() => {
+                navigation.navigate('MyGuesthouseReservationDetail', {
+                  reservationId: reservation.reservationId,
+                });
+              }}>
               <View style={styles.reservationCardHeader}>
                 <Text style={[FONTS.fs_16_semibold, styles.reservationName]}>
                   {reservation.guestName || '게스트'}
@@ -361,7 +369,7 @@ const Home = ({ reservationMethod = 'closed', guesthouseId }) => {
                   </TouchableOpacity>
                 )
               )}
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
       </View>
@@ -398,12 +406,6 @@ const Home = ({ reservationMethod = 'closed', guesthouseId }) => {
               {Number(settlementData?.accumulatedSettlementAmount || 0).toLocaleString()}원
             </Text>
           </View>
-          {/* 성장률이 백엔드에 있을 경우 표시 */}
-          {(settlementData?.growthRate || '+12.5%') && (
-            <Text style={[FONTS.fs_12_semibold, styles.settlementRateRed]}>
-              {settlementData?.growthRate || '+12.5%'} 대비 지난달
-            </Text>
-          )}
         </View>
 
         <View style={styles.settlementSubRow}>

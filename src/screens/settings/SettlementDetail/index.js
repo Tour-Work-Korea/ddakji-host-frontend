@@ -68,13 +68,13 @@ const SettlementDetail = () => {
   const getStatusBadgeStyle = status => {
     switch (status) {
       case 'PENDING':
-        return [styles.badgeComplete, { backgroundColor: COLORS.secondary_yellow }];
+        return [styles.badgeComplete, { backgroundColor: COLORS.secondary_red }];
       case 'COMPLETE':
       case 'COMPLETED':
       case 'PAID':
         return styles.badgeComplete;
       case 'HOLD':
-        return [styles.badgeComplete, { backgroundColor: COLORS.secondary_red }];
+        return [styles.badgeComplete, { backgroundColor: COLORS.grayscale_100 }];
       default:
         return styles.badgeComplete;
     }
@@ -83,13 +83,13 @@ const SettlementDetail = () => {
   const getStatusTextStyle = status => {
     switch (status) {
       case 'PENDING':
-        return [styles.badgeCompleteText, { color: COLORS.semantic_yellow }];
+        return [styles.badgeCompleteText, { color: COLORS.semantic_red }];
       case 'COMPLETE':
       case 'COMPLETED':
       case 'PAID':
         return styles.badgeCompleteText;
       case 'HOLD':
-        return [styles.badgeCompleteText, { color: COLORS.semantic_red }];
+        return [styles.badgeCompleteText, { color: COLORS.grayscale_500 }];
       default:
         return styles.badgeCompleteText;
     }
@@ -203,10 +203,12 @@ const SettlementDetail = () => {
                               <Text style={styles.diffLevelTitle}>
                                 {line.sequence}차 ({line.stayDate ? line.stayDate.substring(5).replace('-', '.') : ''})
                               </Text>
-                              <Text style={styles.diffLevelDesc}>{line.policyRuleLabel}</Text>
+                              <Text style={styles.diffLevelDesc}>
+                                {line.daysBeforeStay === 0 ? '당일' : `${line.daysBeforeStay}일 전`} 취소{line.penaltyRate > 0 ? `(위약금 ${line.penaltyRate}% 발생)` : ''}
+                              </Text>
                             </View>
                             <Text style={line.settlementPenaltyAmount > 0 ? styles.diffLevelValueBold : styles.diffLevelValueNormal}>
-                              위약금 {line.penaltyRate}% 발생 (₩{formatNumber(line.settlementPenaltyAmount)})
+                              {line.penaltyRate === 0 ? `위약금 없음 (₩0)` : `₩${formatNumber(line.settlementPenaltyAmount)}`}
                             </Text>
                           </View>
                         ))}
@@ -223,12 +225,14 @@ const SettlementDetail = () => {
                     <View style={styles.calcRow}>
                       <Text style={styles.calcLabel}>적용 규정</Text>
                       <Text style={styles.cancelRuleTextRed}>
-                        {item.cancellationLines[0].policyRuleLabel} (위약금 {item.cancellationLines[0].penaltyRate}% 발생)
+                        {item.cancellationLines[0].daysBeforeStay === 0 ? '당일' : `${item.cancellationLines[0].daysBeforeStay}일 전`} 취소{item.cancellationLines[0].penaltyRate > 0 ? `(위약금 ${item.cancellationLines[0].penaltyRate}% 발생)` : ''}
                       </Text>
                     </View>
                     <View style={styles.calcRow}>
                       <Text style={styles.calcLabel}>취소 위약금</Text>
-                      <Text style={styles.calcValue}>₩ {formatNumber(item.cancellationLines[0].settlementPenaltyAmount || 0)}</Text>
+                      <Text style={styles.calcValue}>
+                        {item.cancellationLines[0].penaltyRate === 0 ? '위약금 없음 (₩ 0)' : `₩ ${formatNumber(item.cancellationLines[0].settlementPenaltyAmount || 0)}`}
+                      </Text>
                     </View>
                   </>
                 ) : (

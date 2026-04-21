@@ -111,6 +111,13 @@ const SettlementManagement = () => {
 
   const formatNumber = (num) => Number(num || 0).toLocaleString();
 
+  const getFormattedDateWithDay = (dateStr) => {
+    if (!dateStr) return '-';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr.replace(/-/g, '.');
+    return `${dateStr.replace(/-/g, '.')} (${['일', '월', '화', '수', '목', '금', '토'][d.getDay()]})`;
+  };
+
   const getStatusBadgeStyle = status => {
     switch (status) {
       case 'PENDING':
@@ -227,11 +234,6 @@ const SettlementManagement = () => {
           <View style={styles.settlementAccumulatedRow}>
             <Text style={styles.cumulativeAmount}>{formatNumber(accumulatedSettlementAmount)}원</Text>
           </View>
-          {(safeData?.growthRate || '+12.5%') && (
-            <Text style={styles.comparisonText}>
-              {safeData?.growthRate || '+12.5%'} 대비 지난달
-            </Text>
-          )}
         </View>
 
         {/* Two Columns Row */}
@@ -266,7 +268,7 @@ const SettlementManagement = () => {
               <View>
                 <Text style={styles.detailItemDateTop}>정산액 입금일</Text>
                 <Text style={styles.detailItemDateTopValue}>
-                  {item.payoutDate ? item.payoutDate.replace(/-/g, '.') : '-'}
+                  {getFormattedDateWithDay(item.payoutDate)}
                 </Text>
               </View>
               <View style={getStatusBadgeStyle(item.payoutStatus)}>
@@ -276,10 +278,16 @@ const SettlementManagement = () => {
               </View>
             </View>
 
-            <View style={styles.divider} />
+            <View style={styles.itemDivider} />
 
             <View style={styles.detailItemBody}>
               <View style={styles.detailColLeft}>
+                <View style={[styles.detailMetaTextRow, {marginBottom: 4}]}>
+                  <Text style={styles.detailMetaLabel}>정산 기준일</Text>
+                  <Text style={styles.detailMetaValue}>
+                    {item.targetDate?.replace(/-/g, '.') || item.salesDate?.replace(/-/g, '.') || item.payoutDate?.replace(/-/g, '.') || '-'}
+                  </Text>
+                </View>
                 <View style={styles.detailMetaTextRow}>
                   <Text style={styles.detailMetaLabel}>건수</Text>
                   <Text style={styles.detailMetaValue}>{item.itemCount}건</Text>

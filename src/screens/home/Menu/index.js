@@ -21,6 +21,7 @@ import PolicyIcon from '@assets/images/menu_policy.svg';
 import VersionIcon from '@assets/images/menu_version.svg';
 import SettingIcon from '@assets/images/settings_gray.svg';
 import RightArrowIcon from '@assets/images/chevron_right_gray.svg';
+import BankIcon from '@assets/images/bank_gray.svg';
 
 import styles from './HostHomeMenu.styles';
 
@@ -33,8 +34,8 @@ const menuSections = [
   },
   {
     key: 'settlement',
-    label: '정산관리',
-    icon: MemberIcon,
+    label: '정산 관리',
+    icon: BankIcon,
     routeName: 'SettlementManagement',
   },
   {

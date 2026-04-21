@@ -37,12 +37,13 @@ const styles = StyleSheet.create({
   },
   badgeComplete: {
     backgroundColor: COLORS.secondary_blue,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 4,
   },
   badgeCompleteText: {
-    ...FONTS.fs_12_bold,
+    ...FONTS.fs_14_semibold,
+    fontSize: 12,
     color: COLORS.semantic_blue,
   },
   headerAmount: {
@@ -245,7 +246,8 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   dropdownMockText: {
-    ...FONTS.fs_12_semibold,
+    ...FONTS.fs_14_semibold,
+    fontSize: 13,
     color: COLORS.semantic_red,
     marginRight: 4,
   },

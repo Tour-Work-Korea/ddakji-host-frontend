@@ -139,6 +139,11 @@ export default StyleSheet.create({
     color: '#666',
     marginBottom: 8,
   },
+  itemDivider: {
+    height: 1,
+    backgroundColor: '#F0F0F0',
+    marginVertical: 16,
+  },
   settlementAccumulatedRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
@@ -207,13 +212,13 @@ export default StyleSheet.create({
     marginBottom: 8,
   },
   detailItemDateTop: {
-    ...FONTS.fs_12_medium,
-    color: COLORS.grayscale_500,
+    ...FONTS.fs_14_medium,
+    color: COLORS.grayscale_600,
   },
   detailItemDateTopValue: {
-    ...FONTS.fs_16_bold,
-    color: COLORS.grayscale_800,
-    marginTop: 2,
+    ...FONTS.fs_18_semibold,
+    color: COLORS.grayscale_900,
+    marginTop: 4,
   },
   badge: {
     paddingHorizontal: 10,
@@ -221,7 +226,8 @@ export default StyleSheet.create({
     borderRadius: 4,
   },
   badgeText: {
-    ...FONTS.fs_12_bold,
+    ...FONTS.fs_14_semibold,
+    fontSize: 12,
   },
   badgePending: {
     backgroundColor: COLORS.secondary_red,
@@ -245,7 +251,6 @@ export default StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
-    marginTop: 16,
   },
   detailColLeft: {
     justifyContent: 'center',
@@ -259,16 +264,16 @@ export default StyleSheet.create({
     alignItems: 'center',
   },
   detailMetaLabel: {
-    ...FONTS.fs_12_medium,
-    color: COLORS.grayscale_500,
-    width: 45,
+    ...FONTS.fs_14_medium,
+    color: COLORS.grayscale_400,
+    width: 72,
   },
   detailMetaValue: {
-    ...FONTS.fs_12_bold,
-    color: COLORS.grayscale_800,
+    ...FONTS.fs_14_semibold,
+    color: COLORS.grayscale_900,
   },
   detailItemAmount: {
-    ...FONTS.fs_20_bold,
-    color: COLORS.grayscale_800,
+    ...FONTS.fs_22_bold,
+    color: COLORS.grayscale_900,
   },
 });

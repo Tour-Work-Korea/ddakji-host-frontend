@@ -16,6 +16,7 @@ import { useRoute } from '@react-navigation/native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import Header from '@components/Header';
 import ChevronDownGray from '@assets/images/chevron_right_gray.svg'; // Reuse a gray arrow
+import InfoIconRed from '@assets/images/info_circle_red.svg';
 import settlementApi from '@utils/api/settlementApi';
 import { adaptiveCompressToJPEG, generateUniqueFilename } from '@utils/imageUploadHandler';
 
@@ -329,7 +330,7 @@ const SettlementAccountChange = () => {
         {/* 변경 안내 및 절차 */}
         <View style={styles.guideBox}>
           <View style={styles.guideHeader}>
-            <Text style={styles.guideHeaderIcon}>ℹ️</Text>
+            <InfoIconRed width={24} height={24} style={styles.guideHeaderIcon} />
             <Text style={styles.guideTitle}>변경 안내 및 절차</Text>
           </View>
           

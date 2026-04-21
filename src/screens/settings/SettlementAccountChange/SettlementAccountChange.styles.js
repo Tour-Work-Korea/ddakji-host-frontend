@@ -181,41 +181,42 @@ const styles = StyleSheet.create({
 
   // Guide Process Box
   guideBox: {
-    backgroundColor: COLORS.secondary_red,
-    borderRadius: 12,
-    padding: 20,
+    backgroundColor: '#FCF5F5',
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 24,
     marginTop: 24,
   },
   guideHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   guideHeaderIcon: {
-    marginRight: 6,
+    marginRight: 8,
   },
   guideTitle: {
-    ...FONTS.fs_14_semibold,
+    ...FONTS.fs_16_bold,
     color: COLORS.grayscale_900,
   },
   stepCard: {
     backgroundColor: COLORS.grayscale_0,
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 16,
   },
   stepNumber: {
     ...FONTS.fs_12_bold,
     color: COLORS.semantic_red,
-    marginBottom: 2,
+    marginBottom: 8,
   },
   stepTitle: {
-    ...FONTS.fs_14_semibold,
+    ...FONTS.fs_16_bold,
     color: COLORS.grayscale_900,
-    marginBottom: 4,
+    marginBottom: 8,
   },
   stepDesc: {
-    ...FONTS.fs_12_medium,
+    ...FONTS.fs_14_medium,
     color: COLORS.grayscale_500,
   },
   guideFooter: {
@@ -223,16 +224,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderColor: COLORS.secondary_pink,
-    paddingTop: 16,
-    marginTop: 4,
+    borderColor: '#EDDFDF',
+    paddingTop: 20,
+    marginTop: 8,
   },
   guideFooterLeft: {
-    ...FONTS.fs_12_medium,
+    ...FONTS.fs_14_medium,
     color: COLORS.grayscale_500,
   },
   guideFooterRight: {
-    ...FONTS.fs_12_semibold,
+    ...FONTS.fs_16_semibold,
     color: COLORS.grayscale_900,
   },
 
