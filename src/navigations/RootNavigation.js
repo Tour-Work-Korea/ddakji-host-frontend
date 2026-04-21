@@ -35,6 +35,9 @@ import {
   Setting,
   NotificationSettings,
   NotificationCenter,
+  SettlementManagement,
+  SettlementAccountChange,
+  SettlementDetail,
   Terms,
   MyGuesthouseList,
   MyGuesthouseReview,
@@ -134,6 +137,9 @@ const RootNavigation = () => {
         name="NotificationCenter"
         component={NotificationCenter}
       />
+      <Stack.Screen name="SettlementManagement" component={SettlementManagement} />
+      <Stack.Screen name="SettlementAccountChange" component={SettlementAccountChange} />
+      <Stack.Screen name="SettlementDetail" component={SettlementDetail} />
       <Stack.Screen name="Terms" component={Terms} />
       <Stack.Screen name="NoticeList" component={NoticeList} />
       <Stack.Screen name="NoticeDetail" component={NoticeDetail} />

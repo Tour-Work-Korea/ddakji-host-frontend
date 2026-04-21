@@ -359,6 +359,7 @@ const GuesthouseManagement = () => {
           guesthouseDetail={guesthouseDetail}
           hasPartyTemplate={hasPartyTemplate}
           reservationMethod={reservationMethod}
+          guesthouseId={effectiveGuesthouseId}
           onMoveTab={setActiveTab}
         />
       ) : activeTab === INFO_TAB ? (
