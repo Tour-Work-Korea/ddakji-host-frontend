@@ -38,6 +38,7 @@ import {
   SettlementManagement,
   SettlementAccountChange,
   SettlementDetail,
+  SalesManagement,
   Terms,
   MyGuesthouseList,
   MyGuesthouseReview,
@@ -140,6 +141,7 @@ const RootNavigation = () => {
       <Stack.Screen name="SettlementManagement" component={SettlementManagement} />
       <Stack.Screen name="SettlementAccountChange" component={SettlementAccountChange} />
       <Stack.Screen name="SettlementDetail" component={SettlementDetail} />
+      <Stack.Screen name="SalesManagement" component={SalesManagement} />
       <Stack.Screen name="Terms" component={Terms} />
       <Stack.Screen name="NoticeList" component={NoticeList} />
       <Stack.Screen name="NoticeDetail" component={NoticeDetail} />

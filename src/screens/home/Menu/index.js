@@ -5,7 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import Avatar from '@components/Avatar';
 import AlertModal from '@components/modals/AlertModal';
 import { FONTS } from '@constants/fonts';
-import {APP_VERSION} from '@constants/appVersion';
+import { APP_VERSION } from '@constants/appVersion';
 import useUserStore from '@stores/userStore';
 import authApi from '@utils/api/authApi';
 import { tryLogout } from '@utils/auth/login';
@@ -22,6 +22,7 @@ import VersionIcon from '@assets/images/menu_version.svg';
 import SettingIcon from '@assets/images/settings_gray.svg';
 import RightArrowIcon from '@assets/images/chevron_right_gray.svg';
 import BankIcon from '@assets/images/bank_gray.svg';
+import TrendingIcon from '@assets/images/trending_gray.svg';
 
 import styles from './HostHomeMenu.styles';
 
@@ -37,6 +38,12 @@ const menuSections = [
     label: '정산 관리',
     icon: BankIcon,
     routeName: 'SettlementManagement',
+  },
+  {
+    key: 'sales',
+    label: '매출 분석',
+    icon: TrendingIcon,
+    routeName: 'SalesManagement',
   },
   {
     key: 'notice',

@@ -18,7 +18,7 @@ const formatDateWithNights = (checkIn, checkOut) => {
   const end = new Date(checkOut);
   const diffTime = Math.abs(end - start);
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
+
   const format = d => `${String(d.getFullYear()).slice(-2)}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
   return `${format(start)} - ${format(end)} (${diffDays || 1}박)`;
 };
@@ -257,8 +257,8 @@ const Home = ({ reservationMethod = 'closed', guesthouseId }) => {
 
         <View style={styles.reservationListContainer}>
           {itemsToShow.map(reservation => (
-            <TouchableOpacity 
-              key={reservation.reservationId} 
+            <TouchableOpacity
+              key={reservation.reservationId}
               style={styles.reservationCard}
               activeOpacity={0.8}
               onPress={() => {
@@ -270,7 +270,7 @@ const Home = ({ reservationMethod = 'closed', guesthouseId }) => {
                 <Text style={[FONTS.fs_16_semibold, styles.reservationName]}>
                   {reservation.guestName || '게스트'}
                 </Text>
-                
+
                 {selectedTab === 'TODAY_STAYING' ? (
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <View
@@ -309,7 +309,7 @@ const Home = ({ reservationMethod = 'closed', guesthouseId }) => {
                     </Text>
                   </View>
                 )}
-                
+
                 {selectedTab === 'WAITING_APPROVAL' && (
                   <View style={styles.waitingAlertRow}>
                     <View style={styles.waitingAlertIcon}>
@@ -375,6 +375,51 @@ const Home = ({ reservationMethod = 'closed', guesthouseId }) => {
         </View>
       </View>
 
+      {/* 매출 분석 요약 보드 */}
+      <View style={{ marginBottom: 30 }}>
+        <TouchableOpacity
+          style={styles.settlementSectionTitleRow}
+          activeOpacity={0.8}
+          onPress={() => navigation.navigate('SalesManagement')}>
+          <Text style={[FONTS.fs_18_semibold]}>매출 분석</Text>
+          <ChevronRightIcon width={18} height={18} style={{ marginLeft: 4 }} />
+        </TouchableOpacity>
+
+        <View style={styles.salesCardMain}>
+          <View style={{ marginBottom: 24 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+              <Text style={{ fontSize: 14, fontWeight: '600', color: COLORS.grayscale_600 }}>이번 달 순매출</Text>
+              <View style={{ width: 14, height: 14, borderRadius: 7, borderWidth: 1, borderColor: COLORS.grayscale_300, alignItems: 'center', justifyContent: 'center', marginLeft: 4 }}>
+                <Text style={{ fontSize: 9, color: COLORS.grayscale_400, fontWeight: 'bold' }}>?</Text>
+              </View>
+            </View>
+            <View style={[styles.salesCardAmountRow, { marginBottom: 4 }]}>
+              <Text style={styles.salesCardAmount}>24,800,000</Text>
+              <Text style={styles.salesCardCurrency}>원</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{ fontSize: 14, color: COLORS.grayscale_600, fontWeight: '500', marginRight: 4 }}>이전기간대비</Text>
+              <Text style={{ fontSize: 14, color: COLORS.semantic_red, fontWeight: 'bold' }}>+3,794,400</Text>
+            </View>
+          </View>
+
+          <View style={{ gap: 14 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ fontSize: 14, color: COLORS.grayscale_600, fontWeight: '500' }}>전체 매출</Text>
+              <Text style={{ fontSize: 15, color: COLORS.grayscale_900, fontWeight: 'bold' }}>26,500,000원</Text>
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ fontSize: 14, color: COLORS.grayscale_600, fontWeight: '500' }}>취소/노쇼</Text>
+              <Text style={{ fontSize: 15, color: COLORS.grayscale_900, fontWeight: 'bold' }}>-1,700,000원</Text>
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ fontSize: 14, color: COLORS.grayscale_600, fontWeight: '500' }}>취소수수료</Text>
+              <Text style={{ fontSize: 15, color: COLORS.grayscale_900, fontWeight: 'bold' }}>+0원</Text>
+            </View>
+          </View>
+        </View>
+      </View>
+
       {/* 정산 관리 요약 보드 */}
       <View style={{ marginBottom: 30 }}>
         <TouchableOpacity
@@ -390,40 +435,45 @@ const Home = ({ reservationMethod = 'closed', guesthouseId }) => {
         </TouchableOpacity>
 
         <View style={styles.settlementCardMain}>
-          <Text style={[FONTS.fs_14_semibold, styles.settlementLabel]}>
-            {settlementData?.nextPayoutDate || `${new Date().getMonth() + 1}월 입금 예정`}
-          </Text>
-          <Text style={[FONTS.fs_22_bold, styles.settlementValueBlue]}>
-            {Number(settlementData?.upcomingPayoutAmount || 0).toLocaleString()}원
-          </Text>
-
-          <View style={styles.settlementDivider} />
-
-          <Text style={[FONTS.fs_14_medium, styles.settlementLabel]}>
-            {new Date().getMonth() + 1}월 누적 정산액
-          </Text>
-          <View style={styles.settlementAccumulatedRow}>
-            <Text style={[FONTS.fs_22_bold, styles.settlementValueBlack]}>
-              {Number(settlementData?.accumulatedSettlementAmount || 0).toLocaleString()}원
-            </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={{ flex: 1, paddingRight: 10 }}>
+              <Text style={[FONTS.fs_13_medium, styles.settlementLabel, { marginBottom: 4 }]}>
+                {settlementData?.nextPayoutDate || `${new Date().getMonth() + 1}월 입금 예정`}
+              </Text>
+              <Text style={[FONTS.fs_20_semibold, { color: COLORS.primary_blue }]}>
+                {Number(settlementData?.upcomingPayoutAmount || 0).toLocaleString()}원
+              </Text>
+            </View>
+            <View style={{ width: 1, height: 40, backgroundColor: COLORS.grayscale_200 }} />
+            <View style={{ flex: 1, paddingLeft: 20 }}>
+              <Text style={[FONTS.fs_13_medium, styles.settlementLabel, { marginBottom: 4 }]}>
+                {new Date().getMonth() + 1}월 누적 정산액
+              </Text>
+              <View style={styles.settlementAccumulatedRow}>
+                <Text style={[FONTS.fs_20_semibold, { color: COLORS.grayscale_900 }]}>
+                  {Number(settlementData?.accumulatedSettlementAmount || 0).toLocaleString()}원
+                </Text>
+              </View>
+            </View>
           </View>
         </View>
 
         <View style={styles.settlementSubRow}>
           <View style={[styles.settlementSubCard, styles.settlementSubCardSpacing]}>
             <Text style={[FONTS.fs_12_semibold, styles.settlementSubLabel]}>총 매출액 (부가세 포함)</Text>
-            <Text style={[FONTS.fs_18_bold, styles.settlementSubValue]}>
+            <Text style={[FONTS.fs_18_semibold, styles.settlementSubValue]}>
               {Number(settlementData?.grossSalesAmount || 0).toLocaleString()}원
             </Text>
           </View>
           <View style={styles.settlementSubCard}>
             <Text style={[FONTS.fs_12_semibold, styles.settlementSubLabel]}>수수료 (3.4%)</Text>
-            <Text style={[FONTS.fs_18_bold, styles.settlementSubValue]}>
+            <Text style={[FONTS.fs_18_semibold, styles.settlementSubValue]}>
               {Number(settlementData?.commissionAmount || 0).toLocaleString()}원
             </Text>
           </View>
         </View>
       </View>
+
     </ScrollView>
   );
 };

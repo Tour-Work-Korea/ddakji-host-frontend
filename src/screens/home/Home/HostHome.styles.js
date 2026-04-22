@@ -104,6 +104,44 @@ export default StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 16,
   },
+  salesSummaryCard: {
+    borderRadius: 12,
+    backgroundColor: COLORS.grayscale_0,
+    borderWidth: 1,
+    borderColor: '#EFEFEF',
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  salesSummaryHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  salesSummaryTitle: {
+    color: COLORS.grayscale_600,
+    marginRight: 8,
+  },
+  salesSummaryBadge: {
+    backgroundColor: COLORS.secondary_red,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  salesSummaryBadgeText: {
+    color: COLORS.semantic_red,
+  },
+  salesSummaryNumRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  salesSummaryNum: {
+    color: COLORS.grayscale_900,
+  },
+  salesSummaryUnit: {
+    color: COLORS.grayscale_900,
+    marginLeft: 4,
+  },
   instaEventCard: {
     borderRadius: 10,
     backgroundColor: '#E8EFFA',

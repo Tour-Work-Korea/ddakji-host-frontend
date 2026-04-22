@@ -28,6 +28,7 @@ export {default as NotificationSettings} from './settings/NotificationSettings';
 export {default as SettlementManagement} from './settings/SettlementManagement';
 export {default as SettlementAccountChange} from './settings/SettlementAccountChange';
 export {default as SettlementDetail} from './settings/SettlementDetail';
+export {default as SalesManagement} from './settings/SalesManagement';
 export {default as Terms} from './settings/Setting/Terms';
 
 export {default as HostMyPage} from './profile/MyPage';

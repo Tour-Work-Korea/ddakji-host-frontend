@@ -223,16 +223,20 @@ const SettlementManagement = () => {
 
         {/* Main Summary Card */}
         <View style={styles.card}>
-          <Text style={styles.summarySubtext}>
-            {safeData?.nextPayoutDate || `${currentDate.getMonth() + 1}월 입금 예정`}
-          </Text>
-          <Text style={styles.primaryAmountText}>{formatNumber(upcomingPayoutAmount)}원</Text>
-
-          <View style={styles.divider} />
-
-          <Text style={styles.cumulativeLabel}>{currentDate.getMonth() + 1}월 누적 정산액</Text>
-          <View style={styles.settlementAccumulatedRow}>
-            <Text style={styles.cumulativeAmount}>{formatNumber(accumulatedSettlementAmount)}원</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={{ flex: 1, paddingRight: 10 }}>
+              <Text style={styles.summarySubtext}>
+                {safeData?.nextPayoutDate || `${currentDate.getMonth() + 1}월 입금 예정`}
+              </Text>
+              <Text style={[styles.primaryAmountText, { marginTop: 4 }]}>{formatNumber(upcomingPayoutAmount)}원</Text>
+            </View>
+            <View style={{ width: 1, height: 40, backgroundColor: '#EAEBED' }} />
+            <View style={{ flex: 1, paddingLeft: 20 }}>
+              <Text style={styles.cumulativeLabel}>{currentDate.getMonth() + 1}월 누적 정산액</Text>
+              <View style={[styles.settlementAccumulatedRow, { marginTop: 4 }]}>
+                <Text style={styles.cumulativeAmount}>{formatNumber(accumulatedSettlementAmount)}원</Text>
+              </View>
+            </View>
           </View>
         </View>
 

@@ -125,8 +125,8 @@ export default StyleSheet.create({
     marginBottom: 8,
   },
   primaryAmountText: {
-    ...FONTS.fs_22_bold,
-    color: '#3B5AFE',
+    ...FONTS.fs_20_semibold,
+    color: COLORS.primary_blue,
     marginBottom: 8,
   },
   divider: {
@@ -135,9 +135,8 @@ export default StyleSheet.create({
     marginVertical: 24,
   },
   cumulativeLabel: {
-    ...FONTS.fs_14_medium,
-    color: '#666',
-    marginBottom: 8,
+    ...FONTS.fs_13_medium,
+    color: '#888',
   },
   itemDivider: {
     height: 1,
@@ -146,11 +145,11 @@ export default StyleSheet.create({
   },
   settlementAccumulatedRow: {
     flexDirection: 'row',
-    alignItems: 'baseline',
-    marginBottom: 4,
+    alignItems: 'center',
+    gap: 4,
   },
   cumulativeAmount: {
-    ...FONTS.fs_22_bold,
+    ...FONTS.fs_20_semibold,
     color: COLORS.grayscale_900,
   },
   comparisonText: {
@@ -174,7 +173,7 @@ export default StyleSheet.create({
     marginBottom: 12,
   },
   halfCardAmount: {
-    ...FONTS.fs_18_bold,
+    ...FONTS.fs_20_semibold,
     color: COLORS.grayscale_900,
   },
 
@@ -273,7 +272,7 @@ export default StyleSheet.create({
     color: COLORS.grayscale_900,
   },
   detailItemAmount: {
-    ...FONTS.fs_22_bold,
+    ...FONTS.fs_20_semibold,
     color: COLORS.grayscale_900,
   },
 });
