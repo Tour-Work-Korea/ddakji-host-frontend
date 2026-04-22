@@ -188,6 +188,8 @@ const HostHome = () => {
 
         {hasGuesthouseProfiles ? (
           <View style={styles.dashboardSection}>
+
+
             <View style={styles.instaEventCard}>
               <View style={styles.instaEventContent}>
                 <View style={styles.instaEventTextWrap}>

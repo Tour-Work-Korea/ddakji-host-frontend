@@ -304,4 +304,46 @@ export default StyleSheet.create({
   settlementSubValue: {
     color: COLORS.grayscale_900,
   },
+  salesCardMain: {
+    backgroundColor: COLORS.grayscale_0,
+    borderWidth: 1,
+    borderColor: '#EFEFEF',
+    borderRadius: 16,
+    padding: 24,
+    marginBottom: 16,
+  },
+  salesCardTitle: {
+    ...FONTS.fs_14_medium,
+    color: COLORS.grayscale_600,
+    marginBottom: 8,
+  },
+  salesCardAmountRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginBottom: 16,
+  },
+  salesCardAmount: {
+    ...FONTS.fs_28_bold,
+    fontSize: 26,
+    fontWeight: '700',
+    color: COLORS.grayscale_900,
+  },
+  salesCardCurrency: {
+    ...FONTS.fs_16_bold,
+    color: COLORS.grayscale_900,
+    marginLeft: 4,
+  },
+  salesGrowthBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.secondary_red,
+  },
+  salesGrowthText: {
+    ...FONTS.fs_12_bold,
+    color: COLORS.semantic_red,
+  },
 });
