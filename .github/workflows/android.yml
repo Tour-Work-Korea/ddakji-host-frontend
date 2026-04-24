@@ -138,3 +138,33 @@ jobs:
           status: completed 
           # 필요하다면 출시 노트를 작성할 수 있습니다. (폴더가 없으면 에러가 날 수 있어 주석 유지)
           # whatsNewDirectory: android/release-notes
+
+      - name: Notify Discord (Host Android)
+        if: always()
+        run: |
+          BRANCH="${GITHUB_REF##*/}"
+      
+          if [ "$BRANCH" = "develop" ]; then
+            ENV_NAME="🧪 DEV"
+          else
+            ENV_NAME="🚀 PROD"
+          fi
+      
+          if [ "${{ job.status }}" = "success" ]; then
+            COLOR=3066993
+            MSG="🏠🤖 Host Android 빌드 성공"
+          else
+            COLOR=15158332
+            MSG="❌ Host Android 빌드 실패"
+          fi
+      
+          curl -H "Content-Type: application/json" \
+          -X POST \
+          -d "{
+            \"embeds\": [{
+              \"title\": \"$MSG\",
+              \"description\": \"환경: $ENV_NAME\n브랜치: $BRANCH\nRun: #${{ github.run_number }}\n작성자: ${{ github.actor }}\n링크: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",
+              \"color\": $COLOR
+            }]
+          }" \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}
