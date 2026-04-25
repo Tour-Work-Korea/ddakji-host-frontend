@@ -3,8 +3,13 @@ import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import useUserStore from '@stores/userStore';
 import settlementApi from '@utils/api/settlementApi';
+import { downloadSettlementExcel } from '@utils/downloadExcel';
+import { Alert } from 'react-native';
+import { COLORS } from '@constants/colors';
+import { FONTS } from '@constants/fonts';
 import Header from '@components/Header';
 import GuesthouseProfileList from '@components/modals/HostMy/Guesthouse/GuesthouseProfileList';
+import MonthPickerModal from '@components/modals/MonthPickerModal';
 
 import ChevronLeftBlack from '@assets/images/chevron_left_black.svg';
 import ChevronRightBlack from '@assets/images/chevron_right_black.svg';
@@ -64,6 +69,7 @@ const SettlementManagement = () => {
   const guesthouseId = selectedGuesthouse?.id;
 
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [isMonthPickerVisible, setIsMonthPickerVisible] = useState(false);
   const [overviewData, setOverviewData] = useState(null);
 
   const yearMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
@@ -95,6 +101,14 @@ const SettlementManagement = () => {
 
   const handlePrevMonth = () => setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
   const handleNextMonth = () => setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+
+  const handleExcelDownload = () => {
+    if (!guesthouseId) {
+      Alert.alert('알림', '선택된 게스트하우스가 없습니다.');
+      return;
+    }
+    downloadSettlementExcel(guesthouseId, yearMonth);
+  };
 
   const safeData = overviewData || {};
   const {
@@ -163,6 +177,21 @@ const SettlementManagement = () => {
     }
   };
 
+  const getPayoutDateLabel = status => {
+    switch (status) {
+      case 'PENDING':
+        return '정산액 입금 예정일';
+      case 'COMPLETE':
+      case 'COMPLETED':
+      case 'PAID':
+        return '정산액 입금 완료일';
+      case 'HOLD':
+        return '정산액 입금 보류일';
+      default:
+        return '정산액 입금일';
+    }
+  };
+
   return (
     <View style={styles.container}>
       {/* 커스텀 헤더 (업장 선택기 내장) */}
@@ -203,7 +232,10 @@ const SettlementManagement = () => {
           <TouchableOpacity style={styles.iconButton} onPress={handlePrevMonth}>
             <ChevronLeftBlack width={20} height={20} />
           </TouchableOpacity>
-          <Text style={styles.monthText}>{displayMonth}</Text>
+            <TouchableOpacity activeOpacity={0.8} onPress={() => setIsMonthPickerVisible(true)} style={{flexDirection:'row', alignItems:'center'}}>
+              <Text style={styles.monthText}>{displayMonth}</Text>
+              <ChevronDown width={16} height={16} style={{ marginLeft: 4 }} />
+            </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton} onPress={handleNextMonth}>
             <ChevronRightBlack width={20} height={20} />
           </TouchableOpacity>
@@ -225,16 +257,22 @@ const SettlementManagement = () => {
         <View style={styles.card}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <View style={{ flex: 1, paddingRight: 10 }}>
-              <Text style={styles.summarySubtext}>
+              <Text style={[FONTS.fs_13_medium, { color: '#666', marginBottom: 4 }]}>
                 {safeData?.nextPayoutDate || `${currentDate.getMonth() + 1}월 입금 예정`}
               </Text>
-              <Text style={[styles.primaryAmountText, { marginTop: 4 }]}>{formatNumber(upcomingPayoutAmount)}원</Text>
+              <Text style={[FONTS.fs_20_semibold, { color: COLORS.primary_blue }]}>
+                {formatNumber(upcomingPayoutAmount)}원
+              </Text>
             </View>
-            <View style={{ width: 1, height: 40, backgroundColor: '#EAEBED' }} />
+            <View style={{ width: 1, height: 40, backgroundColor: COLORS.grayscale_200 }} />
             <View style={{ flex: 1, paddingLeft: 20 }}>
-              <Text style={styles.cumulativeLabel}>{currentDate.getMonth() + 1}월 누적 정산액</Text>
-              <View style={[styles.settlementAccumulatedRow, { marginTop: 4 }]}>
-                <Text style={styles.cumulativeAmount}>{formatNumber(accumulatedSettlementAmount)}원</Text>
+              <Text style={[FONTS.fs_13_medium, { color: '#666', marginBottom: 4 }]}>
+                {currentDate.getMonth() + 1}월 누적 정산액
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: 4 }}>
+                <Text style={[FONTS.fs_20_semibold, { color: COLORS.grayscale_900 }]}>
+                  {formatNumber(accumulatedSettlementAmount)}원
+                </Text>
               </View>
             </View>
           </View>
@@ -255,7 +293,7 @@ const SettlementManagement = () => {
         {/* Section Header */}
         <View style={styles.sectionHeaderRow}>
           <Text style={styles.sectionTitle}>상세 내역</Text>
-          <TouchableOpacity style={styles.downloadButton}>
+          <TouchableOpacity style={styles.downloadButton} onPress={handleExcelDownload} activeOpacity={0.8}>
             <Text style={styles.downloadText}>엑셀 다운로드 ↓</Text>
           </TouchableOpacity>
         </View>
@@ -270,9 +308,9 @@ const SettlementManagement = () => {
           >
             <View style={styles.detailItemHeader}>
               <View>
-                <Text style={styles.detailItemDateTop}>정산액 입금일</Text>
+                <Text style={styles.detailItemDateTop}>{getPayoutDateLabel(item.payoutStatus)}</Text>
                 <Text style={styles.detailItemDateTopValue}>
-                  {getFormattedDateWithDay(item.payoutDate)}
+                  {getFormattedDateWithDay(item.settlementEndDate || item.payoutDate)}
                 </Text>
               </View>
               <View style={getStatusBadgeStyle(item.payoutStatus)}>
@@ -289,7 +327,7 @@ const SettlementManagement = () => {
                 <View style={[styles.detailMetaTextRow, {marginBottom: 4}]}>
                   <Text style={styles.detailMetaLabel}>정산 기준일</Text>
                   <Text style={styles.detailMetaValue}>
-                    {item.targetDate?.replace(/-/g, '.') || item.salesDate?.replace(/-/g, '.') || item.payoutDate?.replace(/-/g, '.') || '-'}
+                    {item.settlementStartDate?.replace(/-/g, '.') || item.targetDate?.replace(/-/g, '.') || '-'}
                   </Text>
                 </View>
                 <View style={styles.detailMetaTextRow}>
@@ -311,15 +349,23 @@ const SettlementManagement = () => {
         onClose={() => setIsGuesthouseListVisible(false)}
         items={guesthouseProfiles}
         selectedId={selectedProfileId}
-        onSelect={item => {
+        onSelect={(item) => {
           setSelectedProfileId(item.id);
           setIsGuesthouseListVisible(false);
-          // When changed, reset overview data so it shows loading/empty gracefully
-          setOverviewData(null);
         }}
         onAdd={() => {
           setIsGuesthouseListVisible(false);
           navigation.navigate('StoreRegisterForm1');
+        }}
+      />
+
+      <MonthPickerModal
+        visible={isMonthPickerVisible}
+        initialDate={currentDate}
+        onClose={() => setIsMonthPickerVisible(false)}
+        onConfirm={(dateInfo) => {
+          setCurrentDate(new Date(dateInfo.year, dateInfo.month - 1, 1));
+          setIsMonthPickerVisible(false);
         }}
       />
     </View>
