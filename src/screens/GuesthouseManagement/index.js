@@ -56,6 +56,7 @@ const GuesthouseManagement = () => {
         : null;
   const hostProfile = useUserStore(state => state.hostProfile);
   const setHostProfile = useUserStore(state => state.setHostProfile);
+  const setSelectedGuesthouseId = useUserStore(state => state.setSelectedGuesthouseId);
   const [isGuesthouseListVisible, setIsGuesthouseListVisible] = useState(false);
   const [guesthouseDetail, setGuesthouseDetail] = useState(null);
   const [hasPartyTemplate, setHasPartyTemplate] = useState(false);
@@ -126,6 +127,10 @@ const GuesthouseManagement = () => {
       setSelectedProfileKey(guesthouseProfiles[0].id);
     }
   }, [guesthouseProfiles, selectedProfileKey]);
+
+  useEffect(() => {
+    setSelectedGuesthouseId(selectedProfileKey ?? null);
+  }, [selectedProfileKey, setSelectedGuesthouseId]);
 
   const selectedGuesthouse = useMemo(() => {
     if (selectedProfileKey) {

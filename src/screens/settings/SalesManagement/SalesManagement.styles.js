@@ -364,8 +364,8 @@ const styles = StyleSheet.create({
     color: COLORS.grayscale_900,
     zIndex: 1,
   },
-  rankTextGreen: {
-    color: '#439B58', // Pleasant solid green matching image
+  rankTextHighlight: {
+    color: COLORS.primary_blue, // primary brand color (#4351EC)
   },
   rankDivider: {
     height: 1,
@@ -406,7 +406,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   donutPercentText: {
-    ...FONTS.fs_28_bold,
+    fontSize: 24,
+    fontWeight: '700',
     color: '#333333',
   },
   percentSmall: {
@@ -491,7 +492,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   cancelRateNumber: {
-    ...FONTS.fs_28_bold,
+    fontSize: 24,
+    fontWeight: '700',
     color: '#333',
   },
   cancelChangeRow: {
@@ -548,7 +550,8 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   metricCardMain: {
-    ...FONTS.fs_28_bold,
+    fontSize: 24,
+    fontWeight: '700',
     color: '#333',
   },
   metricCardSub: {

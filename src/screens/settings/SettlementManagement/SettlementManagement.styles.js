@@ -196,7 +196,7 @@ export default StyleSheet.create({
     paddingHorizontal: 8,
   },
   downloadText: {
-    ...FONTS.fs_13_medium,
+    ...FONTS.fs_13_bold,
     color: COLORS.primary_blue,
   },
 
@@ -212,7 +212,7 @@ export default StyleSheet.create({
   },
   detailItemDateTop: {
     ...FONTS.fs_14_medium,
-    color: COLORS.grayscale_600,
+    color: COLORS.grayscale_400,
   },
   detailItemDateTopValue: {
     ...FONTS.fs_18_semibold,

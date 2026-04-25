@@ -7,6 +7,7 @@ import { FONTS } from '@constants/fonts';
 import adminApi from '@utils/api/adminApi';
 import orderApi from '@utils/api/orderApi';
 import settlementApi from '@utils/api/settlementApi';
+import statisticsApi from '@utils/api/statisticsApi';
 import styles from './Home.styles';
 
 import ChevronRightIcon from '@assets/images/chevron_right_gray.svg';
@@ -68,6 +69,7 @@ const Home = ({ reservationMethod = 'closed', guesthouseId }) => {
   const navigation = useNavigation();
   const [latestNotice, setLatestNotice] = useState(null);
   const [settlementData, setSettlementData] = useState(null);
+  const [salesData, setSalesData] = useState(null);
   const [dashboardData, setDashboardData] = useState(null);
   const [selectedTab, setSelectedTab] = useState('TODAY_CONFIRMED');
 
@@ -103,11 +105,28 @@ const Home = ({ reservationMethod = 'closed', guesthouseId }) => {
     }
   }, [guesthouseId]);
 
+  const fetchSalesData = useCallback(async () => {
+    if (!guesthouseId) return;
+    try {
+      const now = new Date();
+      const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const response = await statisticsApi.getSalesDashboard(guesthouseId, yearMonth);
+      let result = response.data || response;
+      if (result && result.data && result.data.salesSummary) {
+        result = result.data;
+      }
+      setSalesData(result);
+    } catch (error) {
+      console.warn('[Home] failed to fetch sales data:', error?.message);
+    }
+  }, [guesthouseId]);
+
   useFocusEffect(
     useCallback(() => {
       fetchSettlementOverview();
       fetchDashboardData();
-    }, [fetchSettlementOverview, fetchDashboardData]),
+      fetchSalesData();
+    }, [fetchSettlementOverview, fetchDashboardData, fetchSalesData]),
   );
 
   const summaryItems = [
@@ -380,7 +399,13 @@ const Home = ({ reservationMethod = 'closed', guesthouseId }) => {
         <TouchableOpacity
           style={styles.settlementSectionTitleRow}
           activeOpacity={0.8}
-          onPress={() => navigation.navigate('SalesManagement')}>
+          onPress={() => {
+            if (guesthouseId) {
+              navigation.navigate('SalesManagement', { guesthouseId });
+            } else {
+              navigation.navigate('SalesManagement');
+            }
+          }}>
           <Text style={[FONTS.fs_18_semibold]}>매출 분석</Text>
           <ChevronRightIcon width={18} height={18} style={{ marginLeft: 4 }} />
         </TouchableOpacity>
@@ -389,32 +414,31 @@ const Home = ({ reservationMethod = 'closed', guesthouseId }) => {
           <View style={{ marginBottom: 24 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
               <Text style={{ fontSize: 14, fontWeight: '600', color: COLORS.grayscale_600 }}>이번 달 순매출</Text>
-              <View style={{ width: 14, height: 14, borderRadius: 7, borderWidth: 1, borderColor: COLORS.grayscale_300, alignItems: 'center', justifyContent: 'center', marginLeft: 4 }}>
-                <Text style={{ fontSize: 9, color: COLORS.grayscale_400, fontWeight: 'bold' }}>?</Text>
-              </View>
             </View>
             <View style={[styles.salesCardAmountRow, { marginBottom: 4 }]}>
-              <Text style={styles.salesCardAmount}>24,800,000</Text>
+              <Text style={styles.salesCardAmount}>{Number(salesData?.salesSummary?.currentNetSales || 0).toLocaleString()}</Text>
               <Text style={styles.salesCardCurrency}>원</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Text style={{ fontSize: 14, color: COLORS.grayscale_600, fontWeight: '500', marginRight: 4 }}>이전기간대비</Text>
-              <Text style={{ fontSize: 14, color: COLORS.semantic_red, fontWeight: 'bold' }}>+3,794,400</Text>
+              <Text style={{ fontSize: 14, color: (salesData?.salesSummary?.deltaNetSales >= 0) ? COLORS.semantic_red : COLORS.semantic_blue, fontWeight: 'bold' }}>
+                {(salesData?.salesSummary?.deltaNetSales > 0) ? '+' : ''}{(salesData?.salesSummary?.deltaNetSales || 0).toLocaleString()}
+              </Text>
             </View>
           </View>
 
           <View style={{ gap: 14 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <Text style={{ fontSize: 14, color: COLORS.grayscale_600, fontWeight: '500' }}>전체 매출</Text>
-              <Text style={{ fontSize: 15, color: COLORS.grayscale_900, fontWeight: 'bold' }}>26,500,000원</Text>
+              <Text style={{ fontSize: 15, color: COLORS.grayscale_900, fontWeight: 'bold' }}>{Number(salesData?.salesSummary?.currentGrossSales || 0).toLocaleString()}원</Text>
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <Text style={{ fontSize: 14, color: COLORS.grayscale_600, fontWeight: '500' }}>취소/노쇼</Text>
-              <Text style={{ fontSize: 15, color: COLORS.grayscale_900, fontWeight: 'bold' }}>-1,700,000원</Text>
+              <Text style={{ fontSize: 15, color: COLORS.grayscale_900, fontWeight: 'bold' }}>-{Number(salesData?.salesSummary?.currentCancelledSales || 0).toLocaleString()}원</Text>
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <Text style={{ fontSize: 14, color: COLORS.grayscale_600, fontWeight: '500' }}>취소수수료</Text>
-              <Text style={{ fontSize: 15, color: COLORS.grayscale_900, fontWeight: 'bold' }}>+0원</Text>
+              <Text style={{ fontSize: 15, color: COLORS.grayscale_900, fontWeight: 'bold' }}>+{Number(salesData?.salesSummary?.currentCancellationFee || 0).toLocaleString()}원</Text>
             </View>
           </View>
         </View>

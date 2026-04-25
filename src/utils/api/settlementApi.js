@@ -9,6 +9,13 @@ const settlementApi = {
       withAuth: true, // 로그인 토큰 필요
     }),
 
+  // 정산용 공식 은행 목록 조회
+  // GET /api/v1/settlement/host/banks
+  getSettlementBanks: () =>
+    api.get('/settlement/host/banks', {
+      withAuth: true,
+    }),
+
   // 정산 계좌 조회
   // GET /api/v1/settlement/host/accounts?guesthouseId={id}
   getSettlementAccount: (guesthouseId) =>

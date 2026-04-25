@@ -88,13 +88,19 @@ const HostHomeMenu = () => {
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const hostProfile = useUserStore(state => state.hostProfile);
 
+  const selectedGuesthouseId = useUserStore(state => state.selectedGuesthouseId);
+
   const selectedGuesthouse = useMemo(
     () => {
       const guesthouseProfiles = hostProfile?.guesthouseProfiles ?? [];
 
-      return guesthouseProfiles[0];
+      const matchedProfile = guesthouseProfiles.find(
+        p => String(p.profileKey ?? p.guesthouseId) === String(selectedGuesthouseId)
+      );
+
+      return matchedProfile || guesthouseProfiles[0];
     },
-    [hostProfile?.guesthouseProfiles],
+    [hostProfile?.guesthouseProfiles, selectedGuesthouseId],
   );
 
   const profileName = hostProfile?.name || '';
@@ -104,7 +110,12 @@ const HostHomeMenu = () => {
 
   const handleMenuPress = routeName => {
     if (routeName) {
-      navigation.navigate(routeName);
+      if (routeName === 'SettlementManagement' || routeName === 'SalesManagement') {
+        const passId = selectedGuesthouse?.profileKey ?? selectedGuesthouse?.guesthouseId ?? selectedGuesthouseId;
+        navigation.navigate(routeName, { guesthouseId: passId });
+      } else {
+        navigation.navigate(routeName);
+      }
     }
   };
 

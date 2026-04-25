@@ -27,7 +27,7 @@ const SettlementAccountChange = () => {
   const route = useRoute();
   const guesthouseId = route.params?.guesthouseId;
 
-  const [selectedBank, setSelectedBank] = useState('');
+  const [selectedBank, setSelectedBank] = useState(null);
   const [accountNumber, setAccountNumber] = useState('');
   const [accountHolder, setAccountHolder] = useState('');
   const [bankbookImg, setBankbookImg] = useState(null);
@@ -37,14 +37,10 @@ const SettlementAccountChange = () => {
   const [accountData, setAccountData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const BANK_LIST = [
-    'NH농협은행', 'KB국민은행', '신한은행', '우리은행', '하나은행',
-    'IBK기업은행', '카카오뱅크', '토스뱅크', '케이뱅크', '새마을금고',
-    '우체국', '신협', '수협은행', '대구은행', '부산은행', '광주은행'
-  ];
+  const [bankList, setBankList] = useState([]);
 
-  const handleSelectBank = (bankName) => {
-    setSelectedBank(bankName);
+  const handleSelectBank = (bankObj) => {
+    setSelectedBank(bankObj);
     setBankModalVisible(false);
   };
 
@@ -54,14 +50,26 @@ const SettlementAccountChange = () => {
       return;
     }
     try {
-      const response = await settlementApi.getSettlementAccount(guesthouseId);
-      let result = response.data || response;
-      if (result && result.data && !result.currentAccount) {
-        result = result.data;
+      const [accountRes, banksRes] = await Promise.all([
+        settlementApi.getSettlementAccount(guesthouseId),
+        settlementApi.getSettlementBanks()
+      ]);
+      
+      let accountResult = accountRes.data || accountRes;
+      if (accountResult && accountResult.data && !accountResult.currentAccount) {
+        accountResult = accountResult.data;
       }
-      setAccountData(result);
+      setAccountData(accountResult);
+
+      let banksResult = banksRes.data || banksRes;
+      if (banksResult && banksResult.data && Array.isArray(banksResult.data)) {
+        banksResult = banksResult.data;
+      }
+      if (Array.isArray(banksResult)) {
+        setBankList(banksResult);
+      }
     } catch (err) {
-      console.warn('Get Settlement Account Error:', err);
+      console.warn('Get Settlement Account/Banks Error:', err);
     } finally {
       setLoading(false);
     }
@@ -99,15 +107,7 @@ const SettlementAccountChange = () => {
     fetchAccountData();
   }, [guesthouseId]);
 
-  const getBankCode = (bankName) => {
-    const bankMap = {
-      'NH농협은행': '011', 'KB국민은행': '004', '신한은행': '088', '우리은행': '020',
-      '하나은행': '081', 'IBK기업은행': '003', '카카오뱅크': '090', '토스뱅크': '092',
-      '케이뱅크': '089', '새마을금고': '045', '우체국': '071', '신협': '048',
-      '수협은행': '007', '대구은행': '031', '부산은행': '032', '광주은행': '034'
-    };
-    return bankMap[bankName] || '000';
-  };
+
 
   const handleSubmit = async () => {
     if (!selectedBank) {
@@ -163,7 +163,7 @@ const SettlementAccountChange = () => {
 
       // 3. 최종 변경 신청 API
       const payload = {
-        bankCode: getBankCode(selectedBank),
+        bankCode: selectedBank.officialCode,
         accountNumber: accountNumber,
         accountHolderName: accountHolder,
         bankbookCopyObjectKey: objectKey || 'unknown_obect_key'
@@ -176,7 +176,7 @@ const SettlementAccountChange = () => {
       ]);
       
       // 입력 초기화
-      setSelectedBank('');
+      setSelectedBank(null);
       setAccountNumber('');
       setAccountHolder('');
       setBankbookImg(null);
@@ -265,7 +265,7 @@ const SettlementAccountChange = () => {
             onPress={() => setBankModalVisible(true)}
           >
             {selectedBank ? (
-              <Text style={styles.dropdownTextSelected}>{selectedBank}</Text>
+              <Text style={styles.dropdownTextSelected}>{selectedBank.displayName}</Text>
             ) : (
               <Text style={styles.dropdownPlaceholder}>은행을 선택해주세요</Text>
             )}
@@ -396,8 +396,8 @@ const SettlementAccountChange = () => {
               </TouchableOpacity>
             </View>
             <FlatList
-              data={BANK_LIST}
-              keyExtractor={(item) => item}
+              data={bankList}
+              keyExtractor={(item) => item.officialCode || item.displayName}
               contentContainerStyle={styles.bankList}
               showsVerticalScrollIndicator={false}
               renderItem={({ item }) => (
@@ -405,7 +405,7 @@ const SettlementAccountChange = () => {
                   style={styles.bankItem}
                   onPress={() => handleSelectBank(item)}
                 >
-                  <Text style={styles.bankItemText}>{item}</Text>
+                  <Text style={styles.bankItemText}>{item.displayName}</Text>
                 </TouchableOpacity>
               )}
             />
