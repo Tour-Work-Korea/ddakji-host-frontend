@@ -50,6 +50,7 @@ const AlertModal = ({
   customInputPlaceholder = '',
   onChangeCustomInput,
   customContent = null,
+  onRequestClose,
 }) => {
   // 강조 텍스트 여부
   const renderMessage = () => {
@@ -87,7 +88,11 @@ const AlertModal = ({
   };
 
   return (
-    <Modal transparent={true} animationType="fade" visible={visible}>
+    <Modal
+      transparent={true}
+      animationType="fade"
+      visible={visible}
+      onRequestClose={onRequestClose}>
       <KeyboardAvoidingView
         style={styles.overlay}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
