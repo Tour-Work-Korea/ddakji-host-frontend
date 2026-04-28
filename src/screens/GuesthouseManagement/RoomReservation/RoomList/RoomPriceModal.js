@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import Toast from 'react-native-toast-message';
+import BasicToast from '@components/toasts/BasicToast';
 
 import { CALENDAR_COMMON_PROPS, CALENDAR_THEME } from '@constants/calendarConfig';
 import { COLORS } from '@constants/colors';
@@ -42,9 +43,12 @@ const getPriceColor = (valStr) => {
   }
 };
 
-const getSeasonColor = (dateStr, seasonData) => {
-  const season = seasonData[dateStr];
-  if (season) return SEASON_COLORS[season];
+const getSeasonColor = (dateStr, seasonData, seasonLabels) => {
+  const seasonKey = seasonData[dateStr];
+  if (seasonKey) {
+    const found = seasonLabels.find(s => s.key === seasonKey);
+    if (found) return found.color;
+  }
   return 'transparent';
 };
 
@@ -53,16 +57,8 @@ const formatPrice = (price) => {
   return Number(price).toLocaleString('ko-KR');
 };
 
-const SEASON_LABELS = [
-  { key: 'OFF', label: '비수기' },
-  { key: 'SHOULDER', label: '준성수기' },
-  { key: 'PEAK', label: '성수기' },
-];
-
-const SEASON_COLORS = {
-  OFF: COLORS.secondary_yellow,
-  SHOULDER: COLORS.secondary_blue,
-  PEAK: COLORS.secondary_red,
+const toastConfig = {
+  success: (props) => <BasicToast {...props} />,
 };
 
 const RoomPriceModal = ({ visible, onClose, room }) => {
@@ -76,6 +72,11 @@ const RoomPriceModal = ({ visible, onClose, room }) => {
   const [activeTab, setActiveTab] = useState('calendar'); // 'calendar' | 'season'
 
   const [seasonData, setSeasonData] = useState({});
+  const [seasonLabels, setSeasonLabels] = useState([
+    { key: 'OFF', label: '비수기', color: COLORS.secondary_yellow },
+    { key: 'SHOULDER', label: '준성수기', color: COLORS.secondary_blue },
+    { key: 'PEAK', label: '성수기', color: COLORS.secondary_red },
+  ]);
   const [seasonDates, setSeasonDates] = useState({
     OFF: { start: '', end: '' },
     SHOULDER: { start: '', end: '' },
@@ -86,11 +87,54 @@ const RoomPriceModal = ({ visible, onClose, room }) => {
     SHOULDER: { weekday: '', friday: '', saturday: '', sunday: '' },
     PEAK: { weekday: '', friday: '', saturday: '', sunday: '' },
   });
-  const [datePickerConfig, setDatePickerConfig] = useState({ visible: false, targetSeason: null, targetField: null, currentDate: '' });
-  const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '' });
 
-  const showAlert = (title, message) => {
-    setAlertConfig({ visible: true, title, message });
+  const handleAddSeason = () => {
+    const currentCustomCount = seasonLabels.filter(s => s.key.startsWith('CUSTOM_')).length;
+    if (currentCustomCount >= 5) {
+      showAlert('알림', '사용자 추가 시즌은 최대 5개까지만 등록할 수 있습니다.');
+      return;
+    }
+
+    const newKey = `CUSTOM_${Date.now()}`;
+    const colorOptions = [COLORS.secondary_green, COLORS.secondary_yellow, COLORS.secondary_blue, COLORS.secondary_red];
+
+    setSeasonLabels(prev => {
+      const customCount = prev.filter(s => s.key.startsWith('CUSTOM_')).length;
+      const newColor = colorOptions[customCount % colorOptions.length];
+      return [...prev, { key: newKey, label: `새 시즌 ${prev.length + 1}`, color: newColor }];
+    });
+
+    setSeasonDates(prev => ({ ...prev, [newKey]: { start: '', end: '' } }));
+    setSeasonPrices(prev => ({ ...prev, [newKey]: { weekday: '', friday: '', saturday: '', sunday: '' } }));
+  };
+
+  const handleRemoveSeason = (keyToRemove) => {
+    setSeasonLabels(prev => prev.filter(s => s.key !== keyToRemove));
+    setSeasonDates(prev => {
+      const next = { ...prev };
+      delete next[keyToRemove];
+      return next;
+    });
+    setSeasonPrices(prev => {
+      const next = { ...prev };
+      delete next[keyToRemove];
+      return next;
+    });
+    setSeasonData(prev => {
+      const next = { ...prev };
+      Object.keys(next).forEach(date => {
+        if (next[date] === keyToRemove) {
+          delete next[date];
+        }
+      });
+      return next;
+    });
+  };
+  const [datePickerConfig, setDatePickerConfig] = useState({ visible: false, targetSeason: null, targetField: null, currentDate: '' });
+  const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '', onConfirm: null });
+
+  const showAlert = (title, message, onConfirm = null) => {
+    setAlertConfig({ visible: true, title, message, onConfirm });
   };
 
   // 초기화
@@ -101,6 +145,21 @@ const RoomPriceModal = ({ visible, onClose, room }) => {
       setSelectionStart(null);
       setInputPrice('');
       setSeasonData({});
+      setSeasonLabels([
+        { key: 'OFF', label: '비수기', color: COLORS.secondary_yellow },
+        { key: 'SHOULDER', label: '준성수기', color: COLORS.secondary_blue },
+        { key: 'PEAK', label: '성수기', color: COLORS.secondary_red },
+      ]);
+      setSeasonDates({
+        OFF: { start: '', end: '' },
+        SHOULDER: { start: '', end: '' },
+        PEAK: { start: '', end: '' },
+      });
+      setSeasonPrices({
+        OFF: { weekday: '', friday: '', saturday: '', sunday: '' },
+        SHOULDER: { weekday: '', friday: '', saturday: '', sunday: '' },
+        PEAK: { weekday: '', friday: '', saturday: '', sunday: '' },
+      });
 
       // 초기 요금 세팅을 위해 오늘 기준 임시 생성 (실제로는 API에서 받아옴)
       // 현재는 방의 기본가(roomPrice)를 90일치만 임의로 깔아둠
@@ -171,18 +230,15 @@ const RoomPriceModal = ({ visible, onClose, room }) => {
 
   const handleSaveAll = () => {
     // API 저장 로직을 이곳에 붙입니다.
-    Toast.show({
-      type: 'success',
-      text1: '모든 객실 요금이 서버에 저장되었습니다.',
-      position: 'top',
+    showAlert('저장 완료', '모든 객실 요금이 서버에 반영되었습니다.', () => {
+      onClose();
     });
-    onClose();
   };
 
   const applySeasonPricesToCalendar = () => {
     // 1. 기간 겹침 유효성 검사
     const validSeasons = [];
-    for (const season of SEASON_LABELS) {
+    for (const season of seasonLabels) {
       const s = seasonDates[season.key];
       if (s.start && s.end) {
         const start = new Date(s.start);
@@ -244,14 +300,16 @@ const RoomPriceModal = ({ visible, onClose, room }) => {
       }
     };
 
-    checkDateAndSet('OFF');
-    checkDateAndSet('SHOULDER');
-    checkDateAndSet('PEAK');
+    seasonLabels.forEach(s => checkDateAndSet(s.key));
 
     setPriceData(nextPrices);
     setSeasonData(nextSeasons);
     setActiveTab('calendar');
-    Toast.show({ type: 'success', text1: '시즌 규칙이 달력에 일괄 적용되었습니다.', position: 'top' });
+    Toast.show({
+      type: 'success',
+      text1: '시즌 규칙이 달력에 적용되었습니다.',
+      position: 'top',
+    });
   };
 
   const updateSeasonDate = (seasonKey, field, val) => {
@@ -278,42 +336,58 @@ const RoomPriceModal = ({ visible, onClose, room }) => {
         <View style={styles.seasonSection}>
           <Text style={[FONTS.fs_18_semibold, styles.seasonSectionTitle]}>시즌 등록</Text>
           <View style={styles.seasonTable}>
-            <View style={styles.seasonTableRow}>
+            <View style={[styles.seasonTableRow, { backgroundColor: COLORS.grayscale_100 }]}>
               <Text style={[FONTS.fs_14_medium, styles.seasonTableHeader, { width: 70 }]}>기간명</Text>
               <Text style={[FONTS.fs_14_medium, styles.seasonTableHeader, { flex: 1, textAlign: 'center' }]}>기간</Text>
             </View>
 
-            {SEASON_LABELS.map(({ key, label }) => (
+            {seasonLabels.map(({ key, label }) => (
               <View style={styles.seasonTableRow} key={key}>
-                <Text style={[FONTS.fs_14_medium, { width: 70, color: COLORS.grayscale_900 }]}>{label}</Text>
+                <TextInput
+                  style={[FONTS.fs_14_medium, { width: 70, color: COLORS.grayscale_900, padding: 0 }]}
+                  value={label}
+                  onChangeText={(text) => {
+                    setSeasonLabels(prev => prev.map(s => s.key === key ? { ...s, label: text } : s));
+                  }}
+                  placeholder="시즌명"
+                  placeholderTextColor={COLORS.grayscale_400}
+                />
                 <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                   <TouchableOpacity
                     style={styles.seasonDateInput}
-                    onPress={() => handleOpenDate(key, 'start', seasonDates[key].start)}
+                    onPress={() => handleOpenDate(key, 'start', seasonDates[key]?.start)}
                   >
-                    <Text style={[FONTS.fs_12_medium, { color: seasonDates[key].start ? COLORS.grayscale_900 : COLORS.grayscale_400 }]}>
-                      {seasonDates[key].start ? seasonDates[key].start.replace(/-/g, '. ') : 'YY.MM.DD'}
+                    <Text style={[FONTS.fs_12_medium, { color: seasonDates[key]?.start ? COLORS.grayscale_900 : COLORS.grayscale_400 }]}>
+                      {seasonDates[key]?.start ? seasonDates[key].start.replace(/-/g, '. ') : 'YY.MM.DD'}
                     </Text>
                   </TouchableOpacity>
                   <Text style={{ color: COLORS.grayscale_500 }}>-</Text>
                   <TouchableOpacity
                     style={styles.seasonDateInput}
-                    onPress={() => handleOpenDate(key, 'end', seasonDates[key].end)}
+                    onPress={() => handleOpenDate(key, 'end', seasonDates[key]?.end)}
                   >
-                    <Text style={[FONTS.fs_12_medium, { color: seasonDates[key].end ? COLORS.grayscale_900 : COLORS.grayscale_400 }]}>
-                      {seasonDates[key].end ? seasonDates[key].end.replace(/-/g, '. ') : 'YY.MM.DD'}
+                    <Text style={[FONTS.fs_12_medium, { color: seasonDates[key]?.end ? COLORS.grayscale_900 : COLORS.grayscale_400 }]}>
+                      {seasonDates[key]?.end ? seasonDates[key].end.replace(/-/g, '. ') : 'YY.MM.DD'}
                     </Text>
                   </TouchableOpacity>
+                  {key.startsWith('CUSTOM_') && (
+                    <TouchableOpacity onPress={() => handleRemoveSeason(key)} style={{ padding: 4 }}>
+                      <Text style={[FONTS.fs_12_medium, { color: COLORS.semantic_red }]}>삭제</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               </View>
             ))}
           </View>
+          <TouchableOpacity style={styles.addSeasonBtn} onPress={handleAddSeason} activeOpacity={0.8}>
+            <Text style={[FONTS.fs_14_semibold, styles.addSeasonBtnText]}>+ 시즌 추가</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.seasonSection}>
           <Text style={[FONTS.fs_18_semibold, styles.seasonSectionTitle]}>객실 가격</Text>
           <View style={styles.priceMatrixTable}>
-            <View style={styles.priceMatrixRow}>
+            <View style={[styles.priceMatrixRow, { backgroundColor: COLORS.grayscale_100 }]}>
               <Text style={[FONTS.fs_14_medium, styles.seasonTableHeader, { width: 60, textAlign: 'center' }]}>요금</Text>
               <Text style={[FONTS.fs_14_medium, styles.seasonTableHeader, { flex: 1, textAlign: 'center' }]}>주중</Text>
               <Text style={[FONTS.fs_14_medium, styles.seasonTableHeader, { flex: 1, textAlign: 'center' }]}>금요일</Text>
@@ -321,9 +395,9 @@ const RoomPriceModal = ({ visible, onClose, room }) => {
               <Text style={[FONTS.fs_14_medium, styles.seasonTableHeader, { flex: 1, textAlign: 'center' }]}>일요일</Text>
             </View>
 
-            {SEASON_LABELS.map(({ key, label }) => (
+            {seasonLabels.map(({ key, label }) => (
               <View style={styles.priceMatrixRow} key={`price_${key}`}>
-                <Text style={[FONTS.fs_14_medium, { width: 60, color: COLORS.grayscale_900, textAlign: 'center' }]}>{label}</Text>
+                <Text style={[FONTS.fs_14_medium, { width: 60, color: COLORS.grayscale_900, textAlign: 'center' }]} numberOfLines={1}>{label}</Text>
 
                 {['weekday', 'friday', 'saturday', 'sunday'].map(field => (
                   <View style={{ flex: 1, paddingHorizontal: 2 }} key={field}>
@@ -331,7 +405,7 @@ const RoomPriceModal = ({ visible, onClose, room }) => {
                       <TextInput
                         style={[FONTS.fs_12_medium, styles.matrixInput]}
                         keyboardType="numeric"
-                        value={seasonPrices[key][field] ? formatPrice(seasonPrices[key][field]) : ''}
+                        value={seasonPrices[key]?.[field] ? formatPrice(seasonPrices[key][field]) : ''}
                         onChangeText={(t) => updateSeasonPrice(key, field, t.replace(/[^0-9]/g, ''))}
                         placeholder="0"
                         placeholderTextColor={COLORS.grayscale_400}
@@ -426,7 +500,7 @@ const RoomPriceModal = ({ visible, onClose, room }) => {
     const extendRight = isSelected && isSelectedNext && !isRightmost;
 
     const dayPrice = priceData[dateStr] || '';
-    const bgColor = getSeasonColor(dateStr, seasonData);
+    const bgColor = getSeasonColor(dateStr, seasonData, seasonLabels);
 
     const assignedSeason = seasonData[dateStr];
     let isOverride = false;
@@ -548,16 +622,18 @@ const RoomPriceModal = ({ visible, onClose, room }) => {
             <>
               {/* Season Legend */}
               <View style={styles.legendContainer}>
-                {SEASON_LABELS.map(s => (
-                  <View style={styles.legendItem} key={`legend_${s.key}`}>
-                    <View style={[styles.legendColorBox, { backgroundColor: SEASON_COLORS[s.key] }]} />
-                    <Text style={[FONTS.fs_12_medium, styles.legendText]}>{s.label}</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 16, alignItems: 'center', paddingHorizontal: 20 }}>
+                  {seasonLabels.map(s => (
+                    <View style={styles.legendItem} key={`legend_${s.key}`}>
+                      <View style={[styles.legendColorBox, { backgroundColor: s.color }]} />
+                      <Text style={[FONTS.fs_12_medium, styles.legendText]}>{s.label}</Text>
+                    </View>
+                  ))}
+                  <View style={styles.legendItem}>
+                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.primary_orange }} />
+                    <Text style={[FONTS.fs_12_medium, styles.legendText]}>요금 수동 변경</Text>
                   </View>
-                ))}
-                <View style={styles.legendItem}>
-                  <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.primary_orange }} />
-                  <Text style={[FONTS.fs_12_medium, styles.legendText]}>요금 수동 변경</Text>
-                </View>
+                </ScrollView>
               </View>
 
               {/* Calendar */}
@@ -616,8 +692,8 @@ const RoomPriceModal = ({ visible, onClose, room }) => {
                         placeholder="새로운 요금 입력"
                         placeholderTextColor={COLORS.grayscale_400}
                         keyboardType="numeric"
-                        value={inputPrice}
-                        onChangeText={setInputPrice}
+                        value={inputPrice ? formatPrice(inputPrice) : ''}
+                        onChangeText={(t) => setInputPrice(t.replace(/[^0-9]/g, ''))}
                       />
                     </View>
                     <TouchableOpacity
@@ -642,8 +718,12 @@ const RoomPriceModal = ({ visible, onClose, room }) => {
         title={alertConfig.title}
         message={alertConfig.message}
         buttonText="확인"
-        onPress={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+        onPress={() => {
+          setAlertConfig(prev => ({ ...prev, visible: false }));
+          if (alertConfig.onConfirm) alertConfig.onConfirm();
+        }}
       />
+      <Toast config={toastConfig} />
     </Modal>
   );
 };
@@ -713,6 +793,17 @@ const styles = StyleSheet.create({
   seasonSectionTitle: {
     color: COLORS.grayscale_900,
     marginBottom: 16,
+  },
+  addSeasonBtn: {
+    marginTop: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    backgroundColor: '#FFF4F0',
+    borderRadius: 12,
+  },
+  addSeasonBtnText: {
+    color: COLORS.primary_orange,
   },
   seasonTable: {
     borderWidth: 1,
