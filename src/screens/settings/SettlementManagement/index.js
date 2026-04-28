@@ -90,7 +90,6 @@ const SettlementManagement = () => {
           result = result.data;
         }
 
-        console.log('====== SETTLEMENT API RAW RESPONSE ======', JSON.stringify(result, null, 2));
         setOverviewData(result);
       } catch (err) {
         console.warn('Settlement API Error:', err);

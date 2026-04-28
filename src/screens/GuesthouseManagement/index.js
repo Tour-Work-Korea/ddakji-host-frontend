@@ -73,21 +73,21 @@ const GuesthouseManagement = () => {
     () =>
       Array.isArray(hostProfile?.guesthouseProfiles)
         ? hostProfile.guesthouseProfiles
-            .filter(
-              item =>
-                item?.applicationStatus !== 'PENDING' &&
-                item?.status !== '심사중' &&
-                item?.status !== '등록 심사중',
-            )
-            .map((item, index) => ({
-              id: String(
-                item?.profileKey ?? item?.guesthouseId ?? `guesthouse-${index}`,
-              ),
-              guesthouseId: item?.guesthouseId ?? null,
-              name: item?.guesthouseName || '이름 없음',
-              photoUrl: item?.profileImageUrl || null,
-              noticeCount: 0,
-            }))
+          .filter(
+            item =>
+              item?.applicationStatus !== 'PENDING' &&
+              item?.status !== '심사중' &&
+              item?.status !== '등록 심사중',
+          )
+          .map((item, index) => ({
+            id: String(
+              item?.profileKey ?? item?.guesthouseId ?? `guesthouse-${index}`,
+            ),
+            guesthouseId: item?.guesthouseId ?? null,
+            name: item?.guesthouseName || '이름 없음',
+            photoUrl: item?.profileImageUrl || null,
+            noticeCount: 0,
+          }))
         : [],
     [hostProfile?.guesthouseProfiles],
   );
@@ -229,7 +229,7 @@ const GuesthouseManagement = () => {
 
   const fetchUnreadCount = useCallback(async () => {
     try {
-      const {data} = await notificationApi.getUnreadCount();
+      const { data } = await notificationApi.getUnreadCount();
       const count = Number(
         data?.unreadCount ?? data?.count ?? data?.data ?? data ?? 0,
       );
