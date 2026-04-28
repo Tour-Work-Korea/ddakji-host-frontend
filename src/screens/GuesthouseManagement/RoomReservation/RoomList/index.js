@@ -456,6 +456,7 @@ const RoomList = ({guesthouseId}) => {
           setActionTargetRoom(null);
         }}
         room={actionTargetRoom}
+        guesthouseId={guesthouseId}
       />
     </View>
   );

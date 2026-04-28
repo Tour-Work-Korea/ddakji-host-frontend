@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Modal,
   StyleSheet,
@@ -9,7 +9,6 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ScrollView,
 } from 'react-native';
 import { Calendar } from 'react-native-calendars';
@@ -19,38 +18,12 @@ import BasicToast from '@components/toasts/BasicToast';
 import { CALENDAR_COMMON_PROPS, CALENDAR_THEME } from '@constants/calendarConfig';
 import { COLORS } from '@constants/colors';
 import { FONTS } from '@constants/fonts';
+import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
 
 import XIcon from '@assets/images/x_gray.svg';
 import ChevronLeft from '@assets/images/chevron_left_black.svg';
 import ChevronRight from '@assets/images/chevron_right_black.svg';
-import CalendarIcon from '@assets/images/calendar_gray.svg';
 import AlertModal from '@components/modals/AlertModal';
-
-const getPriceColor = (valStr) => {
-  if (!valStr || valStr === '0') return 'transparent';
-  const val = parseInt(String(valStr).replace(/[^0-9]/g, ''), 10);
-  if (isNaN(val) || val === 0) return 'transparent';
-
-  const tier = Math.floor(val / 10000);
-  switch (tier % 6) {
-    case 2: return COLORS.secondary_yellow;
-    case 3: return COLORS.secondary_pink;
-    case 4: return COLORS.secondary_blue;
-    case 5: return COLORS.secondary_green;
-    case 0: return COLORS.secondary_khaki;
-    case 1: return COLORS.secondary_red;
-    default: return COLORS.secondary_yellow;
-  }
-};
-
-const getSeasonColor = (dateStr, seasonData, seasonLabels) => {
-  const seasonKey = seasonData[dateStr];
-  if (seasonKey) {
-    const found = seasonLabels.find(s => s.key === seasonKey);
-    if (found) return found.color;
-  }
-  return 'transparent';
-};
 
 const formatPrice = (price) => {
   if (!price) return '';
@@ -61,125 +34,109 @@ const toastConfig = {
   success: (props) => <BasicToast {...props} />,
 };
 
-const RoomPriceModal = ({ visible, onClose, room }) => {
+const SEASON_COLORS = {
+  SEASON_1: COLORS.secondary_yellow,
+  SEASON_2: COLORS.secondary_blue,
+  SEASON_3: COLORS.secondary_red,
+  SEASON_4: COLORS.secondary_green,
+  SEASON_5: COLORS.secondary_khaki,
+};
+
+const getSeasonColor = (seasonColorKey) => {
+  if (!seasonColorKey) return 'transparent';
+  return SEASON_COLORS[seasonColorKey] || COLORS.grayscale_200;
+};
+
+const RoomPriceModal = ({ visible, onClose, room, guesthouseId }) => {
   const [selectedDates, setSelectedDates] = useState(new Set());
-  const [selectionStart, setSelectionStart] = useState(null);
-  const [selectedDaysOfWeek, setSelectedDaysOfWeek] = useState(new Set([0, 1, 2, 3, 4, 5, 6]));
-  const [priceData, setPriceData] = useState({});
   const [inputPrice, setInputPrice] = useState('');
   const [currentMonth, setCurrentMonth] = useState('');
 
   const [activeTab, setActiveTab] = useState('calendar'); // 'calendar' | 'season'
 
-  const [seasonData, setSeasonData] = useState({});
-  const [seasonLabels, setSeasonLabels] = useState([
-    { key: 'OFF', label: '비수기', color: COLORS.secondary_yellow },
-    { key: 'SHOULDER', label: '준성수기', color: COLORS.secondary_blue },
-    { key: 'PEAK', label: '성수기', color: COLORS.secondary_red },
-  ]);
-  const [seasonDates, setSeasonDates] = useState({
-    OFF: { start: '', end: '' },
-    SHOULDER: { start: '', end: '' },
-    PEAK: { start: '', end: '' },
-  });
-  const [seasonPrices, setSeasonPrices] = useState({
-    OFF: { weekday: '', friday: '', saturday: '', sunday: '' },
-    SHOULDER: { weekday: '', friday: '', saturday: '', sunday: '' },
-    PEAK: { weekday: '', friday: '', saturday: '', sunday: '' },
-  });
+  // Backend state
+  const [calendarData, setCalendarData] = useState({});
+  const [seasons, setSeasons] = useState([]);
 
-  const handleAddSeason = () => {
-    const currentCustomCount = seasonLabels.filter(s => s.key.startsWith('CUSTOM_')).length;
-    if (currentCustomCount >= 5) {
-      showAlert('알림', '사용자 추가 시즌은 최대 5개까지만 등록할 수 있습니다.');
-      return;
-    }
-
-    const newKey = `CUSTOM_${Date.now()}`;
-    const colorOptions = [COLORS.secondary_green, COLORS.secondary_yellow, COLORS.secondary_blue, COLORS.secondary_red];
-
-    setSeasonLabels(prev => {
-      const customCount = prev.filter(s => s.key.startsWith('CUSTOM_')).length;
-      const newColor = colorOptions[customCount % colorOptions.length];
-      return [...prev, { key: newKey, label: `새 시즌 ${prev.length + 1}`, color: newColor }];
-    });
-
-    setSeasonDates(prev => ({ ...prev, [newKey]: { start: '', end: '' } }));
-    setSeasonPrices(prev => ({ ...prev, [newKey]: { weekday: '', friday: '', saturday: '', sunday: '' } }));
-  };
-
-  const handleRemoveSeason = (keyToRemove) => {
-    setSeasonLabels(prev => prev.filter(s => s.key !== keyToRemove));
-    setSeasonDates(prev => {
-      const next = { ...prev };
-      delete next[keyToRemove];
-      return next;
-    });
-    setSeasonPrices(prev => {
-      const next = { ...prev };
-      delete next[keyToRemove];
-      return next;
-    });
-    setSeasonData(prev => {
-      const next = { ...prev };
-      Object.keys(next).forEach(date => {
-        if (next[date] === keyToRemove) {
-          delete next[date];
-        }
-      });
-      return next;
-    });
-  };
-  const [datePickerConfig, setDatePickerConfig] = useState({ visible: false, targetSeason: null, targetField: null, currentDate: '' });
+  const [datePickerConfig, setDatePickerConfig] = useState({ visible: false, targetIndex: null, targetField: null, currentDate: '' });
   const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '', onConfirm: null });
 
   const showAlert = (title, message, onConfirm = null) => {
     setAlertConfig({ visible: true, title, message, onConfirm });
   };
 
-  // 초기화
+  const fetchCalendarData = useCallback(async (yearMonth) => {
+    if (!guesthouseId || !room?.roomId || !yearMonth) return;
+    try {
+      const res = await hostGuesthouseApi.getRoomPricingCalendar(guesthouseId, room.roomId, yearMonth);
+      console.log(`[API Response] 캘린더 데이터 (${yearMonth}):`, res.data);
+      let payload = res.data?.data ?? res.data;
+      let data = payload?.days; // Extract the 'days' array
+      if (!Array.isArray(data)) data = [];
+      
+      const dataMap = {};
+      data.forEach(item => {
+        dataMap[item.date] = item;
+      });
+      setCalendarData(prev => ({ ...prev, ...dataMap }));
+    } catch (e) {
+      console.error(e);
+      Toast.show({ type: 'error', text1: '요금 달력을 불러오지 못했습니다.', position: 'top' });
+    }
+  }, [guesthouseId, room?.roomId]);
+
+  const fetchSeasonsData = useCallback(async () => {
+    if (!guesthouseId || !room?.roomId) return;
+    try {
+      const res = await hostGuesthouseApi.getRoomPricingSeasons(guesthouseId, room.roomId);
+      console.log(`[API Response] 시즌 데이터:`, res.data);
+      let data = res.data?.data ?? res.data;
+      if (!Array.isArray(data)) data = [];
+      
+      // Assign local _key for UI rendering purposes
+      setSeasons(data.map((s, idx) => ({ ...s, _key: `season_${idx}_${Date.now()}` })));
+    } catch (e) {
+      console.error(e);
+      Toast.show({ type: 'error', text1: '시즌 정보를 불러오지 못했습니다.', position: 'top' });
+    }
+  }, [guesthouseId, room?.roomId]);
+
+  // 초기화 및 데이터 로딩
   useEffect(() => {
     if (visible && room) {
       setActiveTab('calendar');
       setSelectedDates(new Set());
-      setSelectionStart(null);
       setInputPrice('');
-      setSeasonData({});
-      setSeasonLabels([
-        { key: 'OFF', label: '비수기', color: COLORS.secondary_yellow },
-        { key: 'SHOULDER', label: '준성수기', color: COLORS.secondary_blue },
-        { key: 'PEAK', label: '성수기', color: COLORS.secondary_red },
-      ]);
-      setSeasonDates({
-        OFF: { start: '', end: '' },
-        SHOULDER: { start: '', end: '' },
-        PEAK: { start: '', end: '' },
-      });
-      setSeasonPrices({
-        OFF: { weekday: '', friday: '', saturday: '', sunday: '' },
-        SHOULDER: { weekday: '', friday: '', saturday: '', sunday: '' },
-        PEAK: { weekday: '', friday: '', saturday: '', sunday: '' },
-      });
-
-      // 초기 요금 세팅을 위해 오늘 기준 임시 생성 (실제로는 API에서 받아옴)
-      // 현재는 방의 기본가(roomPrice)를 90일치만 임의로 깔아둠
-      const defaultPrice = room?.roomPrice;
-      const initialMap = {};
-
-      if (defaultPrice != null && defaultPrice !== '') {
-        const today = new Date();
-        for (let i = 0; i < 90; i++) {
-          const d = new Date(today);
-          d.setDate(today.getDate() + i);
-          const y = d.getFullYear();
-          const m = String(d.getMonth() + 1).padStart(2, '0');
-          const day = String(d.getDate()).padStart(2, '0');
-          initialMap[`${y}-${m}-${day}`] = defaultPrice;
-        }
-      }
-      setPriceData(initialMap);
+      setCalendarData({});
+      setSeasons([]);
+      
+      const today = new Date();
+      const y = today.getFullYear();
+      const m = String(today.getMonth() + 1).padStart(2, '0');
+      setCurrentMonth(`${y}-${m}`);
+      fetchCalendarData(`${y}-${m}`);
+      
+      // Load next month as well just in case
+      const nextMonth = new Date(today);
+      nextMonth.setMonth(today.getMonth() + 1);
+      const ny = nextMonth.getFullYear();
+      const nm = String(nextMonth.getMonth() + 1).padStart(2, '0');
+      fetchCalendarData(`${ny}-${nm}`);
     }
-  }, [visible, room]);
+  }, [visible, room, fetchCalendarData]);
+
+  useEffect(() => {
+    if (activeTab === 'season' && visible) {
+      fetchSeasonsData();
+    }
+  }, [activeTab, visible, fetchSeasonsData]);
+
+  const handleMonthChange = (date) => {
+    const y = date.year;
+    const m = String(date.month).padStart(2, '0');
+    setCurrentMonth(`${y}-${m}`);
+    fetchCalendarData(`${y}-${m}`);
+  };
 
   const handleDayPress = (day) => {
     const dateStr = day.dateString;
@@ -191,64 +148,111 @@ const RoomPriceModal = ({ visible, onClose, room }) => {
     });
   };
 
-  const handleApplyPrice = () => {
+  const handleApplyPrice = async () => {
     const numericPrice = inputPrice.replace(/[^0-9]/g, '');
     if (!numericPrice || numericPrice === '0') {
       showAlert('오류', '올바른 요금을 입력해주세요.');
       return;
     }
+    if (selectedDates.size === 0) return;
 
-    setPriceData(prev => {
-      const next = { ...prev };
-      selectedDates.forEach(date => {
-        next[date] = numericPrice;
-      });
-      return next;
-    });
+    const payload = Array.from(selectedDates).map(date => ({
+      date,
+      price: parseInt(numericPrice, 10),
+    }));
+    
+    console.log(`[API Request] 수동 요금 적용 (payload):`, payload);
 
-    setSelectedDates(new Set());
-    setSelectionStart(null);
-    setInputPrice('');
-    Toast.show({
-      type: 'success',
-      text1: '선택한 날짜의 요금이 변경되었습니다.',
-      position: 'top',
-    });
-  };
-
-  const handleToggleDayOfWeek = (dayVal) => {
-    setSelectedDaysOfWeek(prev => {
-      const next = new Set(prev);
-      if (next.has(dayVal)) {
-        if (next.size > 1) next.delete(dayVal);
-      } else {
-        next.add(dayVal);
+    try {
+      const res = await hostGuesthouseApi.updateRoomManualPriceOverrides(guesthouseId, room.roomId, payload);
+      console.log(`[API Response] 수동 요금 적용 결과:`, res.data);
+      Toast.show({ type: 'success', text1: '선택한 날짜의 요금이 변경되었습니다.', position: 'top' });
+      setSelectedDates(new Set());
+      setInputPrice('');
+      
+      // Refresh current month
+      if (currentMonth) {
+        fetchCalendarData(currentMonth);
       }
-      return next;
-    });
+    } catch (e) {
+      console.error(e);
+      Toast.show({ type: 'error', text1: '요금 변경에 실패했습니다.', position: 'top' });
+    }
   };
 
-  const handleSaveAll = () => {
-    // API 저장 로직을 이곳에 붙입니다.
-    showAlert('저장 완료', '모든 객실 요금이 서버에 반영되었습니다.', () => {
-      onClose();
-    });
+  const handleClearManualPrice = async () => {
+    if (selectedDates.size === 0) return;
+    
+    // Only clear if the selected dates have manual overrides
+    const payload = { dates: Array.from(selectedDates) };
+
+    console.log(`[API Request] 수동 요금 해제 (payload):`, payload);
+
+    try {
+      const res = await hostGuesthouseApi.clearRoomManualPriceOverrides(guesthouseId, room.roomId, payload);
+      console.log(`[API Response] 수동 요금 해제 결과:`, res.data);
+      Toast.show({ type: 'success', text1: '수동 요금 변경이 해제되었습니다.', position: 'top' });
+      setSelectedDates(new Set());
+      
+      // Refresh current month
+      if (currentMonth) {
+        fetchCalendarData(currentMonth);
+      }
+    } catch (e) {
+      console.error(e);
+      Toast.show({ type: 'error', text1: '요금 변경 해제에 실패했습니다.', position: 'top' });
+    }
   };
 
-  const applySeasonPricesToCalendar = () => {
-    // 1. 기간 겹침 유효성 검사
+  // --- 시즌 탭 관련 로직 ---
+  const handleAddSeason = () => {
+    if (seasons.length >= 5) {
+      showAlert('알림', '시즌은 최대 5개까지만 등록할 수 있습니다.');
+      return;
+    }
+
+    setSeasons(prev => [
+      ...prev,
+      {
+        _key: `CUSTOM_${Date.now()}`,
+        name: `새 시즌 ${prev.length + 1}`,
+        startDate: '',
+        endDate: '',
+        weekdayPrice: '',
+        fridayPrice: '',
+        saturdayPrice: '',
+        sundayPrice: '',
+      }
+    ]);
+  };
+
+  const handleRemoveSeason = (indexToRemove) => {
+    setSeasons(prev => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+
+  const updateSeasonField = (index, field, val) => {
+    setSeasons(prev => prev.map((s, idx) => idx === index ? { ...s, [field]: val } : s));
+  };
+
+  const handleOpenDate = (index, field, currentVal) => {
+    setDatePickerConfig({ visible: true, targetIndex: index, targetField: field, currentDate: currentVal });
+  };
+
+  const handleSaveSeasons = async () => {
+    // 1. 유효성 검사
     const validSeasons = [];
-    for (const season of seasonLabels) {
-      const s = seasonDates[season.key];
-      if (s.start && s.end) {
-        const start = new Date(s.start);
-        const end = new Date(s.end);
-        if (start > end) {
-          showAlert('기간 오류', `${season.label}의 시작일이 종료일보다 늦습니다.`);
-          return;
-        }
-        validSeasons.push({ label: season.label, start, end });
+    for (const season of seasons) {
+      if (!season.name || !season.startDate || !season.endDate) {
+        showAlert('입력 오류', '모든 시즌의 이름과 기간을 입력해주세요.');
+        return;
       }
+      const start = new Date(season.startDate);
+      const end = new Date(season.endDate);
+      if (start > end) {
+        showAlert('기간 오류', `${season.name}의 시작일이 종료일보다 늦습니다.`);
+        return;
+      }
+      validSeasons.push({ name: season.name, start, end });
     }
 
     for (let i = 0; i < validSeasons.length; i++) {
@@ -256,78 +260,38 @@ const RoomPriceModal = ({ visible, onClose, room }) => {
         const a = validSeasons[i];
         const b = validSeasons[j];
         if (a.start <= b.end && b.start <= a.end) {
-          showAlert('기간 중복 오류', `${a.label}와 ${b.label}의 기간이 겹칩니다.\n서로 중복되지 않게 설정해주세요.`);
+          showAlert('기간 중복 오류', `${a.name}와 ${b.name}의 기간이 겹칩니다.\n서로 중복되지 않게 설정해주세요.`);
           return;
         }
       }
     }
 
-    const nextPrices = { ...priceData };
-    const nextSeasons = { ...seasonData };
-    const checkDateAndSet = (seasonKey) => {
-      const s = seasonDates[seasonKey];
-      const p = seasonPrices[seasonKey];
-      if (!s.start || !s.end) return;
+    const payload = seasons.map(s => ({
+      name: s.name,
+      startDate: s.startDate,
+      endDate: s.endDate,
+      weekdayPrice: parseInt(s.weekdayPrice || 0, 10),
+      fridayPrice: parseInt(s.fridayPrice || 0, 10),
+      saturdayPrice: parseInt(s.saturdayPrice || 0, 10),
+      sundayPrice: parseInt(s.sundayPrice || 0, 10),
+    }));
 
-      const start = new Date(s.start);
-      const end = new Date(s.end);
-      if (start > end) return;
+    console.log(`[API Request] 시즌 데이터 저장 (payload):`, payload);
 
-      let current = new Date(start);
-      while (current <= end) {
-        const y = current.getFullYear();
-        const m = String(current.getMonth() + 1).padStart(2, '0');
-        const d = String(current.getDate()).padStart(2, '0');
-        const dateStr = `${y}-${m}-${d}`;
-
-        const dayOfWeek = current.getDay();
-        let priceToApply = '';
-        if (dayOfWeek === 5 && p.friday) {
-          priceToApply = p.friday;
-        } else if (dayOfWeek === 6 && p.saturday) {
-          priceToApply = p.saturday;
-        } else if (dayOfWeek === 0 && p.sunday) {
-          priceToApply = p.sunday;
-        } else if (p.weekday) {
-          priceToApply = p.weekday;
-        }
-
-        if (priceToApply) {
-          nextPrices[dateStr] = priceToApply;
-          nextSeasons[dateStr] = seasonKey;
-        }
-        current.setDate(current.getDate() + 1);
+    try {
+      const res = await hostGuesthouseApi.updateRoomPricingSeasons(guesthouseId, room.roomId, payload);
+      console.log(`[API Response] 시즌 데이터 저장 결과:`, res.data);
+      Toast.show({ type: 'success', text1: '시즌 요금이 서버에 반영되었습니다.', position: 'top' });
+      // Refresh data
+      if (currentMonth) {
+        fetchCalendarData(currentMonth);
       }
-    };
-
-    seasonLabels.forEach(s => checkDateAndSet(s.key));
-
-    setPriceData(nextPrices);
-    setSeasonData(nextSeasons);
-    setActiveTab('calendar');
-    Toast.show({
-      type: 'success',
-      text1: '시즌 규칙이 달력에 적용되었습니다.',
-      position: 'top',
-    });
-  };
-
-  const updateSeasonDate = (seasonKey, field, val) => {
-    setSeasonDates(prev => ({
-      ...prev,
-      [seasonKey]: { ...prev[seasonKey], [field]: val }
-    }));
-  };
-
-  const updateSeasonPrice = (seasonKey, field, val) => {
-    setSeasonPrices(prev => ({
-      ...prev,
-      [seasonKey]: { ...prev[seasonKey], [field]: val }
-    }));
-  };
-
-  const handleOpenDate = (seasonKey, field, currentVal) => {
-    setDatePickerConfig({ visible: true, targetSeason: seasonKey, targetField: field, currentDate: currentVal });
+      fetchSeasonsData();
+      setActiveTab('calendar');
+    } catch (e) {
+      console.error(e);
+      Toast.show({ type: 'error', text1: '시즌 저장에 실패했습니다.', position: 'top' });
+    }
   };
 
   const renderSeasonTab = () => {
@@ -341,40 +305,36 @@ const RoomPriceModal = ({ visible, onClose, room }) => {
               <Text style={[FONTS.fs_14_medium, styles.seasonTableHeader, { flex: 1, textAlign: 'center' }]}>기간</Text>
             </View>
 
-            {seasonLabels.map(({ key, label }) => (
-              <View style={styles.seasonTableRow} key={key}>
+            {seasons.map((season, index) => (
+              <View style={styles.seasonTableRow} key={season._key}>
                 <TextInput
                   style={[FONTS.fs_14_medium, { width: 70, color: COLORS.grayscale_900, padding: 0 }]}
-                  value={label}
-                  onChangeText={(text) => {
-                    setSeasonLabels(prev => prev.map(s => s.key === key ? { ...s, label: text } : s));
-                  }}
+                  value={season.name}
+                  onChangeText={(text) => updateSeasonField(index, 'name', text)}
                   placeholder="시즌명"
                   placeholderTextColor={COLORS.grayscale_400}
                 />
                 <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                   <TouchableOpacity
                     style={styles.seasonDateInput}
-                    onPress={() => handleOpenDate(key, 'start', seasonDates[key]?.start)}
+                    onPress={() => handleOpenDate(index, 'startDate', season.startDate)}
                   >
-                    <Text style={[FONTS.fs_12_medium, { color: seasonDates[key]?.start ? COLORS.grayscale_900 : COLORS.grayscale_400 }]}>
-                      {seasonDates[key]?.start ? seasonDates[key].start.replace(/-/g, '. ') : 'YY.MM.DD'}
+                    <Text style={[FONTS.fs_12_medium, { color: season.startDate ? COLORS.grayscale_900 : COLORS.grayscale_400 }]}>
+                      {season.startDate ? season.startDate.replace(/-/g, '. ') : 'YY.MM.DD'}
                     </Text>
                   </TouchableOpacity>
                   <Text style={{ color: COLORS.grayscale_500 }}>-</Text>
                   <TouchableOpacity
                     style={styles.seasonDateInput}
-                    onPress={() => handleOpenDate(key, 'end', seasonDates[key]?.end)}
+                    onPress={() => handleOpenDate(index, 'endDate', season.endDate)}
                   >
-                    <Text style={[FONTS.fs_12_medium, { color: seasonDates[key]?.end ? COLORS.grayscale_900 : COLORS.grayscale_400 }]}>
-                      {seasonDates[key]?.end ? seasonDates[key].end.replace(/-/g, '. ') : 'YY.MM.DD'}
+                    <Text style={[FONTS.fs_12_medium, { color: season.endDate ? COLORS.grayscale_900 : COLORS.grayscale_400 }]}>
+                      {season.endDate ? season.endDate.replace(/-/g, '. ') : 'YY.MM.DD'}
                     </Text>
                   </TouchableOpacity>
-                  {key.startsWith('CUSTOM_') && (
-                    <TouchableOpacity onPress={() => handleRemoveSeason(key)} style={{ padding: 4 }}>
-                      <Text style={[FONTS.fs_12_medium, { color: COLORS.semantic_red }]}>삭제</Text>
-                    </TouchableOpacity>
-                  )}
+                  <TouchableOpacity onPress={() => handleRemoveSeason(index)} style={{ padding: 4 }}>
+                    <Text style={[FONTS.fs_12_medium, { color: COLORS.semantic_red }]}>삭제</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             ))}
@@ -395,18 +355,18 @@ const RoomPriceModal = ({ visible, onClose, room }) => {
               <Text style={[FONTS.fs_14_medium, styles.seasonTableHeader, { flex: 1, textAlign: 'center' }]}>일요일</Text>
             </View>
 
-            {seasonLabels.map(({ key, label }) => (
-              <View style={styles.priceMatrixRow} key={`price_${key}`}>
-                <Text style={[FONTS.fs_14_medium, { width: 60, color: COLORS.grayscale_900, textAlign: 'center' }]} numberOfLines={1}>{label}</Text>
+            {seasons.map((season, index) => (
+              <View style={styles.priceMatrixRow} key={`price_${season._key}`}>
+                <Text style={[FONTS.fs_14_medium, { width: 60, color: COLORS.grayscale_900, textAlign: 'center' }]} numberOfLines={1}>{season.name}</Text>
 
-                {['weekday', 'friday', 'saturday', 'sunday'].map(field => (
+                {['weekdayPrice', 'fridayPrice', 'saturdayPrice', 'sundayPrice'].map(field => (
                   <View style={{ flex: 1, paddingHorizontal: 2 }} key={field}>
                     <View style={styles.matrixInputWrap}>
                       <TextInput
                         style={[FONTS.fs_12_medium, styles.matrixInput]}
                         keyboardType="numeric"
-                        value={seasonPrices[key]?.[field] ? formatPrice(seasonPrices[key][field]) : ''}
-                        onChangeText={(t) => updateSeasonPrice(key, field, t.replace(/[^0-9]/g, ''))}
+                        value={season[field] ? formatPrice(season[field]) : ''}
+                        onChangeText={(t) => updateSeasonField(index, field, t.replace(/[^0-9]/g, ''))}
                         placeholder="0"
                         placeholderTextColor={COLORS.grayscale_400}
                       />
@@ -418,7 +378,7 @@ const RoomPriceModal = ({ visible, onClose, room }) => {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.applyAllBtn} onPress={applySeasonPricesToCalendar}>
+        <TouchableOpacity style={styles.applyAllBtn} onPress={handleSaveSeasons}>
           <Text style={[FONTS.fs_16_semibold, { color: COLORS.grayscale_0 }]}>반영하기</Text>
         </TouchableOpacity>
         <View style={{ height: 40 }} />
@@ -450,7 +410,7 @@ const RoomPriceModal = ({ visible, onClose, room }) => {
                   : <ChevronRight width={20} height={20} color={COLORS.grayscale_400} />
               )}
               onDayPress={(day) => {
-                updateSeasonDate(datePickerConfig.targetSeason, datePickerConfig.targetField, day.dateString);
+                updateSeasonField(datePickerConfig.targetIndex, datePickerConfig.targetField, day.dateString);
                 setDatePickerConfig({ ...datePickerConfig, visible: false });
               }}
               markedDates={datePickerConfig.currentDate ? {
@@ -499,22 +459,13 @@ const RoomPriceModal = ({ visible, onClose, room }) => {
     const extendLeft = isSelected && isSelectedPrev && !isLeftmost;
     const extendRight = isSelected && isSelectedNext && !isRightmost;
 
-    const dayPrice = priceData[dateStr] || '';
-    const bgColor = getSeasonColor(dateStr, seasonData, seasonLabels);
-
-    const assignedSeason = seasonData[dateStr];
-    let isOverride = false;
-    if (assignedSeason && dayPrice) {
-      const p = seasonPrices[assignedSeason];
-      let defaultPrice = '';
-      if (dayOfWeek === 5 && p.friday) defaultPrice = p.friday;
-      else if (dayOfWeek === 6 && p.saturday) defaultPrice = p.saturday;
-      else if (dayOfWeek === 0 && p.sunday) defaultPrice = p.sunday;
-      else if (p.weekday) defaultPrice = p.weekday;
-
-      if (defaultPrice && dayPrice !== defaultPrice) {
-        isOverride = true;
-      }
+    const dayInfo = calendarData[dateStr] || {};
+    const dayPrice = dayInfo.effectivePrice || '';
+    
+    // UI 배경색: source가 SEASON이거나 seasonColorKey가 있으면 해당 시즌 색상
+    let bgColor = 'transparent';
+    if (dayInfo.seasonColorKey) {
+      bgColor = getSeasonColor(dayInfo.seasonColorKey);
     }
 
     const radiusStyle = {
@@ -533,7 +484,7 @@ const RoomPriceModal = ({ visible, onClose, room }) => {
             styles.dayCell,
             radiusStyle,
             { backgroundColor: bgColor },
-            isSelected && styles.dayCellSelectedModified // 투명 보더 추가 (레이아웃 흔들림 방지 위함)
+            isSelected && styles.dayCellSelectedModified 
           ]}
         >
           <Text style={[
@@ -548,7 +499,7 @@ const RoomPriceModal = ({ visible, onClose, room }) => {
               {formatPrice(dayPrice)}
             </Text>
           ) : null}
-          {isOverride && (
+          {dayInfo.isManualOverride && (
             <View style={{
               position: 'absolute',
               top: 6,
@@ -577,6 +528,15 @@ const RoomPriceModal = ({ visible, onClose, room }) => {
       </View>
     );
   };
+
+  // Derive unique seasons for the legend based on current month calendarData
+  const activeSeasonLegends = Array.from(
+    new Map(
+      Object.values(calendarData)
+        .filter(d => d.seasonColorKey && d.seasonName)
+        .map(d => [d.seasonColorKey, { colorKey: d.seasonColorKey, name: d.seasonName }])
+    ).values()
+  ).sort((a, b) => a.colorKey.localeCompare(b.colorKey));
 
   return (
     <Modal
@@ -623,10 +583,10 @@ const RoomPriceModal = ({ visible, onClose, room }) => {
               {/* Season Legend */}
               <View style={styles.legendContainer}>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 16, alignItems: 'center', paddingHorizontal: 20 }}>
-                  {seasonLabels.map(s => (
-                    <View style={styles.legendItem} key={`legend_${s.key}`}>
-                      <View style={[styles.legendColorBox, { backgroundColor: s.color }]} />
-                      <Text style={[FONTS.fs_12_medium, styles.legendText]}>{s.label}</Text>
+                  {activeSeasonLegends.map(s => (
+                    <View style={styles.legendItem} key={`legend_${s.colorKey}`}>
+                      <View style={[styles.legendColorBox, { backgroundColor: getSeasonColor(s.colorKey) }]} />
+                      <Text style={[FONTS.fs_12_medium, styles.legendText]}>{s.name}</Text>
                     </View>
                   ))}
                   <View style={styles.legendItem}>
@@ -639,6 +599,7 @@ const RoomPriceModal = ({ visible, onClose, room }) => {
               {/* Calendar */}
               <Calendar
                 {...CALENDAR_COMMON_PROPS}
+                onMonthChange={handleMonthChange}
                 dayComponent={renderDay}
                 renderHeader={renderHeader}
                 theme={{
@@ -661,14 +622,6 @@ const RoomPriceModal = ({ visible, onClose, room }) => {
                 style={styles.calendarStyle}
               />
 
-              {/* Save Button */}
-              <View style={styles.saveBtnContainer}>
-                <Text style={[FONTS.fs_12_medium, { color: COLORS.grayscale_500, marginRight: 8 }]}>※ 저장 버튼을 눌러야 최종 적용됩니다.</Text>
-                <TouchableOpacity onPress={handleSaveAll} style={styles.saveBtn}>
-                  <Text style={[FONTS.fs_16_semibold, styles.saveBtnText]}>저장</Text>
-                </TouchableOpacity>
-              </View>
-
               {/* Bottom Action Bar for Setting Price */}
               {selectedDates.size > 0 && (
                 <View style={styles.bottomBar}>
@@ -676,12 +629,16 @@ const RoomPriceModal = ({ visible, onClose, room }) => {
                     <Text style={[FONTS.fs_14_medium, styles.selectedCountText]}>
                       {selectedDates.size}개 날짜 선택됨
                     </Text>
-                    <TouchableOpacity onPress={() => {
-                      setSelectedDates(new Set());
-                      setSelectionStart(null);
-                    }}>
-                      <Text style={[FONTS.fs_14_medium, styles.cancelText]}>선택 해제</Text>
-                    </TouchableOpacity>
+                    <View style={{ flexDirection: 'row', gap: 16 }}>
+                      {Array.from(selectedDates).some(date => calendarData[date]?.isManualOverride) && (
+                         <TouchableOpacity onPress={handleClearManualPrice}>
+                            <Text style={[FONTS.fs_14_medium, styles.cancelText, { color: COLORS.semantic_red }]}>수동 해제</Text>
+                         </TouchableOpacity>
+                      )}
+                      <TouchableOpacity onPress={() => setSelectedDates(new Set())}>
+                        <Text style={[FONTS.fs_14_medium, styles.cancelText]}>선택 해제</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
 
                   <View style={styles.priceInputRow}>
@@ -890,23 +847,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8,
   },
-  saveBtnContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    paddingHorizontal: 20,
-    marginBottom: 8,
-  },
-
-  saveBtn: {
-    backgroundColor: COLORS.primary_orange,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  saveBtnText: {
-    color: COLORS.grayscale_0,
-  },
   calendarStyle: {
     paddingHorizontal: 10,
     paddingBottom: 20,
@@ -944,7 +884,6 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   dayCellSelectedModified: {
-    // 테두리는 connector가 담당하므로 여백 유지를 위해 투명만 사용
     borderColor: 'transparent',
   },
   dayNumber: {
@@ -969,7 +908,7 @@ const styles = StyleSheet.create({
     borderTopColor: COLORS.grayscale_200,
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 36, // SafeArea 하단 대응 임의 여백
+    paddingBottom: 36,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.1,
@@ -987,28 +926,6 @@ const styles = StyleSheet.create({
   },
   cancelText: {
     color: COLORS.grayscale_500,
-  },
-  daysFilterContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  dayFilterChip: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: COLORS.grayscale_100,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dayFilterChipSelected: {
-    backgroundColor: COLORS.primary_orange,
-  },
-  dayFilterText: {
-    color: COLORS.grayscale_600,
-  },
-  dayFilterTextSelected: {
-    color: COLORS.grayscale_0,
   },
   priceInputRow: {
     flexDirection: 'row',
