@@ -133,6 +133,9 @@ export default StyleSheet.create({
     color: COLORS.grayscale_600,
     lineHeight: 20,
   },
+  pendingActionLine: {
+    color: COLORS.semantic_red,
+  },
   notificationDate: {
     color: COLORS.grayscale_500,
     marginTop: 6,

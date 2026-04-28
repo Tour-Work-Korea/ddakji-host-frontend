@@ -1,10 +1,11 @@
 import React from 'react';
-import {Pressable, ScrollView, Text, View} from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
-import {FONTS} from '@constants/fonts';
+import { FONTS } from '@constants/fonts';
 
 import GuesthouseConfirmedIcon from '@assets/images/noti_guesthouse_confirmed.svg';
-import GuesthouseCancelledIcon from '@assets/images/noti_guesthouse_cancelled.svg';
+import GuesthouseRejectedIcon from '@assets/images/noti_guesthouse_rejected.svg';
+import GuesthousePendingIcon from '@assets/images/noti_guesthouse_pending.svg';
 import NoticeIcon from '@assets/images/noti_notice.svg';
 import PartyConfirmedIcon from '@assets/images/noti_party_confirmed.svg';
 import PartyCancelledIcon from '@assets/images/noti_party_cancelled.svg';
@@ -34,10 +35,14 @@ const renderLeadingIcon = item => {
     );
   }
 
+  const isPending = item.status === 'pending';
+
   return (
     <View style={styles.iconWrap}>
-      {isCancelled ? (
-        <GuesthouseCancelledIcon width={24} height={24} />
+      {isPending ? (
+        <GuesthousePendingIcon width={24} height={24} />
+      ) : isCancelled ? (
+        <GuesthouseRejectedIcon width={24} height={24} />
       ) : (
         <GuesthouseConfirmedIcon width={24} height={24} />
       )}
@@ -45,7 +50,7 @@ const renderLeadingIcon = item => {
   );
 };
 
-const NotificationList = ({items = []}) => {
+const NotificationList = ({ items = [], onPressItem }) => {
   if (!items.length) {
     return (
       <View style={styles.emptyWrap}>
@@ -65,7 +70,7 @@ const NotificationList = ({items = []}) => {
         <Pressable
           key={item.id}
           style={styles.notificationItem}
-          onPress={() => {}}>
+          onPress={() => onPressItem?.(item)}>
           {renderLeadingIcon(item)}
 
           <View style={styles.notificationContent}>
@@ -89,6 +94,7 @@ const NotificationList = ({items = []}) => {
                       : FONTS.fs_14_medium,
                   styles.notificationLine,
                   item.type === 'notice' && styles.noticeLine,
+                  item.status === 'pending' && index === item.lines.length - 1 && styles.pendingActionLine,
                   item.isRead && styles.notificationTextRead,
                 ]}>
                 {line}

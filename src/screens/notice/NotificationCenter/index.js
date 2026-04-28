@@ -1,10 +1,10 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import {ActivityIndicator, Text, TouchableOpacity, View} from 'react-native';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 import notificationApi from '@utils/api/notificationApi';
-import {FONTS} from '@constants/fonts';
-import {COLORS} from '@constants/colors';
+import { FONTS } from '@constants/fonts';
+import { COLORS } from '@constants/colors';
 import useUserStore from '@stores/userStore';
 import GuesthouseProfileList from '@components/modals/HostMy/Guesthouse/GuesthouseProfileList';
 import NotificationList from './NotificationList';
@@ -16,10 +16,11 @@ import SettingIcon from '@assets/images/settings_gray.svg';
 import styles from './NotificationCenter.styles';
 
 const FILTER_CHIPS = [
-  {key: 'all', label: '전체'},
-  {key: 'roomReservation', label: '객실 예약'},
-  {key: 'partyReservation', label: '파티 예약'},
-  {key: 'notice', label: '공지사항'},
+  { key: 'all', label: '전체' },
+  { key: 'roomReservation', label: '객실 예약' },
+  { key: 'partyReservation', label: '파티 예약' },
+  { key: 'settlement', label: '정산' },
+  { key: 'notice', label: '공지사항' },
 ];
 
 const extractItems = data =>
@@ -69,6 +70,10 @@ const normalizeType = type => {
     return 'notice';
   }
 
+  if (rawType.startsWith('SETTLEMENT') || rawType.includes('SETTLEMENT')) {
+    return 'settlement';
+  }
+
   if (rawType.startsWith('PARTY_')) {
     return 'partyReservation';
   }
@@ -84,6 +89,10 @@ const normalizeStatus = type => {
     rawType.includes('REFUND')
   ) {
     return 'cancelled';
+  }
+
+  if (rawType.includes('NEW')) {
+    return 'pending';
   }
 
   return 'confirmed';
@@ -119,12 +128,15 @@ const mapNotificationItem = item => ({
   lines: buildLines(item),
   date: formatDate(item?.createdAt),
   isRead: Boolean(item?.isRead),
+  guesthouseId: item?.guesthouseId || null,
   rawItem: item,
 });
 
 const NotificationCenter = () => {
   const navigation = useNavigation();
   const hostProfile = useUserStore(state => state.hostProfile);
+  const globalSelectedGuesthouseId = useUserStore(state => state.selectedGuesthouseId);
+  const setSelectedGuesthouseId = useUserStore(state => state.setSelectedGuesthouseId);
   const [selectedFilter, setSelectedFilter] = useState(FILTER_CHIPS[0].key);
   const [isGuesthouseListVisible, setIsGuesthouseListVisible] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState(null);
@@ -136,23 +148,29 @@ const NotificationCenter = () => {
     () =>
       Array.isArray(hostProfile?.guesthouseProfiles)
         ? hostProfile.guesthouseProfiles
-            .filter(
-              item =>
-                item?.applicationStatus !== 'PENDING' &&
-                item?.status !== '심사중' &&
-                item?.status !== '등록 심사중',
-            )
-            .map((item, index) => ({
-              id: String(
-                item?.profileKey ?? item?.guesthouseId ?? `guesthouse-${index}`,
-              ),
+          .filter(
+            item =>
+              item?.applicationStatus !== 'PENDING' &&
+              item?.status !== '심사중' &&
+              item?.status !== '등록 심사중',
+          )
+          .map((item, index) => {
+            const ghId = String(item?.guesthouseId ?? item?.profileKey ?? `guesthouse-${index}`);
+            // 현재 알림 리스트에서 해당 게하의 안 읽은 알림 개수를 계산
+            const count = notifications.filter(
+              n => !n.isRead && String(n.guesthouseId) === ghId
+            ).length;
+
+            return {
+              id: ghId,
               guesthouseId: item?.guesthouseId ?? null,
               name: item?.guesthouseName || '게스트하우스',
               photoUrl: item?.profileImageUrl || null,
-              noticeCount: 0,
-            }))
+              noticeCount: count,
+            };
+          })
         : [],
-    [hostProfile?.guesthouseProfiles],
+    [hostProfile?.guesthouseProfiles, notifications],
   );
 
   useEffect(() => {
@@ -168,9 +186,17 @@ const NotificationCenter = () => {
     );
 
     if (!hasSelected) {
-      setSelectedProfileId(guesthouseProfiles[0].id);
+      // 전역에서 선택된 게하가 있다면 그걸 우선 적용, 없으면 첫 번째 게하
+      const match = guesthouseProfiles.find(
+        p => String(p.id) === String(globalSelectedGuesthouseId) || String(p.guesthouseId) === String(globalSelectedGuesthouseId)
+      );
+      if (match) {
+        setSelectedProfileId(match.id);
+      } else {
+        setSelectedProfileId(guesthouseProfiles[0].id);
+      }
     }
-  }, [guesthouseProfiles, selectedProfileId]);
+  }, [guesthouseProfiles, selectedProfileId, globalSelectedGuesthouseId]);
 
   const selectedGuesthouse = useMemo(
     () =>
@@ -183,10 +209,9 @@ const NotificationCenter = () => {
   const fetchNotifications = useCallback(async () => {
     try {
       setLoading(true);
-      const params = selectedGuesthouse?.guesthouseId
-        ? {guesthouseId: selectedGuesthouse.guesthouseId}
-        : undefined;
-      const {data} = await notificationApi.getMyNotifications(params);
+      // 전체 게스트하우스의 알림 갯수를 표시하기 위해 파라미터 없이 모두 불러옵니다.
+      const { data } = await notificationApi.getMyNotifications();
+
       const items = extractItems(data);
       setNotifications(items.map(mapNotificationItem));
     } catch (error) {
@@ -198,7 +223,7 @@ const NotificationCenter = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedGuesthouse?.guesthouseId]);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -206,19 +231,25 @@ const NotificationCenter = () => {
     }, [fetchNotifications]),
   );
 
-  useEffect(() => {
-    if (selectedGuesthouse) {
-      fetchNotifications();
-    }
-  }, [fetchNotifications, selectedGuesthouse]);
-
   const filteredNotifications = useMemo(() => {
-    if (selectedFilter === 'all') {
-      return notifications;
+    let result = notifications;
+
+    // 1. 게스트하우스별 필터링
+    if (selectedGuesthouse) {
+      result = result.filter(
+        item =>
+          item.type === 'notice' || // 시스템 공지사항(notice) 타입만 전체 허용
+          (selectedGuesthouse.guesthouseId && String(item.guesthouseId) === String(selectedGuesthouse.guesthouseId))
+      );
     }
 
-    return notifications.filter(item => item.type === selectedFilter);
-  }, [notifications, selectedFilter]);
+    // 2. 탭 필터링 (전체, 객실 예약, 파티 예약 등)
+    if (selectedFilter !== 'all') {
+      result = result.filter(item => item.type === selectedFilter);
+    }
+
+    return result;
+  }, [notifications, selectedFilter, selectedGuesthouse]);
 
   const handleReadAll = async () => {
     if (markingAllRead) {
@@ -228,7 +259,7 @@ const NotificationCenter = () => {
     try {
       setMarkingAllRead(true);
       await notificationApi.readAll();
-      setNotifications(prev => prev.map(item => ({...item, isRead: true})));
+      setNotifications(prev => prev.map(item => ({ ...item, isRead: true })));
     } catch (error) {
       console.warn(
         '[NotificationCenter] failed to mark all as read:',
@@ -236,6 +267,38 @@ const NotificationCenter = () => {
       );
     } finally {
       setMarkingAllRead(false);
+    }
+  };
+
+  const handlePressItem = (item) => {
+    // 1. 알림 클릭 시 해당 알림의 게스트하우스 컨텍스트로 전역 상태 변경
+    const targetGuesthouseId = item.guesthouseId || item.rawItem?.guesthouseId;
+    if (targetGuesthouseId) {
+      setSelectedGuesthouseId(targetGuesthouseId);
+    }
+
+    // 2. 각 타입별 화면 이동
+    if (item.type === 'roomReservation') {
+      const reservationId = item.rawItem?.reservationId;
+      if (reservationId) {
+        navigation.navigate('MyGuesthouseReservationDetail', {
+          reservationId,
+        });
+      }
+    } else if (item.type === 'settlement') {
+      const batchId = item.rawItem?.batchId;
+      if (batchId) {
+        navigation.navigate('SettlementDetail', { batchId });
+      } else {
+        navigation.navigate('SettlementManagement');
+      }
+    } else if (item.type === 'notice') {
+      const noticeId = item.rawItem?.noticeId;
+      if (noticeId) {
+        navigation.navigate('NoticeDetail', { noticeId });
+      } else {
+        navigation.navigate('NoticeList');
+      }
     }
   };
 
@@ -311,7 +374,7 @@ const NotificationCenter = () => {
           <ActivityIndicator size="small" color={COLORS.grayscale_500} />
         </View>
       ) : (
-        <NotificationList items={filteredNotifications} />
+        <NotificationList items={filteredNotifications} onPressItem={handlePressItem} />
       )}
 
       <GuesthouseProfileList

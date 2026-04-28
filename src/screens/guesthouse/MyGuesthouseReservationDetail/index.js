@@ -21,6 +21,10 @@ const STATUS_STYLE = {
     badgeBackground: COLORS.secondary_red,
     badgeText: COLORS.semantic_red,
   },
+  반려: {
+    badgeBackground: COLORS.secondary_brown,
+    badgeText: COLORS.semantic_brown,
+  },
   확정: {
     badgeBackground: COLORS.secondary_blue,
     badgeText: COLORS.semantic_blue,
@@ -41,7 +45,15 @@ const REJECT_REASON_OPTIONS = ['객실 만실', '숙소 내부 사정', '예약 
 const DIRECT_INPUT_REASON = '직접 입력';
 
 const mapReservationDetailToViewData = (reservation = {}) => {
-  const status = STATUS_LABEL_MAP[reservation?.status] || reservation?.status || '완료';
+  let status = STATUS_LABEL_MAP[reservation?.status] || reservation?.status || '완료';
+  let isRejected = false;
+
+  // 호스트가 반려한 경우 '취소' 대신 '반려'로 노출
+  if (status === '취소' && reservation?.approvalStatus === 'REJECTED') {
+    status = '반려';
+    isRejected = true;
+  }
+
   const completedTotal = Number(reservation?.completedTotal || 0);
   const canceledTotal = Number(reservation?.canceledTotal || 0);
   const birthYear = reservation?.birthDate?.split?.('-')?.[0];
@@ -56,7 +68,10 @@ const mapReservationDetailToViewData = (reservation = {}) => {
     ...reservation,
     reservationId: reservation?.reservationId ?? reservation?.id,
     status,
-    statusText: reservation?.statusText ?? `완료 ${completedTotal}, 취소 ${canceledTotal}`,
+    isRejected,
+    rejectedReason: reservation?.cancelledReason || reservation?.paymentCancelReason || '',
+    rejectedAt: reservation?.refundAt || reservation?.createdAt || '',
+    statusText: isRejected ? '신규예약' : (reservation?.statusText ?? `완료 ${completedTotal}, 취소 ${canceledTotal}`),
     name: reservation?.userName ?? reservation?.name,
     age: reservation?.age ?? (birthYear ? `${birthYear}년생` : ''),
     phone: reservation?.userPhone ?? reservation?.phone,
@@ -85,6 +100,17 @@ const mapReservationDetailToViewData = (reservation = {}) => {
         ? reservation?.showCancelButton
         : status === '확정',
   };
+};
+
+const formatDateWithTime = (dateStr) => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  return `${year}.${month}.${day} ${hours}:${minutes}`;
 };
 
 const MyGuesthouseReservationDetail = ({ route }) => {
@@ -134,6 +160,8 @@ const MyGuesthouseReservationDetail = ({ route }) => {
   const isCancelled = reservation.status === '취소';
   const isCompleted = reservation.status === '완료';
   const isConfirmed = reservation.status === '확정';
+  const isRejected = reservation.isRejected;
+  const isCancelledOrRejected = isCancelled || isRejected;
 
   const resetDecisionModal = () => {
     setDecisionModalType(null);
@@ -208,14 +236,14 @@ const MyGuesthouseReservationDetail = ({ route }) => {
     }
   };
 
-  const paymentLabel = isCancelled ? '환불 금액' : '결제금액';
-  const paymentAmountText = isCancelled
+  const paymentLabel = isCancelledOrRejected ? '환불 금액' : '결제금액';
+  const paymentAmountText = isCancelledOrRejected
     ? reservation.refundAmount || reservation.paymentAmount
     : reservation.paymentAmount;
 
-  const paymentStatusText = reservation.paymentStatus || reservation.paymentState;
-  const paymentStatusColor = isCancelled ? styles.highlightText : null;
-  const paymentAmountColor = isCancelled ? styles.highlightText : null;
+  const paymentStatusText = isCancelledOrRejected ? '환불완료' : (reservation.paymentStatus || reservation.paymentState);
+  const paymentStatusColor = isCancelledOrRejected ? styles.highlightText : null;
+  const paymentAmountColor = isCancelledOrRejected ? styles.highlightText : null;
   const requestsText = reservation?.requests?.trim?.() || '';
 
   const statusStyle = STATUS_STYLE[reservation.status] || STATUS_STYLE.완료;
@@ -234,7 +262,7 @@ const MyGuesthouseReservationDetail = ({ route }) => {
 
           <View style={styles.headerTextWrap}>
             <Text style={[FONTS.fs_16_semibold, styles.nameText]}>{reservation.name}</Text>
-            <Text style={[FONTS.fs_12_medium, styles.highlightText]}>{reservation.statusText}</Text>
+            <Text style={[FONTS.fs_12_medium, isRejected ? { color: COLORS.primary_orange } : styles.highlightText]}>{reservation.statusText}</Text>
           </View>
         </View>
 
@@ -273,6 +301,18 @@ const MyGuesthouseReservationDetail = ({ route }) => {
               <View style={styles.requestContainer}>
                 <Text style={[FONTS.fs_14_regular, styles.requestText]}>{requestsText}</Text>
               </View>
+            </View>
+          </>
+        ) : null}
+
+        {isRejected ? (
+          <>
+            <View style={styles.divider} />
+
+            <View style={styles.section}>
+              <Text style={[FONTS.fs_16_semibold, styles.sectionTitle]}>반려 정보</Text>
+              <InfoRow label="반려사유" value={reservation.rejectedReason} />
+              <InfoRow label="반려 일시" value={formatDateWithTime(reservation.rejectedAt)} />
             </View>
           </>
         ) : null}

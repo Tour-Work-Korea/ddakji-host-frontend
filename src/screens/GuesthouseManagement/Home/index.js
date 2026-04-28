@@ -315,16 +315,20 @@ const Home = ({ reservationMethod = 'closed', guesthouseId }) => {
                   <View
                     style={[
                       styles.reservationBadge,
-                      reservation.status === 'CANCELLED' && styles.reservationBadgeRed,
+                      reservation.status === 'CANCELLED' && reservation.approvalStatus !== 'REJECTED' && styles.reservationBadgeRed,
+                      reservation.status === 'CANCELLED' && reservation.approvalStatus === 'REJECTED' && { backgroundColor: COLORS.secondary_brown },
                       selectedTab === 'WAITING_APPROVAL' && styles.reservationBadgeWaiting,
                     ]}>
                     <Text
                       style={[
                         styles.reservationBadgeText,
-                        reservation.status === 'CANCELLED' && styles.reservationBadgeTextRed,
+                        reservation.status === 'CANCELLED' && reservation.approvalStatus !== 'REJECTED' && styles.reservationBadgeTextRed,
+                        reservation.status === 'CANCELLED' && reservation.approvalStatus === 'REJECTED' && { color: COLORS.semantic_brown },
                         selectedTab === 'WAITING_APPROVAL' && styles.reservationBadgeTextWaiting,
                       ]}>
-                      {selectedTab === 'WAITING_APPROVAL' ? '대기중' : getStatusBadgeText(reservation.status)}
+                      {selectedTab === 'WAITING_APPROVAL' 
+                        ? '대기중' 
+                        : (reservation.status === 'CANCELLED' && reservation.approvalStatus === 'REJECTED' ? '예약 반려' : getStatusBadgeText(reservation.status))}
                     </Text>
                   </View>
                 )}

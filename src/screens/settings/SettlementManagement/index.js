@@ -90,7 +90,6 @@ const SettlementManagement = () => {
           result = result.data;
         }
 
-        console.log('====== SETTLEMENT API RAW RESPONSE ======', JSON.stringify(result, null, 2));
         setOverviewData(result);
       } catch (err) {
         console.warn('Settlement API Error:', err);
@@ -192,6 +191,14 @@ const SettlementManagement = () => {
     }
   };
 
+  const getPayoutDateValue = item => {
+    const status = item.payoutStatus;
+    if (status === 'COMPLETE' || status === 'COMPLETED' || status === 'PAID') {
+      return item.payoutCompletedDate;
+    }
+    return item.payoutScheduledDate;
+  };
+
   return (
     <View style={styles.container}>
       {/* 커스텀 헤더 (업장 선택기 내장) */}
@@ -232,10 +239,10 @@ const SettlementManagement = () => {
           <TouchableOpacity style={styles.iconButton} onPress={handlePrevMonth}>
             <ChevronLeftBlack width={20} height={20} />
           </TouchableOpacity>
-            <TouchableOpacity activeOpacity={0.8} onPress={() => setIsMonthPickerVisible(true)} style={{flexDirection:'row', alignItems:'center'}}>
-              <Text style={styles.monthText}>{displayMonth}</Text>
-              <ChevronDown width={16} height={16} style={{ marginLeft: 4 }} />
-            </TouchableOpacity>
+          <TouchableOpacity activeOpacity={0.8} onPress={() => setIsMonthPickerVisible(true)} style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={styles.monthText}>{displayMonth}</Text>
+            <ChevronDown width={16} height={16} style={{ marginLeft: 4 }} />
+          </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton} onPress={handleNextMonth}>
             <ChevronRightBlack width={20} height={20} />
           </TouchableOpacity>
@@ -304,13 +311,16 @@ const SettlementManagement = () => {
             key={item.batchId}
             style={[styles.card, styles.detailItemCard]}
             activeOpacity={0.8}
-            onPress={() => navigation.navigate('SettlementDetail', { batchId: item.batchId })}
+            onPress={() => navigation.navigate('SettlementDetail', { 
+              batchId: item.batchId,
+              settlementEndDate: item.settlementEndDate
+            })}
           >
             <View style={styles.detailItemHeader}>
               <View>
                 <Text style={styles.detailItemDateTop}>{getPayoutDateLabel(item.payoutStatus)}</Text>
                 <Text style={styles.detailItemDateTopValue}>
-                  {getFormattedDateWithDay(item.settlementEndDate || item.payoutDate)}
+                  {getFormattedDateWithDay(getPayoutDateValue(item))}
                 </Text>
               </View>
               <View style={getStatusBadgeStyle(item.payoutStatus)}>
@@ -324,10 +334,10 @@ const SettlementManagement = () => {
 
             <View style={styles.detailItemBody}>
               <View style={styles.detailColLeft}>
-                <View style={[styles.detailMetaTextRow, {marginBottom: 4}]}>
+                <View style={[styles.detailMetaTextRow, { marginBottom: 4 }]}>
                   <Text style={styles.detailMetaLabel}>정산 기준일</Text>
                   <Text style={styles.detailMetaValue}>
-                    {item.settlementStartDate?.replace(/-/g, '.') || item.targetDate?.replace(/-/g, '.') || '-'}
+                    {item.settlementEndDate?.replace(/-/g, '.') || '-'}
                   </Text>
                 </View>
                 <View style={styles.detailMetaTextRow}>

@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, LayoutAnimation, Platform, UIManager, TouchableOpacity } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import Header from '@components/Header';
-import ChevronDownGray from '@assets/images/chevron_right_gray.svg'; 
+import ChevronDownGray from '@assets/images/chevron_right_gray.svg';
 import settlementApi from '@utils/api/settlementApi';
-import {COLORS} from '@constants/colors';
+import { COLORS } from '@constants/colors';
 
 import styles from './SettlementDetail.styles';
 
@@ -17,6 +17,7 @@ if (Platform.OS === 'android') {
 const SettlementDetail = () => {
   const route = useRoute();
   const batchId = route.params?.batchId;
+  const passedEndDate = route.params?.settlementEndDate;
 
   const [detailData, setDetailData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -54,7 +55,7 @@ const SettlementDetail = () => {
 
   if (loading) {
     return (
-      <View style={[styles.container, {justifyContent: 'center', alignItems: 'center'}]}>
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color={COLORS.primary_blue} />
       </View>
     );
@@ -62,7 +63,7 @@ const SettlementDetail = () => {
 
   const data = detailData || {};
   const items = data.items || [];
-  
+
   const formatNumber = num => Number(num || 0).toLocaleString();
 
   const getStatusBadgeStyle = status => {
@@ -79,7 +80,7 @@ const SettlementDetail = () => {
         return styles.badgeComplete;
     }
   };
-  
+
   const getStatusTextStyle = status => {
     switch (status) {
       case 'PENDING':
@@ -94,19 +95,20 @@ const SettlementDetail = () => {
         return styles.badgeCompleteText;
     }
   };
-  
+
   const getStatusLabel = status => {
     switch (status) {
       case 'PENDING': return '입금대기';
-      case 'COMPLETE': 
-      case 'COMPLETED': 
+      case 'COMPLETE':
+      case 'COMPLETED':
       case 'PAID': return '입금완료';
       case 'HOLD': return '입금보류';
       default: return status || '완료';
     }
   };
 
-  const headerDateString = data.payoutDate ? `${data.payoutDate.split('-')[0]}년 ${parseInt(data.payoutDate.split('-')[1], 10)}월 ${parseInt(data.payoutDate.split('-')[2], 10)}일 정산` : '-';
+  const baseDate = data.settlementEndDate || passedEndDate;
+  const headerDateString = baseDate ? `${baseDate.split('-')[0]}년 ${parseInt(baseDate.split('-')[1], 10)}월 ${parseInt(baseDate.split('-')[2], 10)}일 정산` : '-';
 
   return (
     <View style={styles.container}>
@@ -116,7 +118,7 @@ const SettlementDetail = () => {
         style={styles.scrollView}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}>
-        
+
         {/* Top Header Card */}
         <View style={styles.card}>
           <View style={styles.headerCardTopRow}>
@@ -133,7 +135,7 @@ const SettlementDetail = () => {
           <View style={styles.summaryHeaderRow}>
             <Text style={styles.sectionTitle}>정산 요약</Text>
           </View>
-          
+
           <View style={styles.rowItem}>
             <Text style={styles.rowLabel}>총 매출액 (부가세 포함)</Text>
             <Text style={styles.rowValue}>{formatNumber(data.grossSalesAmount)}원</Text>
@@ -142,12 +144,29 @@ const SettlementDetail = () => {
             <Text style={styles.rowLabel}>총 수수료</Text>
             <Text style={styles.rowValueRed}>-{formatNumber(data.commissionAmount)}원</Text>
           </View>
-          
+
           <View style={styles.divider} />
-          
+
           <View style={styles.rowItem}>
             <Text style={styles.finalLabel}>최종 정산액</Text>
             <Text style={styles.finalAmountRed}>{formatNumber(data.finalSettlementAmount)}원</Text>
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.rowItem}>
+            <Text style={styles.rowLabel}>정산 기준일</Text>
+            <Text style={styles.rowValue}>{baseDate ? baseDate.replace(/-/g, '.') : '-'}</Text>
+          </View>
+          <View style={styles.rowItem}>
+            <Text style={styles.rowLabel}>
+              {['COMPLETE', 'COMPLETED', 'PAID'].includes(data.payoutStatus) ? '입금 완료일' : '입금 예정일'}
+            </Text>
+            <Text style={styles.rowValue}>
+              {['COMPLETE', 'COMPLETED', 'PAID'].includes(data.payoutStatus)
+                ? (data.payoutCompletedDate ? data.payoutCompletedDate.replace(/-/g, '.') : '-')
+                : (data.payoutScheduledDate ? data.payoutScheduledDate.replace(/-/g, '.') : '-')}
+            </Text>
           </View>
         </View>
 
@@ -185,20 +204,20 @@ const SettlementDetail = () => {
                   <>
                     <View style={styles.calcRow}>
                       <Text style={styles.calcLabel}>적용 규정</Text>
-                      <TouchableOpacity 
-                        style={styles.dropdownMockRow} 
+                      <TouchableOpacity
+                        style={styles.dropdownMockRow}
                         onPress={() => toggleAccordion(item.settlementItemId)}
                         activeOpacity={0.8}
                       >
                         <Text style={styles.dropdownMockText}>차등 수수료 적용</Text>
-                        <ChevronDownGray width={14} height={14} style={{transform: [{rotate: isExpanded ? '-90deg' : '90deg'}]}} />
+                        <ChevronDownGray width={14} height={14} style={{ transform: [{ rotate: isExpanded ? '-90deg' : '90deg' }] }} />
                       </TouchableOpacity>
                     </View>
 
                     {isExpanded && (
                       <View style={styles.diffLevelBox}>
                         {item.cancellationLines.map((line, idx) => (
-                          <View key={idx} style={[styles.diffLevelRow, idx === item.cancellationLines.length - 1 && {marginBottom: 0}]}>
+                          <View key={idx} style={[styles.diffLevelRow, idx === item.cancellationLines.length - 1 && { marginBottom: 0 }]}>
                             <View>
                               <Text style={styles.diffLevelTitle}>
                                 {line.sequence}차 ({line.stayDate ? line.stayDate.substring(5).replace('-', '.') : ''})
@@ -215,7 +234,7 @@ const SettlementDetail = () => {
                       </View>
                     )}
 
-                    <View style={[styles.calcRow, isExpanded ? {marginTop: 12} : null]}>
+                    <View style={[styles.calcRow, isExpanded ? { marginTop: 12 } : null]}>
                       <Text style={styles.calcLabel}>취소 위약금</Text>
                       <Text style={styles.calcValue}>₩ {formatNumber(item.cancellationLines.reduce((sum, line) => sum + (line.settlementPenaltyAmount || 0), 0))}</Text>
                     </View>
@@ -246,14 +265,14 @@ const SettlementDetail = () => {
                   <Text style={styles.calcLabel}>수수료 ({(item.commissionRateBps / 100).toFixed(1)}%)</Text>
                   <Text style={styles.calcValueRed}>-₩ {formatNumber(item.commissionAmount)}</Text>
                 </View>
-                
+
                 <View style={styles.finalCalcRow}>
                   <Text style={styles.finalCalcLabel}>최종 정산액</Text>
                   <Text style={styles.finalCalcValue}>₩ {formatNumber(item.finalSettlementAmount)}</Text>
                 </View>
               </View>
 
-              <Text style={styles.footerMetaText}>기준 일시: {item.recognizedDate?.replace(/-/g, '.')}</Text>
+              <Text style={styles.footerMetaText}>기준 일시: {item.settlementBaseDate?.replace(/-/g, '.')}</Text>
             </View>
           );
         })}
