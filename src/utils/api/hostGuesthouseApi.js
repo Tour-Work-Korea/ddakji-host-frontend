@@ -246,6 +246,32 @@ const hostGuesthouseApi = {
     api.delete(`/order/reservation/${reservationId}`, {
       data: { type: 'GUESTHOUSE' },
     }),
+
+  // 객실 요금 관리용 객실 목록 조회
+  getRoomPricingTargets: (guesthouseId) =>
+    api.get(`/host/guesthouses/${guesthouseId}/rooms/pricing-targets`),
+
+  // 객실 월별 요금 달력 조회
+  getRoomPricingCalendar: (guesthouseId, roomId, yearMonth) =>
+    api.get(`/host/guesthouses/${guesthouseId}/rooms/${roomId}/pricing/calendar`, {
+      params: { yearMonth },
+    }),
+
+  // 객실 시즌 요금 목록 조회
+  getRoomPricingSeasons: (guesthouseId, roomId) =>
+    api.get(`/host/guesthouses/${guesthouseId}/rooms/${roomId}/pricing/seasons`),
+
+  // 객실 시즌 요금 전체 교체 저장
+  updateRoomPricingSeasons: (guesthouseId, roomId, payload) =>
+    api.put(`/host/guesthouses/${guesthouseId}/rooms/${roomId}/pricing/seasons`, payload),
+
+  // 객실 수동 요금 변경
+  updateRoomManualPriceOverrides: (guesthouseId, roomId, payload) =>
+    api.put(`/host/guesthouses/${guesthouseId}/rooms/${roomId}/pricing/manual-overrides`, payload),
+
+  // 객실 수동 요금 변경 해제
+  clearRoomManualPriceOverrides: (guesthouseId, roomId, payload) =>
+    api.post(`/host/guesthouses/${guesthouseId}/rooms/${roomId}/pricing/manual-overrides/clear`, payload),
 };
 
 export default hostGuesthouseApi;
