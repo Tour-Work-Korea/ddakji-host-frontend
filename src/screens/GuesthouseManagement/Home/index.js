@@ -165,6 +165,7 @@ const Home = ({ reservationMethod = 'closed', guesthouseId }) => {
       setSettlementData(result);
     } catch (error) {
       console.warn('[Home] failed to fetch settlement overview:', error?.message);
+      setSettlementData(null);
     }
   }, [guesthouseId]);
 
@@ -177,6 +178,7 @@ const Home = ({ reservationMethod = 'closed', guesthouseId }) => {
       setDashboardData(result);
     } catch (error) {
       console.warn('[Home] failed to fetch dashboard data:', error?.message);
+      setDashboardData(null);
     }
   }, [guesthouseId]);
 
@@ -193,6 +195,7 @@ const Home = ({ reservationMethod = 'closed', guesthouseId }) => {
       setSalesData(result);
     } catch (error) {
       console.warn('[Home] failed to fetch sales data:', error?.message);
+      setSalesData(null);
     }
   }, [guesthouseId]);
 

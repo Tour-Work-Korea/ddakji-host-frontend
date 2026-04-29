@@ -55,10 +55,8 @@ const StoreRegisterList = () => {
   };
 
   const syncHostProfile = async () => {
-    const response = await hostMyApi.getMyProfile();
-    const normalizedProfile = normalizeHostProfile(response?.data);
-
-    setHostProfile(normalizedProfile);
+    const { updateProfile } = require('@utils/auth/login');
+    await updateProfile('HOST');
   };
 
   const closeStoreActions = () => {
@@ -149,7 +147,14 @@ const StoreRegisterList = () => {
       ]}
       activeOpacity={item.status === '승인 완료' ? 0.8 : 1}
       disabled={item.status !== '승인 완료'}
-      onPress={() => { }}>
+      onPress={() => {
+        if (!item.guesthouseId) return;
+        navigation.navigate('GuesthouseManagement', {
+          profileKey: String(item.guesthouseId),
+          guesthouseName: item.guesthouseName || '게스트하우스',
+          guesthouseId: item.guesthouseId,
+        });
+      }}>
       <View style={styles.listItemLeft}>
         <Avatar
           uri={item.guesthouseProfileImageUrl || null}
@@ -159,7 +164,7 @@ const StoreRegisterList = () => {
           style={styles.avatar}
         />
         <Text style={[FONTS.fs_18_medium, styles.businessName]} numberOfLines={1}>
-          {item.guesthouseName || item.businessName}
+          {item.guesthouseName || '게스트하우스'}
         </Text>
       </View>
 
