@@ -180,11 +180,6 @@ export const Email = ({user, onPress}) => {
             <View style={styles.groupParent}>
               <View  style={styles.titleContainer}>
                 <MainLogo width={60} height={29} />
-                {isHost && (
-                  <View style={styles.subTitleContainer}>
-                    <Text style={styles.subTitleText}>워커웨이 파트너스</Text>
-                  </View>
-                )}
                 <View style={{width: 60, height: 29}} />
               </View>
               <Text style={[styles.titleText]}>이메일 인증</Text>

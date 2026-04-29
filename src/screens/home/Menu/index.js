@@ -105,8 +105,7 @@ const HostHomeMenu = () => {
 
   const profileName = hostProfile?.name || '';
   const profileEmail = hostProfile?.email || '';
-  const profileImage =
-    selectedGuesthouse?.profileImageUrl || hostProfile?.photoUrl || null;
+  const profileImage = hostProfile?.photoUrl || null;
 
   const handleMenuPress = routeName => {
     if (routeName) {

@@ -36,8 +36,8 @@ const businessInfo = [
   {label: '연락처', value: '010-4123-0075'},
 ];
 
-const INSTAGRAM_URL =
-  'https://www.instagram.com/guesthouse_ddakji?igsh=ZGFmdHVmbDV3eHM0';
+const PROMOTION_FORM_URL =
+  'https://forms.gle/cxQYceW29NWomXDJ9';
 
 const formatNoticeDate = value => {
   if (!value) {
@@ -131,11 +131,11 @@ const HostHome = () => {
     }, [fetchUnreadCount]),
   );
 
-  const handlePressInstagramLink = async () => {
+  const handlePressPromotionFormLink = async () => {
     try {
-      await Linking.openURL(INSTAGRAM_URL);
+      await Linking.openURL(PROMOTION_FORM_URL);
     } catch (error) {
-      console.warn('[HostHome] failed to open instagram url:', error?.message);
+      console.warn('[HostHome] failed to open promotion form url:', error?.message);
     }
   };
 
@@ -210,7 +210,7 @@ const HostHome = () => {
                   <TouchableOpacity
                     style={styles.instaEventLinkRow}
                     activeOpacity={0.8}
-                    onPress={handlePressInstagramLink}>
+                    onPress={handlePressPromotionFormLink}>
                     <Text style={[FONTS.fs_12_medium, styles.instaEventLink]}>
                       제작 신청하기
                     </Text>
