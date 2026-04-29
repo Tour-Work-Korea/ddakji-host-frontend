@@ -41,21 +41,11 @@
 				<string>ddakjihost</string>
 			</array>
 		</dict>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>kakao$(KAKAO_NATIVEAPP_KEY)</string>
-			</array>
-		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
-	<key>KAKAO_APP_KEY</key>
-	<string>$(KAKAO_NATIVEAPP_KEY)</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>kftc-bankpay</string>
@@ -96,9 +86,6 @@
 		<string>citispay</string>
 		<string>citicardappkr</string>
 		<string>citimobileapp</string>
-		<string>kakaotalk</string>
-		<string>kakaokompassauth</string>
-		<string>kakaolink</string>
 		<string>payco</string>
 		<string>com.wooricard.wcard</string>
 		<string>newsmartpib</string>
