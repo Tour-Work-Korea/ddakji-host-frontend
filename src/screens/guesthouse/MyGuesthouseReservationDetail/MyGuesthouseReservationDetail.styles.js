@@ -83,6 +83,20 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     marginTop: 20,
   },
+  pendingActionRow: {
+    flexDirection: 'row',
+    marginTop: 20,
+    width: '80%',
+    alignSelf: 'flex-end',
+  },
+  pendingActionButton: {
+    flex: 1,
+    marginRight: 4,
+  },
+  pendingActionButtonLast: {
+    marginLeft: 4,
+    marginRight: 0,
+  },
   cancelButton: {
     borderWidth: 1,
     borderColor: COLORS.grayscale_300,

@@ -1,4 +1,4 @@
-import React, {useState, useCallback} from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   FlatList,
@@ -9,7 +9,7 @@ import {
   Pressable,
   Dimensions,
 } from 'react-native';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 
 import Avatar from '@components/Avatar';
@@ -19,10 +19,10 @@ import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
 import hostMyApi from '@utils/api/hostMyApi';
 import EmptyState from '@components/EmptyState';
 import useUserStore from '@stores/userStore';
-import {normalizeHostProfile} from '@utils/hostProfile';
+import { normalizeHostProfile } from '@utils/hostProfile';
 
 import styles from './StoreRegisterList.styles';
-import {FONTS} from '@constants/fonts';
+import { FONTS } from '@constants/fonts';
 import EmptyIcon from '@assets/images/wa_blue_apply.svg';
 import PlusIcon from '@assets/images/plus_orange.svg';
 import MoreIcon from '@assets/images/more_v_gray.svg';
@@ -55,10 +55,8 @@ const StoreRegisterList = () => {
   };
 
   const syncHostProfile = async () => {
-    const response = await hostMyApi.getMyProfile();
-    const normalizedProfile = normalizeHostProfile(response?.data);
-
-    setHostProfile(normalizedProfile);
+    const { updateProfile } = require('@utils/auth/login');
+    await updateProfile('HOST');
   };
 
   const closeStoreActions = () => {
@@ -69,7 +67,7 @@ const StoreRegisterList = () => {
   };
 
   const openStoreActions = (item, event) => {
-    const {pageX, pageY} = event.nativeEvent;
+    const { pageX, pageY } = event.nativeEvent;
     const menuWidth = 200;
     const screenWidth = Dimensions.get('window').width;
     const horizontalMargin = 8;
@@ -141,7 +139,7 @@ const StoreRegisterList = () => {
     }
   };
 
-  const renderItem = ({item, index}) => (
+  const renderItem = ({ item, index }) => (
     <TouchableOpacity
       style={[
         styles.listItem,
@@ -149,7 +147,14 @@ const StoreRegisterList = () => {
       ]}
       activeOpacity={item.status === '승인 완료' ? 0.8 : 1}
       disabled={item.status !== '승인 완료'}
-      onPress={() => {}}>
+      onPress={() => {
+        if (!item.guesthouseId) return;
+        navigation.navigate('GuesthouseManagement', {
+          profileKey: String(item.guesthouseId),
+          guesthouseName: item.guesthouseName || '게스트하우스',
+          guesthouseId: item.guesthouseId,
+        });
+      }}>
       <View style={styles.listItemLeft}>
         <Avatar
           uri={item.guesthouseProfileImageUrl || null}
@@ -159,7 +164,7 @@ const StoreRegisterList = () => {
           style={styles.avatar}
         />
         <Text style={[FONTS.fs_18_medium, styles.businessName]} numberOfLines={1}>
-          {item.businessName}
+          {item.guesthouseName || '게스트하우스'}
         </Text>
       </View>
 
@@ -197,7 +202,7 @@ const StoreRegisterList = () => {
             activeOpacity={0.8}
             onPress={() => navigation.navigate('StoreRegisterForm1')}>
             <View style={styles.registerPlus}>
-              <PlusIcon height={16} width={16}/>
+              <PlusIcon height={16} width={16} />
             </View>
             <Text style={[FONTS.fs_14_medium, styles.registerLinkText]}>
               게스트하우스 등록
@@ -215,9 +220,9 @@ const StoreRegisterList = () => {
             <View style={styles.emptyContainer}>
               <EmptyState
                 icon={EmptyIcon}
-                iconSize={{width: 188, height: 84}}
+                iconSize={{ width: 188, height: 84 }}
                 title="게스트하우스가 없어요"
-                description="지금 입점신청을 해보세요!"
+                description="지금 내 게스트하우스 등록을 해보세요!"
               />
             </View>
           }

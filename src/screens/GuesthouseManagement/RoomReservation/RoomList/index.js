@@ -11,6 +11,8 @@ import Toast from 'react-native-toast-message';
 
 import AlertModal from '@components/modals/AlertModal';
 import GuesthouseRoomModal from '@components/modals/HostMy/Guesthouse/EditGuesthouse/GuesthouseRoom/GuesthouseRoomModal';
+import RoomActionModal from './RoomActionModal';
+import RoomPriceModal from './RoomPriceModal';
 import {FONTS} from '@constants/fonts';
 import {COLORS} from '@constants/colors';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
@@ -80,6 +82,9 @@ const RoomList = ({guesthouseId}) => {
   const [isPreparingEditRoom, setIsPreparingEditRoom] = useState(false);
   const [deleteTargetRoom, setDeleteTargetRoom] = useState(null);
   const [isDeletingRoom, setIsDeletingRoom] = useState(false);
+  const [actionModalVisible, setActionModalVisible] = useState(false);
+  const [actionTargetRoom, setActionTargetRoom] = useState(null);
+  const [priceModalVisible, setPriceModalVisible] = useState(false);
 
   const fetchRooms = useCallback(async () => {
     if (!guesthouseId) {
@@ -160,6 +165,12 @@ const RoomList = ({guesthouseId}) => {
     } finally {
       setUpdatingRoomId(null);
     }
+  };
+
+  const handlePressEditAction = room => {
+    if (isPreparingEditRoom) return;
+    setActionTargetRoom(room);
+    setActionModalVisible(true);
   };
 
   const handlePressEditRoom = async roomId => {
@@ -346,7 +357,7 @@ const RoomList = ({guesthouseId}) => {
                         activeOpacity={isPreparingEditRoom ? 1 : 0.8}
                         style={styles.iconButton}
                         disabled={isPreparingEditRoom}
-                        onPress={() => handlePressEditRoom(room.roomId)}>
+                        onPress={() => handlePressEditAction(room)}>
                         <EditIcon width={22} height={22} />
                       </TouchableOpacity>
                       <TouchableOpacity
@@ -417,6 +428,35 @@ const RoomList = ({guesthouseId}) => {
         defaultRooms={editingRoom ? [editingRoom] : []}
         directEditMode
         directEditRoomId={editingRoom?.id ?? null}
+      />
+
+      <RoomActionModal
+        visible={actionModalVisible}
+        onClose={() => {
+          setActionModalVisible(false);
+          setActionTargetRoom(null);
+        }}
+        roomName={actionTargetRoom?.name ?? ''}
+        onPressPriceChange={() => {
+          setActionModalVisible(false);
+          setPriceModalVisible(true);
+        }}
+        onPressInfoChange={() => {
+          setActionModalVisible(false);
+          if (actionTargetRoom?.roomId) {
+            handlePressEditRoom(actionTargetRoom.roomId);
+          }
+        }}
+      />
+
+      <RoomPriceModal
+        visible={priceModalVisible}
+        onClose={() => {
+          setPriceModalVisible(false);
+          setActionTargetRoom(null);
+        }}
+        room={actionTargetRoom}
+        guesthouseId={guesthouseId}
       />
     </View>
   );

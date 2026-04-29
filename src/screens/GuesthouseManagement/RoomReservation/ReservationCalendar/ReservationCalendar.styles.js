@@ -80,6 +80,66 @@ export default StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 4,
   },
+  flagsLoadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  dayCellContainer: {
+    width: 36,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    borderRadius: 10,
+    paddingTop: 4,
+  },
+  dayCellContainerFlagged: {
+    backgroundColor: COLORS.secondary_yellow,
+  },
+  dayCellContainerDisabled: {
+    opacity: 0.35,
+  },
+  dayNumberWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dayNumberWrapSelected: {
+    backgroundColor: COLORS.primary_orange,
+  },
+  dayNumberText: {
+    color: COLORS.grayscale_900,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  dayNumberTextDisabled: {
+    color: COLORS.grayscale_400,
+  },
+  dayNumberTextSelected: {
+    color: COLORS.grayscale_0,
+    fontWeight: '600',
+  },
+  dayDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 999,
+    marginTop: 2,
+  },
+  dayDotFuture: {
+    backgroundColor: COLORS.semantic_red,
+  },
+  dayDotPast: {
+    backgroundColor: COLORS.grayscale_400,
+  },
+  dayDotSelected: {
+    marginTop: 2,
+  },
+  dayDotSpacer: {
+    width: 5,
+    height: 5,
+    marginTop: 2,
+  },
   listContainer: {
     flex: 1,
     paddingHorizontal: 8,

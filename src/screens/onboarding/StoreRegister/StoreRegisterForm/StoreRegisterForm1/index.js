@@ -10,7 +10,7 @@ import {
   Keyboard,
   Image,
 } from 'react-native';
-import {useEffect, useMemo, useState} from 'react';
+import {useEffect, useMemo, useState, useRef} from 'react';
 import {launchImageLibrary} from 'react-native-image-picker';
 import {useNavigation} from '@react-navigation/native';
 
@@ -39,6 +39,7 @@ const StoreRegisterForm1 = () => {
     businessType: '',
   });
   const [detailAddress, setDetailAddress] = useState('');
+  const detailAddressRef = useRef(null);
   const [agreements, setAgreements] = useState(hostStorRegisterAgrees);
   const [isAllAgreed, setIsAllAgreed] = useState(false);
   const [addressSearchVisible, setAddressSearchVisible] = useState(false);
@@ -166,6 +167,9 @@ const StoreRegisterForm1 = () => {
                     <Text style={styles.titleText}>
                       등록을 위한 필수 정보를 입력해주세요
                     </Text>
+                    <Text style={[FONTS.fs_14_medium, { color: COLORS.semantic_red, marginTop: 4 }]}>
+                      사업자등록증에 있는 정보로 작성해주세요
+                    </Text>
                   </View>
                 </View>
 
@@ -248,6 +252,7 @@ const StoreRegisterForm1 = () => {
 
                     <View style={styles.inputBox}>
                       <TextInput
+                        ref={detailAddressRef}
                         style={styles.textInput}
                         placeholder="상세 주소를 입력해주세요"
                         placeholderTextColor={COLORS.grayscale_400}
@@ -361,9 +366,13 @@ const StoreRegisterForm1 = () => {
         <AddressSearchModal
           visible={addressSearchVisible}
           onClose={() => setAddressSearchVisible(false)}
-          onSelected={data =>
-            setFormData(prev => ({...prev, address: data.address}))
-          }
+          onSelected={data => {
+            setFormData(prev => ({...prev, address: data.address}));
+            setAddressSearchVisible(false);
+            setTimeout(() => {
+              detailAddressRef.current?.focus();
+            }, 300);
+          }}
         />
 
         <AlertModal

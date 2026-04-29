@@ -6,6 +6,7 @@ import { FONTS } from '@constants/fonts';
 import useUserStore from '@stores/userStore';
 import AlertModal from '@components/modals/AlertModal';
 import GuesthouseProfileList from '@components/modals/HostMy/Guesthouse/GuesthouseProfileList';
+import { useGuesthouseProfiles } from '@hooks/useGuesthouseProfiles';
 import Home from './Home';
 import GuesthouseInfo from './GuesthouseInfo';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
@@ -35,13 +36,19 @@ const tabs = [
   PARTY_RESERVATION_TAB,
 ];
 
+const RESERVATION_POLICY_TO_METHOD = {
+  CLOSED: 'closed',
+  REQUEST_CONFIRMATION: 'request',
+  INSTANT_CONFIRMATION: 'instant',
+};
+
 const GuesthouseManagement = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const routeGuesthouseId = route.params?.guesthouseId;
   const routeProfileKey = route.params?.profileKey;
   const routeBusinessName = route.params?.businessName || '게스트하우스';
-  const reservationMethod = route.params?.reservationMethod || 'closed';
+  const routeReservationMethod = route.params?.reservationMethod;
   const initialProfileKey =
     routeProfileKey != null
       ? String(routeProfileKey)
@@ -50,6 +57,7 @@ const GuesthouseManagement = () => {
         : null;
   const hostProfile = useUserStore(state => state.hostProfile);
   const setHostProfile = useUserStore(state => state.setHostProfile);
+  const setSelectedGuesthouseId = useUserStore(state => state.setSelectedGuesthouseId);
   const [isGuesthouseListVisible, setIsGuesthouseListVisible] = useState(false);
   const [guesthouseDetail, setGuesthouseDetail] = useState(null);
   const [hasPartyTemplate, setHasPartyTemplate] = useState(false);
@@ -58,29 +66,11 @@ const GuesthouseManagement = () => {
   const [selectedProfileKey, setSelectedProfileKey] = useState(initialProfileKey);
   const lastSyncedRouteProfileKeyRef = useRef(initialProfileKey);
   const [unreadCount, setUnreadCount] = useState(0);
-
-  const guesthouseProfiles = useMemo(
-    () =>
-      Array.isArray(hostProfile?.guesthouseProfiles)
-        ? hostProfile.guesthouseProfiles
-            .filter(
-              item =>
-                item?.applicationStatus !== 'PENDING' &&
-                item?.status !== '심사중' &&
-                item?.status !== '등록 심사중',
-            )
-            .map((item, index) => ({
-              id: String(
-                item?.profileKey ?? item?.guesthouseId ?? `guesthouse-${index}`,
-              ),
-              guesthouseId: item?.guesthouseId ?? null,
-              name: item?.guesthouseName || '이름 없음',
-              photoUrl: item?.profileImageUrl || null,
-              noticeCount: 0,
-            }))
-        : [],
-    [hostProfile?.guesthouseProfiles],
+  const [reservationMethod, setReservationMethod] = useState(
+    routeReservationMethod || 'closed',
   );
+
+  const { guesthouseProfiles } = useGuesthouseProfiles();
 
   useEffect(() => {
     const nextRouteProfileKey = initialProfileKey;
@@ -117,6 +107,10 @@ const GuesthouseManagement = () => {
       setSelectedProfileKey(guesthouseProfiles[0].id);
     }
   }, [guesthouseProfiles, selectedProfileKey]);
+
+  useEffect(() => {
+    setSelectedGuesthouseId(selectedProfileKey ?? null);
+  }, [selectedProfileKey, setSelectedGuesthouseId]);
 
   const selectedGuesthouse = useMemo(() => {
     if (selectedProfileKey) {
@@ -170,16 +164,52 @@ const GuesthouseManagement = () => {
     }
   }, [effectiveGuesthouseId]);
 
+  const fetchReservationPolicy = useCallback(async () => {
+    if (!effectiveGuesthouseId) {
+      setReservationMethod('closed');
+      return;
+    }
+
+    try {
+      const response = await hostGuesthouseApi.getGuesthouseReservationPolicy(
+        effectiveGuesthouseId,
+      );
+      const reservationPolicy =
+        response?.data?.currentPolicy ??
+        response?.data?.data?.currentPolicy ??
+        response?.data;
+
+      setReservationMethod(
+        RESERVATION_POLICY_TO_METHOD[reservationPolicy] || 'closed',
+      );
+    } catch (error) {
+      console.warn(
+        '[GuesthouseManagement] failed to fetch reservation policy:',
+        error?.message,
+      );
+      setReservationMethod('closed');
+    }
+  }, [effectiveGuesthouseId]);
+
   useFocusEffect(
     useCallback(() => {
       fetchGuesthouseDetail();
       fetchPartyTemplates();
-    }, [fetchGuesthouseDetail, fetchPartyTemplates]),
+      fetchReservationPolicy();
+    }, [fetchGuesthouseDetail, fetchPartyTemplates, fetchReservationPolicy]),
   );
+
+  useEffect(() => {
+    if (!routeReservationMethod) {
+      return;
+    }
+
+    setReservationMethod(routeReservationMethod);
+  }, [routeReservationMethod]);
 
   const fetchUnreadCount = useCallback(async () => {
     try {
-      const {data} = await notificationApi.getUnreadCount();
+      const { data } = await notificationApi.getUnreadCount();
       const count = Number(
         data?.unreadCount ?? data?.count ?? data?.data ?? data ?? 0,
       );
@@ -359,6 +389,7 @@ const GuesthouseManagement = () => {
           guesthouseDetail={guesthouseDetail}
           hasPartyTemplate={hasPartyTemplate}
           reservationMethod={reservationMethod}
+          guesthouseId={effectiveGuesthouseId}
           onMoveTab={setActiveTab}
         />
       ) : activeTab === INFO_TAB ? (

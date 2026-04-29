@@ -14,8 +14,12 @@ import {COLORS} from '@constants/colors';
 import {tryAutoLogin} from '@utils/auth/login';
 import {subscribe} from '@utils/loginModalHub';
 import {initializeNotifications} from '@utils/notifications';
+import usePresenceHeartbeat from '@hooks/usePresenceHeartbeat';
+import useForceUpdate from '@hooks/useForceUpdate';
 import LottieView from 'lottie-react-native';
 import {navigationRef} from '@utils/navigationService';
+import LogoOrange from '@assets/images/meet_reservation_success.svg';
+import {openPartnerCenterStore} from '@utils/forceUpdate';
 import {
   SafeAreaView,
   SafeAreaProvider,
@@ -52,6 +56,7 @@ const waitForNavReady = async () => {
 
 function AppContent() {
   const [appLoaded, setAppLoaded] = useState(false);
+  const forceUpdateState = useForceUpdate();
   const [loginModal, setLoginModal] = useState({
     visible: false,
     title: '',
@@ -61,6 +66,8 @@ function AppContent() {
     onPress: null,
     onPress2: null,
   });
+
+  usePresenceHeartbeat();
 
   useEffect(() => {
     console.log('🚨 API_BASE_URL (runtime):', process.env.API_BASE_URL);
@@ -141,6 +148,15 @@ function AppContent() {
         buttonText2={loginModal.buttonText2}
         onPress={handleLoginModalConfirm}
         onPress2={handleLoginModalCancel}
+      />
+      <AlertModal
+        visible={forceUpdateState.visible}
+        title="새로운 버전이 출시되었습니다!"
+        message={`더욱 안정적인 서비스 이용을 위해\n최신 버전으로 업데이트가 필요합니다.\n\n최신 버전: V${forceUpdateState.minVersion}`}
+        buttonText="업데이트 하기"
+        onPress={openPartnerCenterStore}
+        onRequestClose={() => {}}
+        iconElement={<LogoOrange width={180} height={150} />}
       />
     </>
   );

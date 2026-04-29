@@ -1,19 +1,100 @@
-import React, {useEffect, useState} from 'react';
-import {ScrollView, Text, TouchableOpacity, View} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Linking, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
-import {FONTS} from '@constants/fonts';
+import { COLORS } from '@constants/colors';
+import { FONTS } from '@constants/fonts';
 import adminApi from '@utils/api/adminApi';
+import orderApi from '@utils/api/orderApi';
+import settlementApi from '@utils/api/settlementApi';
+import statisticsApi from '@utils/api/statisticsApi';
+import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
+import AlertModal from '@components/modals/AlertModal';
+import ReservationCancelModal from '@components/modals/HostMy/Guesthouse/ReservationCancelModal';
+import Toast from 'react-native-toast-message';
 import styles from './Home.styles';
 
 import ChevronRightIcon from '@assets/images/chevron_right_gray.svg';
+import PhoneIcon from '@assets/images/phone_black.svg';
 
-const reservationSummary = [
-  {label: '확정 대기', value: '0'},
-  {label: '오늘 확정', value: '0'},
-  {label: '오늘 이용', value: '0'},
-  {label: '오늘 취소', value: '0'},
-];
+const formatDateWithNights = (checkIn, checkOut) => {
+  if (!checkIn || !checkOut) return '';
+  const start = new Date(checkIn);
+  const end = new Date(checkOut);
+  const diffTime = Math.abs(end - start);
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  const format = d => `${String(d.getFullYear()).slice(-2)}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+  return `${format(start)} - ${format(end)} (${diffDays || 1}박)`;
+};
+
+const APPROVAL_LIMIT_HOUR = 11;
+const MINUTE_MS = 60 * 1000;
+const HOUR_MS = 60 * MINUTE_MS;
+const DAY_MS = 24 * HOUR_MS;
+
+const toDate = value => {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const formatDateKey = date => {
+  if (!(date instanceof Date)) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getApprovalDeadlineMeta = reservation => {
+  const createdAt = toDate(reservation?.createdAt);
+  if (!createdAt) {
+    const fallbackDeadline = toDate(reservation?.approvalDeadlineAt);
+
+    return fallbackDeadline
+      ? {
+          deadline: fallbackDeadline,
+          unit: 'hour',
+        }
+      : null;
+  }
+
+  const checkInDate = reservation?.checkInDate?.split?.('T')?.[0] ?? reservation?.checkInDate;
+  const isSameDayReservation = checkInDate && formatDateKey(createdAt) === checkInDate;
+  const isSameDayAfterEleven = isSameDayReservation && createdAt.getHours() >= APPROVAL_LIMIT_HOUR;
+  const limitMs = isSameDayAfterEleven ? 30 * MINUTE_MS : DAY_MS;
+
+  return {
+    deadline: new Date(createdAt.getTime() + limitMs),
+    unit: isSameDayAfterEleven ? 'minute' : 'hour',
+  };
+};
+
+const getApprovalDeadlineText = (reservation, now) => {
+  const deadlineMeta = getApprovalDeadlineMeta(reservation);
+  if (!deadlineMeta?.deadline) return '승인 대기 중';
+
+  const diffMs = Math.max(0, deadlineMeta.deadline.getTime() - now.getTime());
+
+  if (deadlineMeta.unit === 'minute') {
+    const minutes = Math.floor(diffMs / MINUTE_MS);
+    return `${minutes}분 내 승인 필요`;
+  }
+
+  const hours = Math.floor(diffMs / HOUR_MS);
+  return `${hours}시간 내 승인 필요`;
+};
+
+const getStatusBadgeText = (status) => {
+  switch (status) {
+    case 'PENDING': return '대기중';
+    case 'CONFIRMED': return '예약 확정';
+    case 'CANCELLED': return '예약 취소';
+    case 'COMPLETED': return '이용 완료';
+    default: return '예약 확정';
+  }
+};
 
 const RESERVATION_METHOD_CONTENT = {
   closed: {
@@ -46,19 +127,151 @@ const mapNoticeSummary = item => ({
   publishedAt: item?.publishedAt || item?.updatedAt || '',
 });
 
-const Home = ({reservationMethod = 'closed'}) => {
+const Home = ({ reservationMethod = 'closed', guesthouseId }) => {
   const navigation = useNavigation();
   const [latestNotice, setLatestNotice] = useState(null);
+  const [settlementData, setSettlementData] = useState(null);
+  const [salesData, setSalesData] = useState(null);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [selectedTab, setSelectedTab] = useState('TODAY_CONFIRMED');
+  const [decisionModalVisible, setDecisionModalVisible] = useState(false);
+  const [selectedReservation, setSelectedReservation] = useState(null);
+  const [decisionSubmitting, setDecisionSubmitting] = useState(false);
+  const [cancelModalVisible, setCancelModalVisible] = useState(false);
+  const [selectedCancelReservation, setSelectedCancelReservation] = useState(null);
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, MINUTE_MS);
+    return () => clearInterval(timer);
+  }, []);
+
   const reservationMethodContent =
     RESERVATION_METHOD_CONTENT[reservationMethod] ||
     RESERVATION_METHOD_CONTENT.closed;
+
+  const fetchSettlementOverview = useCallback(async () => {
+    if (!guesthouseId) return;
+    try {
+      const now = new Date();
+      const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const response = await settlementApi.getSettlementOverview(guesthouseId, yearMonth);
+      let result = response.data || response;
+      if (result && result.data && !result.yearMonth) {
+        result = result.data;
+      }
+      setSettlementData(result);
+    } catch (error) {
+      console.warn('[Home] failed to fetch settlement overview:', error?.message);
+      setSettlementData(null);
+    }
+  }, [guesthouseId]);
+
+  const fetchDashboardData = useCallback(async () => {
+    if (!guesthouseId) return;
+    try {
+      // baseDate 생략 시 서버에서 오늘을 기준으로 응답함
+      const response = await orderApi.getReservationDashboard(guesthouseId);
+      const result = response.data || response;
+      setDashboardData(result);
+    } catch (error) {
+      console.warn('[Home] failed to fetch dashboard data:', error?.message);
+      setDashboardData(null);
+    }
+  }, [guesthouseId]);
+
+  const fetchSalesData = useCallback(async () => {
+    if (!guesthouseId) return;
+    try {
+      const now = new Date();
+      const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const response = await statisticsApi.getSalesDashboard(guesthouseId, yearMonth);
+      let result = response.data || response;
+      if (result && result.data && result.data.salesSummary) {
+        result = result.data;
+      }
+      setSalesData(result);
+    } catch (error) {
+      console.warn('[Home] failed to fetch sales data:', error?.message);
+      setSalesData(null);
+    }
+  }, [guesthouseId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchSettlementOverview();
+      fetchDashboardData();
+      fetchSalesData();
+    }, [fetchSettlementOverview, fetchDashboardData, fetchSalesData]),
+  );
+
+  const summaryItems = [
+    { key: 'WAITING_APPROVAL', label: '확정 대기', value: String(dashboardData?.counts?.waitingApproval || 0) },
+    { key: 'TODAY_CONFIRMED', label: '오늘 확정', value: String(dashboardData?.counts?.todayConfirmed || 0) },
+    { key: 'TODAY_STAYING', label: '오늘 이용', value: String(dashboardData?.counts?.todayStaying || 0) },
+    { key: 'TODAY_CANCELLED', label: '오늘 취소', value: String(dashboardData?.counts?.todayCancelled || 0) },
+  ];
+
+  const selectedSection = dashboardData?.sections?.find(s => s.type === selectedTab);
+  const itemsToShow = selectedSection?.items || [];
+
+  const handleOpenDecisionModal = (reservation) => {
+    setSelectedReservation(reservation);
+    setDecisionModalVisible(true);
+  };
+
+  const handleOpenCancelModal = (reservation) => {
+    setSelectedCancelReservation({
+      reservationId: reservation.reservationId,
+      roomName: reservation.roomName,
+      reservationUserName: reservation.guestName,
+      reservationUserPhone: reservation.guestPhone,
+      age: reservation.guestBirthDate ? `${reservation.guestBirthDate.substring(0, 4)}년생` : null,
+      reservationNumber: reservation.reservationCode || '',
+      guestCount: reservation.guestCount,
+      period: formatDateWithNights(reservation.checkInDate, reservation.checkOutDate),
+      checkInDate: reservation.checkInDate,
+      checkOutDate: reservation.checkOutDate,
+    });
+    setCancelModalVisible(true);
+  };
+
+  const handleConfirmDecision = async () => {
+    const reservationId = selectedReservation?.reservationId;
+    if (!reservationId || decisionSubmitting) return;
+
+    try {
+      setDecisionSubmitting(true);
+      await hostGuesthouseApi.approveGuesthouseReservationByHost(reservationId);
+      setDecisionModalVisible(false);
+      setSelectedReservation(null);
+      Toast.show({
+        type: 'success',
+        text1: '예약이 확정되었어요.',
+        position: 'top',
+        visibilityTime: 2000,
+      });
+      fetchDashboardData();
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: '예약 확정을 실패했어요.',
+        position: 'top',
+        visibilityTime: 2000,
+      });
+    } finally {
+      setDecisionSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
 
     const fetchLatestNotice = async () => {
       try {
-        const {data} = await adminApi.getHomeNotices();
+        const { data } = await adminApi.getHomeNotices();
         const items = Array.isArray(data)
           ? data
           : Array.isArray(data?.items)
@@ -119,6 +332,7 @@ const Home = ({reservationMethod = 'closed'}) => {
           onPress={() =>
             navigation.navigate('ReservationMethodSettings', {
               selectedOption: reservationMethod,
+              guesthouseId,
             })
           }>
           <Text style={[FONTS.fs_12_medium, styles.actionButtonText]}>
@@ -135,14 +349,14 @@ const Home = ({reservationMethod = 'closed'}) => {
           style={[
             styles.noticeBadge,
             styles.noticeBadgeVariants[latestNotice?.categoryCode] ||
-              styles.noticeBadgeBlue,
+            styles.noticeBadgeBlue,
           ]}>
           <Text
             style={[
               FONTS.fs_14_semibold,
               styles.noticeBadgeText,
               styles.noticeBadgeTextVariants[latestNotice?.categoryCode] ||
-                styles.noticeBadgeBlueText,
+              styles.noticeBadgeBlueText,
             ]}>
             {latestNotice?.category || '운영'}
           </Text>
@@ -157,18 +371,293 @@ const Home = ({reservationMethod = 'closed'}) => {
         <Text style={[FONTS.fs_18_semibold, styles.cardTitle]}>예약 현황</Text>
 
         <View style={styles.summaryRow}>
-          {reservationSummary.map(item => (
-            <View key={item.label} style={styles.summaryItem}>
-              <Text style={[FONTS.fs_22_bold, styles.summaryValue]}>
-                {item.value}
+          {summaryItems.map(item => {
+            const isSelected = selectedTab === item.key;
+            return (
+              <TouchableOpacity
+                key={item.key}
+                style={styles.summaryItem}
+                activeOpacity={0.8}
+                onPress={() => setSelectedTab(item.key)}>
+                <Text
+                  style={[
+                    FONTS.fs_22_bold,
+                    styles.summaryValue,
+                    !isSelected && styles.summaryValueInactive,
+                  ]}>
+                  {item.value}
+                </Text>
+                <Text
+                  style={[
+                    FONTS.fs_12_medium,
+                    styles.summaryLabel,
+                    isSelected ? FONTS.fs_12_bold : {},
+                    !isSelected && styles.summaryLabelInactive,
+                  ]}>
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        <View style={styles.reservationListContainer}>
+          {itemsToShow.map(reservation => (
+            <TouchableOpacity
+              key={reservation.reservationId}
+              style={styles.reservationCard}
+              activeOpacity={0.8}
+              onPress={() => {
+                navigation.navigate('MyGuesthouseReservationDetail', {
+                  reservationId: reservation.reservationId,
+                });
+              }}>
+              <View style={styles.reservationCardHeader}>
+                <Text style={[FONTS.fs_16_semibold, styles.reservationName]}>
+                  {reservation.guestName || '게스트'}
+                </Text>
+
+                {selectedTab === 'TODAY_STAYING' ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <View
+                      style={[
+                        styles.reservationBadge,
+                        reservation.guestGender === 'F' && styles.reservationBadgePink,
+                      ]}>
+                      <Text
+                        style={[
+                          styles.reservationBadgeText,
+                          reservation.guestGender === 'F' && styles.reservationBadgeTextPink,
+                        ]}>
+                        {reservation.guestGender === 'F' ? '여' : '남'}
+                      </Text>
+                    </View>
+                    {reservation.guestBirthDate && (
+                      <Text style={styles.birthYearText}>
+                        {reservation.guestBirthDate.substring(0, 4)}년생
+                      </Text>
+                    )}
+                  </View>
+                ) : (
+                  <View
+                    style={[
+                      styles.reservationBadge,
+                      reservation.status === 'CANCELLED' && reservation.approvalStatus !== 'REJECTED' && styles.reservationBadgeRed,
+                      reservation.status === 'CANCELLED' && reservation.approvalStatus === 'REJECTED' && { backgroundColor: COLORS.secondary_brown },
+                      selectedTab === 'WAITING_APPROVAL' && styles.reservationBadgeWaiting,
+                    ]}>
+                    <Text
+                      style={[
+                        styles.reservationBadgeText,
+                        reservation.status === 'CANCELLED' && reservation.approvalStatus !== 'REJECTED' && styles.reservationBadgeTextRed,
+                        reservation.status === 'CANCELLED' && reservation.approvalStatus === 'REJECTED' && { color: COLORS.semantic_brown },
+                        selectedTab === 'WAITING_APPROVAL' && styles.reservationBadgeTextWaiting,
+                      ]}>
+                      {selectedTab === 'WAITING_APPROVAL' 
+                        ? '대기중' 
+                        : (reservation.status === 'CANCELLED' && reservation.approvalStatus === 'REJECTED' ? '예약 반려' : getStatusBadgeText(reservation.status))}
+                    </Text>
+                  </View>
+                )}
+
+                {selectedTab === 'WAITING_APPROVAL' && (
+                  <View style={styles.waitingAlertRow}>
+                    <View style={styles.waitingAlertIcon}>
+                      <Text style={styles.waitingAlertIconText}>!</Text>
+                    </View>
+                    <Text style={styles.waitingAlertText}>
+                      {getApprovalDeadlineText(reservation, now)}
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              <Text style={[FONTS.fs_14_medium, styles.reservationInfoText]}>
+                {reservation.roomName || '객실 정보 없음'}
+                {reservation.guestCount ? `, ${reservation.guestCount}명` : ''}
               </Text>
-              <Text style={[FONTS.fs_12_medium, styles.summaryLabel]}>
-                {item.label}
-              </Text>
-            </View>
+
+              {selectedTab !== 'TODAY_STAYING' && (
+                <Text
+                  style={[
+                    FONTS.fs_12_medium,
+                    styles.reservationInfoText,
+                    { color: COLORS.grayscale_500 },
+                  ]}>
+                  {formatDateWithNights(reservation.checkInDate, reservation.checkOutDate)}
+                </Text>
+              )}
+
+              {selectedTab === 'TODAY_STAYING' ? (
+                <View style={styles.phoneButtonWrapper}>
+                  <TouchableOpacity
+                    style={styles.phoneButton}
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      if (reservation.guestPhone) {
+                        Linking.openURL(`tel:${reservation.guestPhone}`);
+                      }
+                    }}>
+                    <PhoneIcon width={20} height={20} />
+                  </TouchableOpacity>
+                </View>
+              ) : selectedTab === 'WAITING_APPROVAL' ? (
+                <TouchableOpacity
+                  style={[styles.reservationButton, styles.reservationButtonPrimary]}
+                  activeOpacity={0.8}
+                  onPress={() => handleOpenDecisionModal(reservation)}>
+                  <Text
+                    style={[FONTS.fs_12_medium, styles.reservationButtonText, styles.reservationButtonTextPrimary]}>
+                    예약 확정
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                reservation.status !== 'CANCELLED' && (
+                  <TouchableOpacity
+                    style={styles.reservationButton}
+                    activeOpacity={0.8}
+                    onPress={() => handleOpenCancelModal(reservation)}>
+                    <Text
+                      style={[FONTS.fs_12_medium, styles.reservationButtonText]}>
+                      예약 취소
+                    </Text>
+                  </TouchableOpacity>
+                )
+              )}
+            </TouchableOpacity>
           ))}
         </View>
       </View>
+
+      {/* 매출 분석 요약 보드 */}
+      <View style={{ marginBottom: 30 }}>
+        <TouchableOpacity
+          style={styles.settlementSectionTitleRow}
+          activeOpacity={0.8}
+          onPress={() => {
+            if (guesthouseId) {
+              navigation.navigate('SalesManagement', { guesthouseId });
+            } else {
+              navigation.navigate('SalesManagement');
+            }
+          }}>
+          <Text style={[FONTS.fs_18_semibold]}>매출 분석</Text>
+          <ChevronRightIcon width={18} height={18} style={{ marginLeft: 4 }} />
+        </TouchableOpacity>
+
+        <View style={styles.salesCardMain}>
+          <View style={{ marginBottom: 24 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+              <Text style={{ fontSize: 14, fontWeight: '600', color: COLORS.grayscale_600 }}>이번 달 순매출</Text>
+            </View>
+            <View style={[styles.salesCardAmountRow, { marginBottom: 4 }]}>
+              <Text style={styles.salesCardAmount}>{Number(salesData?.salesSummary?.currentNetSales || 0).toLocaleString()}</Text>
+              <Text style={styles.salesCardCurrency}>원</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{ fontSize: 14, color: COLORS.grayscale_600, fontWeight: '500', marginRight: 4 }}>이전기간대비</Text>
+              <Text style={{ fontSize: 14, color: (salesData?.salesSummary?.deltaNetSales >= 0) ? COLORS.semantic_red : COLORS.semantic_blue, fontWeight: 'bold' }}>
+                {(salesData?.salesSummary?.deltaNetSales > 0) ? '+' : ''}{(salesData?.salesSummary?.deltaNetSales || 0).toLocaleString()}
+              </Text>
+            </View>
+          </View>
+
+          <View style={{ gap: 14 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ fontSize: 14, color: COLORS.grayscale_600, fontWeight: '500' }}>전체 매출</Text>
+              <Text style={{ fontSize: 15, color: COLORS.grayscale_900, fontWeight: 'bold' }}>{Number(salesData?.salesSummary?.currentGrossSales || 0).toLocaleString()}원</Text>
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ fontSize: 14, color: COLORS.grayscale_600, fontWeight: '500' }}>취소/노쇼</Text>
+              <Text style={{ fontSize: 15, color: COLORS.grayscale_900, fontWeight: 'bold' }}>-{Number(salesData?.salesSummary?.currentCancelledSales || 0).toLocaleString()}원</Text>
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ fontSize: 14, color: COLORS.grayscale_600, fontWeight: '500' }}>취소수수료</Text>
+              <Text style={{ fontSize: 15, color: COLORS.grayscale_900, fontWeight: 'bold' }}>+{Number(salesData?.salesSummary?.currentCancellationFee || 0).toLocaleString()}원</Text>
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* 정산 관리 요약 보드 */}
+      <View style={{ marginBottom: 30 }}>
+        <TouchableOpacity
+          style={styles.settlementSectionTitleRow}
+          activeOpacity={0.8}
+          onPress={() => {
+            if (guesthouseId) {
+              navigation.navigate('SettlementManagement', { guesthouseId });
+            }
+          }}>
+          <Text style={[FONTS.fs_18_semibold]}>정산 관리</Text>
+          <ChevronRightIcon width={18} height={18} style={{ marginLeft: 4 }} />
+        </TouchableOpacity>
+
+        <View style={styles.settlementCardMain}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={{ flex: 1, paddingRight: 10 }}>
+              <Text style={[FONTS.fs_13_medium, styles.settlementLabel, { marginBottom: 4 }]}>
+                {settlementData?.nextPayoutDate || `${new Date().getMonth() + 1}월 입금 예정`}
+              </Text>
+              <Text style={[FONTS.fs_20_semibold, { color: COLORS.primary_blue }]}>
+                {Number(settlementData?.upcomingPayoutAmount || 0).toLocaleString()}원
+              </Text>
+            </View>
+            <View style={{ width: 1, height: 40, backgroundColor: COLORS.grayscale_200 }} />
+            <View style={{ flex: 1, paddingLeft: 20 }}>
+              <Text style={[FONTS.fs_13_medium, styles.settlementLabel, { marginBottom: 4 }]}>
+                {new Date().getMonth() + 1}월 누적 정산액
+              </Text>
+              <View style={styles.settlementAccumulatedRow}>
+                <Text style={[FONTS.fs_20_semibold, { color: COLORS.grayscale_900 }]}>
+                  {Number(settlementData?.accumulatedSettlementAmount || 0).toLocaleString()}원
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.settlementSubRow}>
+          <View style={[styles.settlementSubCard, styles.settlementSubCardSpacing]}>
+            <Text style={[FONTS.fs_12_semibold, styles.settlementSubLabel]}>총 매출액 (부가세 포함)</Text>
+            <Text style={[FONTS.fs_18_semibold, styles.settlementSubValue]}>
+              {Number(settlementData?.grossSalesAmount || 0).toLocaleString()}원
+            </Text>
+          </View>
+          <View style={styles.settlementSubCard}>
+            <Text style={[FONTS.fs_12_semibold, styles.settlementSubLabel]}>수수료 (3.4%)</Text>
+            <Text style={[FONTS.fs_18_semibold, styles.settlementSubValue]}>
+              {Number(settlementData?.commissionAmount || 0).toLocaleString()}원
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      <AlertModal
+        visible={decisionModalVisible}
+        title="예약을 확정할까요?"
+        message={'해당 예약을 확정하면\n게스트에게 예약 확정 알림이 전송돼요'}
+        buttonText="예약확정하기"
+        buttonText2="취소"
+        onPress={handleConfirmDecision}
+        onPress2={() => {
+          setDecisionModalVisible(false);
+          setSelectedReservation(null);
+        }}
+        buttonDisabled={decisionSubmitting}
+      />
+
+      <ReservationCancelModal
+        visible={cancelModalVisible}
+        onClose={() => {
+          setCancelModalVisible(false);
+          setSelectedCancelReservation(null);
+        }}
+        reservation={selectedCancelReservation || {}}
+        onSubmit={async () => {
+          fetchDashboardData();
+        }}
+      />
     </ScrollView>
   );
 };

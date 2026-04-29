@@ -1,6 +1,6 @@
 export const COLORS = {
     primary_orange: '#FE4401',
-    primary_blue: '#5361DB',
+    primary_blue: '#4351EC',
 
     secondary_blue: '#E3EBFF',
     Secondary_khaki: '#87986C',
@@ -8,6 +8,7 @@ export const COLORS = {
     secondary_yellow: '#FDF6E7',
     secondary_green: '#DBFFED',
     secondary_pink: '#FAE5EE',
+    secondary_brown: '#F6F0EA',
 
     neutral_black: '#121212',
     neutral_gray: '#FAFAFC',

@@ -10,8 +10,8 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
-import {useMemo, useState} from 'react';
-import {useNavigation} from '@react-navigation/native';
+import { useMemo, useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
 
 import {
   validateStoreForm,
@@ -19,9 +19,9 @@ import {
 } from '@utils/validation/storeRegisterValidation';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
 import hostMyApi from '@utils/api/hostMyApi';
-import {normalizeHostProfile} from '@utils/hostProfile';
+import { normalizeHostProfile } from '@utils/hostProfile';
 import AlertModal from '@components/modals/AlertModal';
-import {uploadSingleImage} from '@utils/imageUploadHandler';
+import { uploadSingleImage } from '@utils/imageUploadHandler';
 import useUserStore from '@stores/userStore';
 
 import styles from '../StoreRegisterForm.styles';
@@ -29,11 +29,11 @@ import Photo from '@assets/images/Photo.svg';
 import NextIcon from '@assets/images/arrow_right_white.svg';
 import NextDisabledIcon from '@assets/images/arrow_right_black.svg';
 import Logo from '@assets/images/logo_orange.svg';
-import {COLORS} from '@constants/colors';
+import { COLORS } from '@constants/colors';
 
-const StoreRegisterForm2 = ({route}) => {
+const StoreRegisterForm2 = ({ route }) => {
   const navigation = useNavigation();
-  const {prevData} = route.params;
+  const { prevData } = route.params;
   const hostProfile = useUserStore(state => state.hostProfile);
   const setHostProfile = useUserStore(state => state.setHostProfile);
   const [formData, setFormData] = useState({
@@ -82,10 +82,8 @@ const StoreRegisterForm2 = ({route}) => {
   };
 
   const syncHostProfile = async () => {
-    const response = await hostMyApi.getMyProfile();
-    const normalizedProfile = normalizeHostProfile(response?.data);
-
-    setHostProfile(normalizedProfile);
+    const { updateProfile } = require('@utils/auth/login');
+    await updateProfile('HOST');
   };
 
   const handleSubmit = async () => {
@@ -213,7 +211,7 @@ const StoreRegisterForm2 = ({route}) => {
                         onPress={pickImage}>
                         {formData.profileImg ? (
                           <Image
-                            source={{uri: formData.profileImg}}
+                            source={{ uri: formData.profileImg }}
                             style={styles.photoBox}
                             resizeMode="cover"
                           />
@@ -258,7 +256,7 @@ const StoreRegisterForm2 = ({route}) => {
           visible={errorModal.visible}
           title={errorModal.title}
           buttonText={'확인'}
-          onPress={() => setErrorModal(prev => ({...prev, visible: false}))}
+          onPress={() => setErrorModal(prev => ({ ...prev, visible: false }))}
         />
       </View>
     </TouchableWithoutFeedback>

@@ -5,7 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import Avatar from '@components/Avatar';
 import AlertModal from '@components/modals/AlertModal';
 import { FONTS } from '@constants/fonts';
-import {APP_VERSION} from '@constants/appVersion';
+import { APP_VERSION } from '@constants/appVersion';
 import useUserStore from '@stores/userStore';
 import authApi from '@utils/api/authApi';
 import { tryLogout } from '@utils/auth/login';
@@ -21,6 +21,8 @@ import PolicyIcon from '@assets/images/menu_policy.svg';
 import VersionIcon from '@assets/images/menu_version.svg';
 import SettingIcon from '@assets/images/settings_gray.svg';
 import RightArrowIcon from '@assets/images/chevron_right_gray.svg';
+import BankIcon from '@assets/images/bank_gray.svg';
+import TrendingIcon from '@assets/images/trending_gray.svg';
 
 import styles from './HostHomeMenu.styles';
 
@@ -32,9 +34,16 @@ const menuSections = [
     routeName: 'StoreRegisterList',
   },
   {
-    key: 'authority',
-    label: '권한관리',
-    icon: MemberIcon,
+    key: 'settlement',
+    label: '정산 관리',
+    icon: BankIcon,
+    routeName: 'SettlementManagement',
+  },
+  {
+    key: 'sales',
+    label: '매출 분석',
+    icon: TrendingIcon,
+    routeName: 'SalesManagement',
   },
   {
     key: 'notice',
@@ -79,23 +88,33 @@ const HostHomeMenu = () => {
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const hostProfile = useUserStore(state => state.hostProfile);
 
+  const selectedGuesthouseId = useUserStore(state => state.selectedGuesthouseId);
+
   const selectedGuesthouse = useMemo(
     () => {
       const guesthouseProfiles = hostProfile?.guesthouseProfiles ?? [];
 
-      return guesthouseProfiles[0];
+      const matchedProfile = guesthouseProfiles.find(
+        p => String(p.profileKey ?? p.guesthouseId) === String(selectedGuesthouseId)
+      );
+
+      return matchedProfile || guesthouseProfiles[0];
     },
-    [hostProfile?.guesthouseProfiles],
+    [hostProfile?.guesthouseProfiles, selectedGuesthouseId],
   );
 
   const profileName = hostProfile?.name || '';
   const profileEmail = hostProfile?.email || '';
-  const profileImage =
-    selectedGuesthouse?.profileImageUrl || hostProfile?.photoUrl || null;
+  const profileImage = hostProfile?.photoUrl || null;
 
   const handleMenuPress = routeName => {
     if (routeName) {
-      navigation.navigate(routeName);
+      if (routeName === 'SettlementManagement' || routeName === 'SalesManagement') {
+        const passId = selectedGuesthouse?.profileKey ?? selectedGuesthouse?.guesthouseId ?? selectedGuesthouseId;
+        navigation.navigate(routeName, { guesthouseId: passId });
+      } else {
+        navigation.navigate(routeName);
+      }
     }
   };
 

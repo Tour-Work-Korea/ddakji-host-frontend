@@ -29,6 +29,7 @@ import styles from './HostMyPage.styles';
 import {FONTS} from '@constants/fonts';
 import useUserStore from '@stores/userStore';
 import GuesthouseProfileList from '@components/modals/HostMy/Guesthouse/GuesthouseProfileList';
+import { useGuesthouseProfiles } from '@hooks/useGuesthouseProfiles';
 import Avatar from '@components/Avatar';
 
 const HostMyPage = () => {
@@ -38,18 +39,7 @@ const HostMyPage = () => {
   const host = useUserStore(state => state.hostProfile);
   const [isGuesthouseListVisible, setIsGuesthouseListVisible] = useState(false);
 
-  const guesthouseProfiles = useMemo(
-    () =>
-      Array.isArray(host?.guesthouseProfiles) && host.guesthouseProfiles.length > 0
-        ? host.guesthouseProfiles.map((item, index) => ({
-            id: String(item.guesthouseId ?? `guesthouse-${index}`),
-            name: item.guesthouseName || '이름 없음',
-            photoUrl: item.profileImageUrl || null,
-            noticeCount: 0,
-          }))
-        : [],
-    [host?.guesthouseProfiles],
-  );
+  const { guesthouseProfiles } = useGuesthouseProfiles();
   const [selectedProfileId, setSelectedProfileId] = useState(null);
 
   const selectedGuesthouse = useMemo(

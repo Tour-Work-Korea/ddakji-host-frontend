@@ -1,7 +1,7 @@
-import React, {useState} from 'react';
-import {Text, TouchableOpacity, View} from 'react-native';
+import React, { useState } from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
 
-import {FONTS} from '@constants/fonts';
+import { FONTS } from '@constants/fonts';
 import MyGuesthouse from './MyGuesthouse';
 import ReviewManagement from './ReviewManagement';
 import styles from './GuesthouseInfo.styles';
