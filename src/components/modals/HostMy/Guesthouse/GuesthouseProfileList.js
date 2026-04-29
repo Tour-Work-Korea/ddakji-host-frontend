@@ -60,12 +60,14 @@ const GuesthouseProfileList = ({
                           {item.name}
                         </Text>
 
-                        <View style={styles.noticeRow}>
-                          <View style={styles.noticeDot} />
-                          <Text style={[FONTS.fs_12_medium, styles.noticeText]}>
-                            알림 {noticeCount}개
-                          </Text>
-                        </View>
+                        {typeof item.noticeCount === 'number' && (
+                          <View style={styles.noticeRow}>
+                            <View style={styles.noticeDot} />
+                            <Text style={[FONTS.fs_12_medium, styles.noticeText]}>
+                              알림 {item.noticeCount}개
+                            </Text>
+                          </View>
+                        )}
                       </View>
                     </View>
 

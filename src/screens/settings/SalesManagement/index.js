@@ -5,6 +5,7 @@ import useUserStore from '@stores/userStore';
 import statisticsApi from '@utils/api/statisticsApi';
 import GuesthouseProfileList from '@components/modals/HostMy/Guesthouse/GuesthouseProfileList';
 import Header from '@components/Header';
+import { useGuesthouseProfiles } from '@hooks/useGuesthouseProfiles';
 import MonthPickerModal from '@components/modals/MonthPickerModal';
 import ChevronLeftBlack from '@assets/images/chevron_left_black.svg';
 import ChevronLeftIcon from '@assets/images/chevron_left_black.svg';
@@ -26,18 +27,7 @@ const SalesManagement = () => {
   const [isGuesthouseListVisible, setIsGuesthouseListVisible] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState(passedGuesthouseId ? String(passedGuesthouseId) : null);
 
-  const guesthouseProfiles = useMemo(
-    () =>
-      Array.isArray(hostProfile?.guesthouseProfiles) && hostProfile.guesthouseProfiles.length > 0
-        ? hostProfile.guesthouseProfiles.map((item, index) => ({
-          id: String(item.guesthouseId ?? `guesthouse-${index}`),
-          name: item.guesthouseName || '이름 없음',
-          photoUrl: item.profileImageUrl || null,
-          noticeCount: 0,
-        }))
-        : [],
-    [hostProfile?.guesthouseProfiles],
-  );
+  const { guesthouseProfiles } = useGuesthouseProfiles();
 
   const selectedGuesthouse = useMemo(
     () => guesthouseProfiles.find(p => p.id === selectedProfileId) || guesthouseProfiles[0],

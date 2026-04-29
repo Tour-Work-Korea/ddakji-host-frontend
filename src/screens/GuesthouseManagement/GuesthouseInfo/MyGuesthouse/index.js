@@ -1,8 +1,8 @@
 import React from 'react';
-import {Image, Text, TouchableOpacity, View} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import { Image, Text, TouchableOpacity, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
-import {FONTS} from '@constants/fonts';
+import { FONTS } from '@constants/fonts';
 import EditIcon from '@assets/images/edit_gray.svg';
 import DeleteIcon from '@assets/images/delete_gray.svg';
 import styles from './MyGuesthouse.styles';
@@ -46,7 +46,7 @@ const MyGuesthouse = ({
       <View style={styles.guesthouseCard}>
         {thumbnailImage ? (
           <Image
-            source={{uri: thumbnailImage}}
+            source={{ uri: thumbnailImage }}
             style={styles.cardImage}
             resizeMode="cover"
           />

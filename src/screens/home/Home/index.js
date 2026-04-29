@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Image,
   Linking,
@@ -9,15 +9,16 @@ import {
   useWindowDimensions,
 } from 'react-native';
 
-import {FONTS} from '@constants/fonts';
-import {COLORS} from '@constants/colors';
+import { FONTS } from '@constants/fonts';
+import { COLORS } from '@constants/colors';
 import Avatar from '@components/Avatar';
 import useUserStore from '@stores/userStore';
 import adminApi from '@utils/api/adminApi';
-import {navigateWithLoginGuard} from '@utils/auth/requireLogin';
-import {navigate} from '@utils/navigationService';
+import { updateProfile } from '@utils/auth/login';
+import { navigateWithLoginGuard } from '@utils/auth/requireLogin';
+import { navigate } from '@utils/navigationService';
 import notificationApi from '@utils/api/notificationApi';
-import {useFocusEffect} from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 
 import LogoIcon from '@assets/images/logo_orange.svg';
 import BellIcon from '@assets/images/bell_gray.svg';
@@ -29,11 +30,11 @@ import InstaEventImg from '@assets/images/home/insta_event_img.png';
 import styles from './HostHome.styles';
 
 const businessInfo = [
-  {label: '대표자', value: '이하늘, 정재원'},
-  {label: '주소', value: '제주시 연동 263-13 레지던스아트3'},
-  {label: '사업자등록번호', value: '888-25-02003'},
-  {label: '통신판매번호', value: '2025-서울양천-0825'},
-  {label: '연락처', value: '010-4123-0075'},
+  { label: '대표자', value: '이하늘, 정재원' },
+  { label: '주소', value: '제주시 연동 263-13 레지던스아트3' },
+  { label: '사업자등록번호', value: '888-25-02003' },
+  { label: '통신판매번호', value: '2025-서울양천-0825' },
+  { label: '연락처', value: '010-4123-0075' },
 ];
 
 const PROMOTION_FORM_URL =
@@ -69,7 +70,7 @@ const mapNoticeSummary = item => ({
 });
 
 const HostHome = () => {
-  const {width: screenWidth} = useWindowDimensions();
+  const { width: screenWidth } = useWindowDimensions();
   const heroBackgroundHeight = 436;
   const hostProfile = useUserStore(state => state.hostProfile);
   const [homeNotices, setHomeNotices] = useState([]);
@@ -83,7 +84,7 @@ const HostHome = () => {
 
     const fetchHomeNotices = async () => {
       try {
-        const {data} = await adminApi.getHomeNotices();
+        const { data } = await adminApi.getHomeNotices();
         const items = Array.isArray(data)
           ? data
           : Array.isArray(data?.items)
@@ -114,7 +115,7 @@ const HostHome = () => {
 
   const fetchUnreadCount = useCallback(async () => {
     try {
-      const {data} = await notificationApi.getUnreadCount();
+      const { data } = await notificationApi.getUnreadCount();
       const count = Number(
         data?.unreadCount ?? data?.count ?? data?.data ?? data ?? 0,
       );
@@ -125,10 +126,15 @@ const HostHome = () => {
     }
   }, []);
 
+  const syncHostProfile = useCallback(async () => {
+    await updateProfile('HOST');
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       fetchUnreadCount();
-    }, [fetchUnreadCount]),
+      syncHostProfile();
+    }, [fetchUnreadCount, syncHostProfile]),
   );
 
   const handlePressPromotionFormLink = async () => {
@@ -234,39 +240,39 @@ const HostHome = () => {
                 activeOpacity={0.8}
                 onPress={() => navigateWithLoginGuard('StoreRegisterList')}>
                 <Text style={[FONTS.fs_18_bold, styles.sectionTitle]}>
-                  내 업체 <Text style={styles.myBusinessCount}>{guesthouseProfiles.length}</Text>
+                  내 게하 <Text style={styles.myBusinessCount}>{guesthouseProfiles.length}</Text>
                 </Text>
                 <RightArrowIcon width={24} height={24} />
               </TouchableOpacity>
 
               <View style={styles.myBusinessList}>
                 {guesthouseProfiles.map((guesthouse, index) => {
-                  // status나 applicationStatus가 있고, 그 값이 '승인 완료'나 'APPROVED'가 아니면 심사중으로 간주
-                  const isPending =
-                    guesthouse?.applicationStatus === 'PENDING' ||
-                    guesthouse?.status === '심사중' ||
-                    guesthouse?.status === '등록 심사중';
+                  const isApproved =
+                    guesthouse?.applicationStatus === '승인 완료' ||
+                    guesthouse?.applicationStatus === 'APPROVED' ||
+                    guesthouse?.status === '승인 완료' ||
+                    guesthouse?.status === 'APPROVED';
+
+                  const isPending = !isApproved;
 
                   return (
                     <TouchableOpacity
                       key={String(
-                        guesthouse?.profileKey ?? guesthouse?.guesthouseId ?? `guesthouse-${index}`,
+                        guesthouse?.guesthouseId ?? guesthouse?.id ?? `guesthouse-${index}`,
                       )}
                       style={styles.myBusinessCard}
                       activeOpacity={isPending ? 1 : 0.85}
                       disabled={isPending}
                       onPress={() =>
                         navigateWithLoginGuard('GuesthouseManagement', {
-                          profileKey:
-                            guesthouse?.profileKey ??
-                            String(guesthouse?.guesthouseId ?? `guesthouse-${index}`),
-                          businessName: guesthouse?.guesthouseName || '게스트하우스',
+                          profileKey: String(guesthouse?.guesthouseId ?? guesthouse?.id),
+                          guesthouseName: guesthouse?.guesthouseName || '게스트하우스',
                           guesthouseId: guesthouse?.guesthouseId ?? null,
                         })
                       }>
                       <View style={styles.myBusinessCardLeft}>
                         <Avatar
-                          uri={guesthouse?.profileImageUrl || null}
+                          uri={guesthouse?.guesthouseProfileImageUrl || guesthouse?.profileImageUrl || null}
                           size={60}
                           borderRadius={10}
                         />
@@ -274,10 +280,10 @@ const HostHome = () => {
                           <Text
                             style={FONTS.fs_18_semibold}
                             numberOfLines={1}>
-                            {guesthouse?.guesthouseName || '게스트하우스'}
+                            {guesthouse?.guesthouseName}
                           </Text>
                           {isPending && (
-                            <Text style={[FONTS.fs_14_medium, {color: COLORS.semantic_red, marginTop: 4}]}>
+                            <Text style={[FONTS.fs_14_medium, { color: COLORS.semantic_red, marginTop: 4 }]}>
                               등록 심사중
                             </Text>
                           )}
@@ -304,7 +310,7 @@ const HostHome = () => {
               resizeMode="cover"
               style={[
                 styles.heroBackground,
-                {width: screenWidth, height: heroBackgroundHeight},
+                { width: screenWidth, height: heroBackgroundHeight },
               ]}
             />
 
@@ -355,13 +361,13 @@ const HostHome = () => {
                   style={[
                     styles.noticeBadge,
                     styles.noticeBadgeVariants[notice.categoryCode] ||
-                      styles.noticeBadgeBlue,
+                    styles.noticeBadgeBlue,
                   ]}>
                   <Text
                     style={[
                       FONTS.fs_14_semibold,
                       styles.noticeBadgeTextVariants[notice.categoryCode] ||
-                        styles.noticeBadgeBlueText,
+                      styles.noticeBadgeBlueText,
                     ]}>
                     {notice.category}
                   </Text>

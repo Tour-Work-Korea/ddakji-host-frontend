@@ -81,21 +81,36 @@ api.interceptors.response.use(
     const status = err.response?.status;
     const errorData = err.response?.data;
 
-    log.error(
-      `🛑 [${id}] error status=`,
-      status,
-      'url=',
-      original?.url,
-      err,
-    );
-    if (errorData) {
-      try {
-        log.error(
-          `🧾 [${id}] error data=`,
-          JSON.stringify(errorData, null, 2),
-        );
-      } catch (e) {
-        log.error(`🧾 [${id}] error data=`, errorData);
+    const isExpectedError = status === 403 || status === 404 || status === 400;
+
+    if (isExpectedError) {
+      log.warn(
+        `🛑 [${id}] error status=`,
+        status,
+        'url=',
+        original?.url,
+        err?.message,
+      );
+      if (errorData) {
+        log.warn(`🧾 [${id}] error data=`, errorData);
+      }
+    } else {
+      log.error(
+        `🛑 [${id}] error status=`,
+        status,
+        'url=',
+        original?.url,
+        err,
+      );
+      if (errorData) {
+        try {
+          log.error(
+            `🧾 [${id}] error data=`,
+            JSON.stringify(errorData, null, 2),
+          );
+        } catch (e) {
+          log.error(`🧾 [${id}] error data=`, errorData);
+        }
       }
     }
     log.timeEnd(`⏱️ ${id}`);

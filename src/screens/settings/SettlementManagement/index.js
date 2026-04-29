@@ -10,6 +10,7 @@ import { FONTS } from '@constants/fonts';
 import Header from '@components/Header';
 import GuesthouseProfileList from '@components/modals/HostMy/Guesthouse/GuesthouseProfileList';
 import MonthPickerModal from '@components/modals/MonthPickerModal';
+import { useGuesthouseProfiles } from '@hooks/useGuesthouseProfiles';
 
 import ChevronLeftBlack from '@assets/images/chevron_left_black.svg';
 import ChevronRightBlack from '@assets/images/chevron_right_black.svg';
@@ -30,18 +31,7 @@ const SettlementManagement = () => {
   const [isGuesthouseListVisible, setIsGuesthouseListVisible] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState(passedGuesthouseId ? String(passedGuesthouseId) : null);
 
-  const guesthouseProfiles = useMemo(
-    () =>
-      Array.isArray(hostProfile?.guesthouseProfiles) && hostProfile.guesthouseProfiles.length > 0
-        ? hostProfile.guesthouseProfiles.map((item, index) => ({
-          id: String(item.guesthouseId ?? `guesthouse-${index}`),
-          name: item.guesthouseName || '이름 없음',
-          photoUrl: item.profileImageUrl || null,
-          noticeCount: 0,
-        }))
-        : [],
-    [hostProfile?.guesthouseProfiles],
-  );
+  const { guesthouseProfiles } = useGuesthouseProfiles();
 
   const selectedGuesthouse = useMemo(
     () =>

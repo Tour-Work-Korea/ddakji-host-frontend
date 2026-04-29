@@ -150,9 +150,10 @@ const NotificationCenter = () => {
         ? hostProfile.guesthouseProfiles
           .filter(
             item =>
-              item?.applicationStatus !== 'PENDING' &&
-              item?.status !== '심사중' &&
-              item?.status !== '등록 심사중',
+              item?.applicationStatus === '승인 완료' ||
+              item?.applicationStatus === 'APPROVED' ||
+              item?.status === '승인 완료' ||
+              item?.status === 'APPROVED',
           )
           .map((item, index) => {
             const ghId = String(item?.guesthouseId ?? item?.profileKey ?? `guesthouse-${index}`);

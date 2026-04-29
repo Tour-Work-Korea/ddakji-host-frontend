@@ -4,6 +4,7 @@ import {Platform} from 'react-native';
 import authApi from '@utils/api/authApi';
 import useUserStore from '@stores/userStore';
 import hostMyApi from '@utils/api/hostMyApi';
+import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
 import {normalizeHostProfile} from '@utils/hostProfile';
 import {log, mask} from '@utils/logger';
 import {navigate} from '@utils/navigationService';
@@ -153,13 +154,19 @@ export const tryLogout = async () => {
   }
 };
 
-const updateProfile = async role => {
+export const updateProfile = async role => {
   log.info('👤 updateProfile: role=', role);
   const {setHostProfile} = useUserStore.getState();
 
   try {
     const res = await hostMyApi.getMyProfile();
-    const normalizedProfile = normalizeHostProfile(res?.data);
+    let appRes = { data: [] };
+    try {
+      appRes = await hostGuesthouseApi.getHostApplications();
+    } catch (e) {
+      log.warn('👤 getHostApplications failed:', e?.message);
+    }
+    const normalizedProfile = normalizeHostProfile(res?.data, appRes?.data);
 
     setHostProfile(normalizedProfile);
     log.info('👤 HOST profile loaded');

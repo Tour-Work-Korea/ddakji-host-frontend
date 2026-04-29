@@ -6,6 +6,7 @@ import { FONTS } from '@constants/fonts';
 import useUserStore from '@stores/userStore';
 import AlertModal from '@components/modals/AlertModal';
 import GuesthouseProfileList from '@components/modals/HostMy/Guesthouse/GuesthouseProfileList';
+import { useGuesthouseProfiles } from '@hooks/useGuesthouseProfiles';
 import Home from './Home';
 import GuesthouseInfo from './GuesthouseInfo';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
@@ -69,28 +70,7 @@ const GuesthouseManagement = () => {
     routeReservationMethod || 'closed',
   );
 
-  const guesthouseProfiles = useMemo(
-    () =>
-      Array.isArray(hostProfile?.guesthouseProfiles)
-        ? hostProfile.guesthouseProfiles
-          .filter(
-            item =>
-              item?.applicationStatus !== 'PENDING' &&
-              item?.status !== '심사중' &&
-              item?.status !== '등록 심사중',
-          )
-          .map((item, index) => ({
-            id: String(
-              item?.profileKey ?? item?.guesthouseId ?? `guesthouse-${index}`,
-            ),
-            guesthouseId: item?.guesthouseId ?? null,
-            name: item?.guesthouseName || '이름 없음',
-            photoUrl: item?.profileImageUrl || null,
-            noticeCount: 0,
-          }))
-        : [],
-    [hostProfile?.guesthouseProfiles],
-  );
+  const { guesthouseProfiles } = useGuesthouseProfiles();
 
   useEffect(() => {
     const nextRouteProfileKey = initialProfileKey;

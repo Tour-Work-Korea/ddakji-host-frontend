@@ -87,7 +87,7 @@ const StoreRegisterForm2 = ({ route }) => {
   };
 
   const handleSubmit = async () => {
-    const validationErrors = validateStoreForm(formData);
+    const validationErrors = validateStoreForm2(formData);
 
     if (validationErrors.length > 0) {
       setErrorModal({
@@ -97,60 +97,14 @@ const StoreRegisterForm2 = ({ route }) => {
       return;
     }
 
-    const form = new FormData();
-    const dto = {
-      name: formData.name,
-      employeeCount: 0,
-      address: formData.address,
-      managerName: hostProfile?.name ?? '',
-      managerEmail: hostProfile?.email ?? '',
-      businessPhone: formData.businessPhone,
-      businessType: formData.businessType,
-    };
-
-    form.append('dto', {
-      string: JSON.stringify(dto),
-      type: 'application/json',
+    // 유효성 검사 통과 시 3단계(계좌 정보)로 이동
+    navigation.navigate('StoreRegisterForm3', {
+      prevData: {
+        ...formData,
+        managerName: hostProfile?.name ?? '',
+        managerEmail: hostProfile?.email ?? '',
+      },
     });
-
-    if (formData.img?.uri) {
-      form.append('img', {
-        uri: formData.img.uri,
-        name: formData.img.name,
-        type: formData.img.type,
-      });
-    }
-
-    try {
-      const applicationResponse = await hostGuesthouseApi.postHostApplication(
-        form,
-      );
-      const applicationId = resolveApplicationId(applicationResponse);
-
-      if (!applicationId) {
-        throw new Error('applicationId not found');
-      }
-
-      await hostGuesthouseApi.tempCreateGuesthouse({
-        applicationId,
-        guesthouseName: formData.guesthouseName.trim(),
-        guesthouseProfileImage: formData.profileImg,
-      });
-
-      await syncHostProfile();
-
-      navigation.replace('StoreRegisterComplete', {
-        businessName: formData.name,
-      });
-    } catch (error) {
-      console.warn('입점신청서 등록 실패:', error);
-      setErrorModal({
-        visible: true,
-        title:
-          error?.response?.data?.message ??
-          '입점신청서 등록 중 오류가 발생했습니다',
-      });
-    }
   };
 
   return (
