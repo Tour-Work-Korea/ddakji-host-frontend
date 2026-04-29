@@ -161,9 +161,6 @@ const HostPhone = ({user, onPress}) => {
             <View style={styles.groupParent}>
               <View  style={styles.titleContainer}>
                 <LogoBlue width={60} height={29} />
-                <View style={styles.subTitleContainer}>
-                  <Text style={styles.subTitleText}>워커웨이 파트너스</Text>
-                </View>
                 <View style={{width: 60, height: 29}} />
               </View>
               <Text style={[styles.titleText]}>전화번호 인증</Text>

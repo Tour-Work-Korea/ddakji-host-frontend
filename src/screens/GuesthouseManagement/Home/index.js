@@ -8,6 +8,10 @@ import adminApi from '@utils/api/adminApi';
 import orderApi from '@utils/api/orderApi';
 import settlementApi from '@utils/api/settlementApi';
 import statisticsApi from '@utils/api/statisticsApi';
+import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
+import AlertModal from '@components/modals/AlertModal';
+import ReservationCancelModal from '@components/modals/HostMy/Guesthouse/ReservationCancelModal';
+import Toast from 'react-native-toast-message';
 import styles from './Home.styles';
 
 import ChevronRightIcon from '@assets/images/chevron_right_gray.svg';
@@ -22,6 +26,64 @@ const formatDateWithNights = (checkIn, checkOut) => {
 
   const format = d => `${String(d.getFullYear()).slice(-2)}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
   return `${format(start)} - ${format(end)} (${diffDays || 1}박)`;
+};
+
+const APPROVAL_LIMIT_HOUR = 11;
+const MINUTE_MS = 60 * 1000;
+const HOUR_MS = 60 * MINUTE_MS;
+const DAY_MS = 24 * HOUR_MS;
+
+const toDate = value => {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const formatDateKey = date => {
+  if (!(date instanceof Date)) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getApprovalDeadlineMeta = reservation => {
+  const createdAt = toDate(reservation?.createdAt);
+  if (!createdAt) {
+    const fallbackDeadline = toDate(reservation?.approvalDeadlineAt);
+
+    return fallbackDeadline
+      ? {
+          deadline: fallbackDeadline,
+          unit: 'hour',
+        }
+      : null;
+  }
+
+  const checkInDate = reservation?.checkInDate?.split?.('T')?.[0] ?? reservation?.checkInDate;
+  const isSameDayReservation = checkInDate && formatDateKey(createdAt) === checkInDate;
+  const isSameDayAfterEleven = isSameDayReservation && createdAt.getHours() >= APPROVAL_LIMIT_HOUR;
+  const limitMs = isSameDayAfterEleven ? 30 * MINUTE_MS : DAY_MS;
+
+  return {
+    deadline: new Date(createdAt.getTime() + limitMs),
+    unit: isSameDayAfterEleven ? 'minute' : 'hour',
+  };
+};
+
+const getApprovalDeadlineText = (reservation, now) => {
+  const deadlineMeta = getApprovalDeadlineMeta(reservation);
+  if (!deadlineMeta?.deadline) return '승인 대기 중';
+
+  const diffMs = Math.max(0, deadlineMeta.deadline.getTime() - now.getTime());
+
+  if (deadlineMeta.unit === 'minute') {
+    const minutes = Math.floor(diffMs / MINUTE_MS);
+    return `${minutes}분 내 승인 필요`;
+  }
+
+  const hours = Math.floor(diffMs / HOUR_MS);
+  return `${hours}시간 내 승인 필요`;
 };
 
 const getStatusBadgeText = (status) => {
@@ -72,6 +134,19 @@ const Home = ({ reservationMethod = 'closed', guesthouseId }) => {
   const [salesData, setSalesData] = useState(null);
   const [dashboardData, setDashboardData] = useState(null);
   const [selectedTab, setSelectedTab] = useState('TODAY_CONFIRMED');
+  const [decisionModalVisible, setDecisionModalVisible] = useState(false);
+  const [selectedReservation, setSelectedReservation] = useState(null);
+  const [decisionSubmitting, setDecisionSubmitting] = useState(false);
+  const [cancelModalVisible, setCancelModalVisible] = useState(false);
+  const [selectedCancelReservation, setSelectedCancelReservation] = useState(null);
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, MINUTE_MS);
+    return () => clearInterval(timer);
+  }, []);
 
   const reservationMethodContent =
     RESERVATION_METHOD_CONTENT[reservationMethod] ||
@@ -138,6 +213,55 @@ const Home = ({ reservationMethod = 'closed', guesthouseId }) => {
 
   const selectedSection = dashboardData?.sections?.find(s => s.type === selectedTab);
   const itemsToShow = selectedSection?.items || [];
+
+  const handleOpenDecisionModal = (reservation) => {
+    setSelectedReservation(reservation);
+    setDecisionModalVisible(true);
+  };
+
+  const handleOpenCancelModal = (reservation) => {
+    setSelectedCancelReservation({
+      reservationId: reservation.reservationId,
+      roomName: reservation.roomName,
+      reservationUserName: reservation.guestName,
+      reservationUserPhone: reservation.guestPhone,
+      age: reservation.guestBirthDate ? `${reservation.guestBirthDate.substring(0, 4)}년생` : null,
+      reservationNumber: reservation.reservationCode || '',
+      guestCount: reservation.guestCount,
+      period: formatDateWithNights(reservation.checkInDate, reservation.checkOutDate),
+      checkInDate: reservation.checkInDate,
+      checkOutDate: reservation.checkOutDate,
+    });
+    setCancelModalVisible(true);
+  };
+
+  const handleConfirmDecision = async () => {
+    const reservationId = selectedReservation?.reservationId;
+    if (!reservationId || decisionSubmitting) return;
+
+    try {
+      setDecisionSubmitting(true);
+      await hostGuesthouseApi.approveGuesthouseReservationByHost(reservationId);
+      setDecisionModalVisible(false);
+      setSelectedReservation(null);
+      Toast.show({
+        type: 'success',
+        text1: '예약이 확정되었어요.',
+        position: 'top',
+        visibilityTime: 2000,
+      });
+      fetchDashboardData();
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: '예약 확정을 실패했어요.',
+        position: 'top',
+        visibilityTime: 2000,
+      });
+    } finally {
+      setDecisionSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -338,7 +462,9 @@ const Home = ({ reservationMethod = 'closed', guesthouseId }) => {
                     <View style={styles.waitingAlertIcon}>
                       <Text style={styles.waitingAlertIconText}>!</Text>
                     </View>
-                    <Text style={styles.waitingAlertText}>30분 내 승인 필요</Text>
+                    <Text style={styles.waitingAlertText}>
+                      {getApprovalDeadlineText(reservation, now)}
+                    </Text>
                   </View>
                 )}
               </View>
@@ -375,7 +501,8 @@ const Home = ({ reservationMethod = 'closed', guesthouseId }) => {
               ) : selectedTab === 'WAITING_APPROVAL' ? (
                 <TouchableOpacity
                   style={[styles.reservationButton, styles.reservationButtonPrimary]}
-                  activeOpacity={0.8}>
+                  activeOpacity={0.8}
+                  onPress={() => handleOpenDecisionModal(reservation)}>
                   <Text
                     style={[FONTS.fs_12_medium, styles.reservationButtonText, styles.reservationButtonTextPrimary]}>
                     예약 확정
@@ -385,7 +512,8 @@ const Home = ({ reservationMethod = 'closed', guesthouseId }) => {
                 reservation.status !== 'CANCELLED' && (
                   <TouchableOpacity
                     style={styles.reservationButton}
-                    activeOpacity={0.8}>
+                    activeOpacity={0.8}
+                    onPress={() => handleOpenCancelModal(reservation)}>
                     <Text
                       style={[FONTS.fs_12_medium, styles.reservationButtonText]}>
                       예약 취소
@@ -502,6 +630,31 @@ const Home = ({ reservationMethod = 'closed', guesthouseId }) => {
         </View>
       </View>
 
+      <AlertModal
+        visible={decisionModalVisible}
+        title="예약을 확정할까요?"
+        message={'해당 예약을 확정하면\n게스트에게 예약 확정 알림이 전송돼요'}
+        buttonText="예약확정하기"
+        buttonText2="취소"
+        onPress={handleConfirmDecision}
+        onPress2={() => {
+          setDecisionModalVisible(false);
+          setSelectedReservation(null);
+        }}
+        buttonDisabled={decisionSubmitting}
+      />
+
+      <ReservationCancelModal
+        visible={cancelModalVisible}
+        onClose={() => {
+          setCancelModalVisible(false);
+          setSelectedCancelReservation(null);
+        }}
+        reservation={selectedCancelReservation || {}}
+        onSubmit={async () => {
+          fetchDashboardData();
+        }}
+      />
     </ScrollView>
   );
 };

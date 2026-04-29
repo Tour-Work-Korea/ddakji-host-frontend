@@ -93,7 +93,7 @@ const RoomGuideMessageEditor = ({route}) => {
             <View style={styles.inputHeader}>
               <Text style={[FONTS.fs_16_medium]}>체크인 안내문 작성</Text>
               <Text style={[FONTS.fs_12_light, styles.countText]}>
-                <Text style={{color: COLORS.primary_orange}}>{message.length}</Text>/700
+                <Text style={{color: COLORS.primary_orange}}>{message.length}</Text>/2000
               </Text>
             </View>
             <View style={styles.inputContainer}>
@@ -104,7 +104,7 @@ const RoomGuideMessageEditor = ({route}) => {
                 style={[FONTS.fs_14_medium, styles.input]}
                 multiline
                 scrollEnabled
-                maxLength={700}
+                maxLength={2000}
                 textAlignVertical="top"
                 placeholder="체크인 전 참고할 내용을 작성해주세요. (예: 주차 안내, 늦은 체크인 안내 등)"
                 placeholderTextColor={styles.placeholderText.color}

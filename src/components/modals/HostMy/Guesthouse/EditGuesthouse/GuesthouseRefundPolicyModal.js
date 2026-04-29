@@ -20,6 +20,7 @@ import {COLORS} from '@constants/colors';
 import ButtonWhite from '@components/ButtonWhite';
 import ButtonScarlet from '@components/ButtonScarlet';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
+import useKeyboardAwareScrollView from '@hooks/useKeyboardAwareScrollView';
 
 import XBtn from '@assets/images/x_gray.svg';
 import PlusOrange from '@assets/images/plus_orange.svg';
@@ -58,24 +59,14 @@ const GuesthouseRefundPolicyModal = ({
   const [appliedData, setAppliedData] = useState([]);
   const [baselinePolicies, setBaselinePolicies] = useState([]);
   
-  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [draftDays, setDraftDays] = useState('');
   const [draftRate, setDraftRate] = useState('');
 
-  useEffect(() => {
-    const showSub = Keyboard.addListener('keyboardDidShow', () =>
-      setIsKeyboardVisible(true),
-    );
-    const hideSub = Keyboard.addListener('keyboardDidHide', () =>
-      setIsKeyboardVisible(false),
-    );
+  const { keyboardHeight, registerInput, scrollRef } = useKeyboardAwareScrollView({ iosOnly: false });
+  const isKeyboardVisible = keyboardHeight > 0;
 
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, []);
+  // Keyboard visibility handled by useKeyboardAwareScrollView
 
   useEffect(() => {
     if (!visible) {
@@ -280,11 +271,7 @@ const GuesthouseRefundPolicyModal = ({
           style={StyleSheet.absoluteFill} 
           onPress={handleOverlayPress} 
         />
-        <KeyboardAvoidingView
-          style={styles.keyboardAvoidingView}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? -220 : 0}>
-          <View style={styles.modalContainer}>
+        <View style={[styles.modalContainer, { paddingBottom: isKeyboardVisible ? keyboardHeight + 10 : 40 }]}>
             <View style={styles.header}>
               <Text style={[FONTS.fs_20_semibold, styles.modalTitle]}>
                 취소 및 환불규정
@@ -297,6 +284,7 @@ const GuesthouseRefundPolicyModal = ({
             </View>
 
             <ScrollView
+              ref={scrollRef}
               style={styles.body}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}>
@@ -351,10 +339,14 @@ const GuesthouseRefundPolicyModal = ({
                   </View>
                 </View>
 
-                {displayPolicies.map(policy => (
+                {displayPolicies.map(policy => {
+                  const field = registerInput(`policy-${policy.daysBeforeCheckin}`);
+                  return (
                   <View
                     key={policy.daysBeforeCheckin}
-                    style={styles.policyRow}>
+                    style={styles.policyRow}
+                    onLayout={field.onLayout}
+                  >
                     <View style={styles.policyContent}>
                       <Text style={[FONTS.fs_14_medium, styles.policyLabel]}>
                         {`방문 ${policy.daysBeforeCheckin}일전`}
@@ -371,6 +363,7 @@ const GuesthouseRefundPolicyModal = ({
                               text,
                             )
                           }
+                          onFocus={field.onFocus}
                           keyboardType="number-pad"
                           style={[FONTS.fs_14_medium, styles.valueInput]}
                           placeholder="환불 비율"
@@ -395,7 +388,7 @@ const GuesthouseRefundPolicyModal = ({
                       <DeleteGray width={18} height={18} />
                     </TouchableOpacity>
                   </View>
-                ))}
+                )})}
               </View>
 
               <TouchableOpacity
@@ -426,7 +419,10 @@ const GuesthouseRefundPolicyModal = ({
               visible={addModalVisible}
               transparent
               onRequestClose={() => setAddModalVisible(false)}>
-              <View style={styles.addOverlay}>
+              <KeyboardAvoidingView 
+                style={styles.addOverlay}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+              >
                 <Pressable 
                   style={StyleSheet.absoluteFill} 
                   onPress={() => setAddModalVisible(false)} 
@@ -500,10 +496,9 @@ const GuesthouseRefundPolicyModal = ({
                     />
                   </View>
                 </View>
-              </View>
+              </KeyboardAvoidingView>
             </Modal>
           </View>
-        </KeyboardAvoidingView>
       </View>
     </Modal>
   );

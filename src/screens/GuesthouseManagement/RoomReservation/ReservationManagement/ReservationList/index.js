@@ -440,7 +440,7 @@ const ReservationList = ({
         message={
           decisionModalType === 'reject'
             ? '해당 예약을 반려하면 게스트에게 안내되며, 예약은 취소돼요'
-            : '해당 예약을 확정하면 게스트에게 예약 확정 알림이 전송돼요'
+            : '해당 예약을 확정하면\n게스트에게 예약 확정 알림이 전송돼요'
         }
         buttonText={decisionModalType === 'reject' ? '예약반려하기' : '예약확정하기'}
         buttonText2="취소"
