@@ -42,8 +42,8 @@ jobs:
       # --------------------------------
       # Xcode
       # --------------------------------
-      - name: Use Xcode 16.2
-        run: sudo xcode-select -s /Applications/Xcode_16.2.app
+      - name: Use Xcode 26
+        run: sudo xcode-select -s /Applications/Xcode_26.app
 
       # --------------------------------
       # AWS OIDC (SSM 접근)
