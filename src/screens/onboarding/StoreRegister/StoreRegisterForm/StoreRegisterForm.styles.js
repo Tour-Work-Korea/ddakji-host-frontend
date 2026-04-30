@@ -139,6 +139,28 @@ export default StyleSheet.create({
     color: COLORS.grayscale_500,
     lineHeight: 20,
   },
+  documentUploadBox: {
+    height: 160,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.grayscale_200,
+    borderRadius: 12,
+    borderStyle: 'dashed',
+    backgroundColor: COLORS.grayscale_50,
+    overflow: 'hidden',
+  },
+  hintText: {
+    ...FONTS.fs_12_medium,
+    color: COLORS.grayscale_500,
+    marginTop: -4,
+  },
+  warningHintText: {
+    ...FONTS.fs_12_medium,
+    color: COLORS.semantic_red,
+    marginTop: -4,
+  },
   //약관동의
   agreeGap: {gap: 12},
   iconPosition: {
