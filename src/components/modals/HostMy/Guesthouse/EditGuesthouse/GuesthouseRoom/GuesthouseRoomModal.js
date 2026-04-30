@@ -196,7 +196,6 @@ const normalizeRooms = (list = []) =>
       dormitoryGenderType: normalizedDormitoryGenderType,
       femaleOnly: r.femaleOnly ?? false,
       roomPrice: r.roomPrice != null ? String(r.roomPrice) : '',
-      roomExtraFees: r.roomExtraFees ?? [],
     };
   });
 
@@ -375,7 +374,6 @@ const GuesthouseRoomModal = ({
       } else {
         const createPayload = {
           ...buildRoomBasicFull(cur),
-          roomExtraFees: Array.isArray(cur.roomExtraFees) ? cur.roomExtraFees : [],
           roomImages: (cur.roomImages || []).map(i => ({
             roomImageUrl: i.roomImageUrl,
             isThumbnail: !!i.isThumbnail,

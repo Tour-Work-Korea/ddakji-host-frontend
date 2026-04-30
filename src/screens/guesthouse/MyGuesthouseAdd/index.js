@@ -231,7 +231,6 @@ const MyGuesthouseAdd = () => {
           roomMaxCapacity,
           roomDesc: room?.roomDesc ?? '',
           roomPrice: Number(room?.roomPrice),
-          roomExtraFees: Array.isArray(room?.roomExtraFees) ? room.roomExtraFees : [],
           roomImages: Array.isArray(room?.roomImages) ? room.roomImages : [],
         };
       };
