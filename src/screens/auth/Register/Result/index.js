@@ -1,9 +1,9 @@
-import {View, Text} from 'react-native';
+import { View, Text } from 'react-native';
 import ButtonScarlet from '@components/ButtonScarlet';
 import styles from '../RegisterIntro/Intro.styles';
 import LogoBlue from '@assets/images/logo_blue_smile.svg';
 
-const Result = ({route}) => {
+const Result = ({ route }) => {
   const {
     to = null,
     onPress = null,
@@ -20,7 +20,7 @@ const Result = ({route}) => {
           <View>
             <Text style={styles.titleText}>반가워요, {nickname}님!</Text>
             <Text style={styles.titleText}>
-              workaway와 함께 해주셔서 감사합니다.
+              게딱지와 함께 해주셔서 감사합니다.
             </Text>
           </View>
         </View>

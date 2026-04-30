@@ -1,4 +1,4 @@
-import React, {useState, useCallback} from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -17,20 +17,20 @@ import {
 } from '@react-navigation/native';
 
 import authApi from '@utils/api/authApi';
-import {validateHostRegister} from '@utils/validation/registerValidation';
+import { validateHostRegister } from '@utils/validation/registerValidation';
 import AlertModal from '@components/modals/AlertModal';
 import ButtonWhite from '@components/ButtonWhite';
-import {tryLogin} from '@utils/auth/login';
+import { tryLogin } from '@utils/auth/login';
 
 import styles from './Register.styles';
-import {COLORS} from '@constants/colors';
-import {FONTS} from '@constants/fonts';
+import { COLORS } from '@constants/colors';
+import { FONTS } from '@constants/fonts';
 import Logo from '@assets/images/logo_blue.svg';
 import ShowPassword from '@assets/images/show_password.svg';
 import HidePassword from '@assets/images/hide_password.svg';
 
-const HostRegisterInfo = ({route}) => {
-  const {agreements, email, phoneNumber} = route.params;
+const HostRegisterInfo = ({ route }) => {
+  const { agreements, email, phoneNumber } = route.params;
   const navigation = useNavigation();
 
   const [formData, setFormData] = useState({
@@ -94,7 +94,7 @@ const HostRegisterInfo = ({route}) => {
   );
 
   const updateField = (key, value) => {
-    const updated = {...formData, [key]: value};
+    const updated = { ...formData, [key]: value };
     setFormData(updated);
     setFormValid(validateHostRegister(updated));
   };
@@ -103,7 +103,7 @@ const HostRegisterInfo = ({route}) => {
     updateField('name', text);
     setFormValid({
       ...formValid,
-      name: validateHostRegister({...formData, name: text}).name,
+      name: validateHostRegister({ ...formData, name: text }).name,
     });
   };
   const handleBussinessNumChange = text => {
@@ -111,7 +111,7 @@ const HostRegisterInfo = ({route}) => {
     setIsBussinessNumChecked(false);
     setFormValid({
       ...formValid,
-      bussinessNum: validateHostRegister({...formData, bussinessNum: text})
+      bussinessNum: validateHostRegister({ ...formData, bussinessNum: text })
         .bussinessNum,
     });
   };
@@ -119,7 +119,7 @@ const HostRegisterInfo = ({route}) => {
     updateField('password', text);
     const nextValid = {
       ...formValid,
-      password: validateHostRegister({...formData, password: text}).password,
+      password: validateHostRegister({ ...formData, password: text }).password,
       passwordConfirm: {
         isMatched: text === formData.passwordConfirm,
       },
@@ -149,7 +149,7 @@ const HostRegisterInfo = ({route}) => {
         visible: true,
         message: '유효하지 않은 사업자등록번호입니다',
         buttonText: '확인',
-        onPress: () => setErrorModal(prev => ({...prev, visible: false})),
+        onPress: () => setErrorModal(prev => ({ ...prev, visible: false })),
       });
     }
   };
@@ -170,7 +170,7 @@ const HostRegisterInfo = ({route}) => {
           error.response?.data?.message ||
           '오류가 발생했습니다\n다시 시도해주세요',
         buttonText: '확인',
-        onPress: () => setErrorModal(prev => ({...prev, visible: false})),
+        onPress: () => setErrorModal(prev => ({ ...prev, visible: false })),
       });
     }
   };
@@ -182,7 +182,7 @@ const HostRegisterInfo = ({route}) => {
         CommonActions.reset({
           index: 0,
           routes: [
-            {name: 'MainTabs', params: {screen: '마이'}},
+            { name: 'MainTabs', params: { screen: '마이' } },
             {
               name: 'Result',
               params: {
@@ -192,7 +192,7 @@ const HostRegisterInfo = ({route}) => {
                   navigation.dispatch(
                     CommonActions.reset({
                       index: 0,
-                      routes: [{name: 'MainTabs', params: {screen: '마이'}}],
+                      routes: [{ name: 'MainTabs', params: { screen: '마이' } }],
                     }),
                   ),
               },
@@ -207,7 +207,7 @@ const HostRegisterInfo = ({route}) => {
         buttonText: '확인',
         onPress: () => {
           navigation.navigate('Login');
-          setErrorModal(prev => ({...prev, visible: false}));
+          setErrorModal(prev => ({ ...prev, visible: false }));
         },
       });
       console.warn('지동 로그인 실패:', error);
@@ -234,7 +234,7 @@ const HostRegisterInfo = ({route}) => {
                   <Logo width={60} height={29} />
                   <View>
                     <Text style={[styles.titleText]}>
-                      workaway에 등록하기 위한,
+                      게딱지에 등록하기 위한,
                     </Text>
                     <Text style={[styles.titleText]}>
                       필수정보를 알려주세요
@@ -407,9 +407,9 @@ const HostRegisterInfo = ({route}) => {
               </View>
 
               <View>
-                <ButtonWhite 
-                  title="다음" 
-                  onPress={handleSubmit} 
+                <ButtonWhite
+                  title="다음"
+                  onPress={handleSubmit}
                   backgroundColor={COLORS.primary_blue}
                   textColor={COLORS.grayscale_0}
                 />
