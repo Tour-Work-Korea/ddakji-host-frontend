@@ -62,6 +62,28 @@ target 'ddakjiHostApp' do
         config.build_settings['ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES'] = 'NO'
         # (선택) 변경되지 않은 프레임워크 스킵 옵션
         config.build_settings['CP_NO_UNCHANGED_FRAMEWORKS'] = 'YES'
+
+        if target.name == 'fmt'
+          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
+          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'FMT_USE_CONSTEVAL=0'
+        end
+      end
+    end
+
+    fmt_base_header = File.join(installer.sandbox.root.to_s, 'fmt/include/fmt/base.h')
+    if File.exist?(fmt_base_header)
+      contents = File.read(fmt_base_header)
+      unless contents.include?('#ifndef FMT_USE_CONSTEVAL')
+        contents.gsub!(
+          "// Detect consteval, C++20 constexpr extensions and std::is_constant_evaluated.\n#if !defined(__cpp_lib_is_constant_evaluated)",
+          "// Detect consteval, C++20 constexpr extensions and std::is_constant_evaluated.\n#ifndef FMT_USE_CONSTEVAL\n#if !defined(__cpp_lib_is_constant_evaluated)"
+        )
+        contents.gsub!(
+          "#  define FMT_USE_CONSTEVAL 0\n#endif\n#if FMT_USE_CONSTEVAL",
+          "#  define FMT_USE_CONSTEVAL 0\n#endif\n#endif\n#if FMT_USE_CONSTEVAL"
+        )
+        File.chmod(0644, fmt_base_header)
+        File.write(fmt_base_header, contents)
       end
     end
 

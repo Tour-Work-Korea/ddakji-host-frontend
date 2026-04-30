@@ -366,6 +366,7 @@ const HostHome = () => {
                   <Text
                     style={[
                       FONTS.fs_14_semibold,
+                      styles.noticeBadgeText,
                       styles.noticeBadgeTextVariants[notice.categoryCode] ||
                       styles.noticeBadgeBlueText,
                     ]}>

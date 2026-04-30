@@ -1,4 +1,4 @@
-import {StyleSheet} from 'react-native';
+import {Platform, StyleSheet} from 'react-native';
 
 import {COLORS} from '@constants/colors';
 import {FONTS} from '@constants/fonts';
@@ -20,12 +20,22 @@ export default StyleSheet.create({
     width: 60,
     height: 32,
     borderRadius: 100,
-    paddingVertical: 8,
+    paddingVertical: Platform.OS === 'ios' ? 8 : 0,
     paddingHorizontal: 12,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
     marginBottom: 16,
+  },
+  badgeText: {
+    ...Platform.select({
+      android: {
+        lineHeight: 18,
+        includeFontPadding: false,
+        width: 80,
+      },
+    }),
+    textAlign: 'center',
   },
   badgeBlue: {
     backgroundColor: COLORS.secondary_blue,

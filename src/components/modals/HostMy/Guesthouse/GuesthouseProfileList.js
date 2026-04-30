@@ -31,6 +31,7 @@ const GuesthouseProfileList = ({
       onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose}>
         <Pressable style={[styles.container, style]} onPress={() => {}}>
+          <Text style={[FONTS.fs_16_semibold, styles.modalTitle]}>내 게스트하우스 목록</Text>
           <View style={styles.rowBorder}>
             {items.map((item, index) => {
               const isSelected = selectedId === item.id;
@@ -105,16 +106,23 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   container: {
     backgroundColor: COLORS.grayscale_0,
-    borderRadius: 16,
-    padding: 20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 24,
+    paddingBottom: 40,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowOffset: {width: 0, height: -2},
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  modalTitle: {
+    color: COLORS.grayscale_900,
+    marginBottom: 16,
   },
 
   rowBorder: {

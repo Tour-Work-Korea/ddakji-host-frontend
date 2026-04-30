@@ -161,6 +161,7 @@ const NoticeList = () => {
           <Text
             style={[
               FONTS.fs_14_semibold,
+              styles.badgeText,
               styles.badgeTextVariants[notice.categoryCode] || styles.badgeBlueText,
             ]}>
             {notice.category}
