@@ -8033,6 +8033,11 @@ react-native-screens@^4.10.0, "react-native-screens@>= 4.0.0":
     react-freeze "^1.0.0"
     warn-once "^0.1.0"
 
+react-native-signature-canvas@^5.0.2:
+  version "5.0.2"
+  resolved "https://registry.yarnpkg.com/react-native-signature-canvas/-/react-native-signature-canvas-5.0.2.tgz#33d6b4ceb9ecf8fb51f3747dc3293615713e2771"
+  integrity sha512-AYtXhuz8i5KcdOQBzbmQZGxeol9RCqYxvJGCBDTd0MJ6WiBsanjH4vH3Ft4C2MP7fYrAKyZCZPA0Ea066uEiMw==
+
 react-native-skeleton-placeholder@^5.2.4:
   version "5.2.4"
   resolved "https://registry.npmjs.org/react-native-skeleton-placeholder/-/react-native-skeleton-placeholder-5.2.4.tgz"

@@ -59,26 +59,32 @@ export default StyleSheet.create({
     marginRight: 4,
     maxWidth: 220,
   },
-  tabRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  tabScrollView: {
+    flexGrow: 0,
+    flexShrink: 0,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.grayscale_200,
   },
+  tabRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+  },
   tabItem: {
-    flex: 1,
-    paddingVertical: 12,
+    minWidth: 76,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
     alignItems: 'center',
   },
   tabItemActive: {
-    borderBottomColor: COLORS.primary_orange,
+    borderBottomColor: COLORS.primary_blue,
   },
   tabText: {
     color: COLORS.grayscale_500,
   },
   tabTextActive: {
-    color: COLORS.primary_orange,
+    color: COLORS.primary_blue,
   },
 });

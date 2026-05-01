@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   Keyboard,
   Text,
@@ -37,6 +37,7 @@ const RESERVATION_STATUS_MAP = {
   취소: 'CANCELLED',
   완료: 'COMPLETED',
 };
+const DATE_STRING_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 const ReservationManagement = ({guesthouseId}) => {
   const getTodayLocalDate = () => {
@@ -72,6 +73,8 @@ const ReservationManagement = ({guesthouseId}) => {
   const [hasNextPage, setHasNextPage] = useState(false);
   const [isReservationsLoading, setIsReservationsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const hasResolvedInitialDateRef = useRef(false);
+  const latestReservationSearchRequestRef = useRef(0);
 
   const searchFilterOptions = ['예약자명', '예약자 전화번호', '예약번호'];
   const reservationStatusOptions = ['전체', '대기', '확정', '취소', '완료'];
@@ -81,6 +84,11 @@ const ReservationManagement = ({guesthouseId}) => {
       selectedColor: COLORS.primary_orange,
     },
   };
+
+  const updateSelectedDate = useCallback(date => {
+    hasResolvedInitialDateRef.current = true;
+    setSelectedDate(date);
+  }, []);
 
   const handleSelectSearchFilter = option => {
     setSelectedSearchFilter(option);
@@ -125,8 +133,12 @@ const ReservationManagement = ({guesthouseId}) => {
 
   const requestReservationSearch = useCallback(
     async (formData, options = {append: false}) => {
-      if (!guesthouseId) return;
+      if (!guesthouseId) {
+        return;
+      }
       const isAppend = !!options?.append;
+      const requestId = latestReservationSearchRequestRef.current + 1;
+      latestReservationSearchRequestRef.current = requestId;
 
       if (isAppend) {
         setIsLoadingMore(true);
@@ -144,9 +156,26 @@ const ReservationManagement = ({guesthouseId}) => {
           [];
         const totalCount = Number(payload?.totalCount);
         const targetCount = Number(payload?.targetDateCount);
+        const nearestFutureReservationDate = payload?.nearestFutureReservationDate;
         const next = Boolean(payload?.hasNext);
         const page = Number(payload?.currentPage);
         const safeContent = Array.isArray(content) ? content : [];
+
+        if (requestId !== latestReservationSearchRequestRef.current) {
+          return;
+        }
+
+        if (
+          !isAppend &&
+          !hasResolvedInitialDateRef.current &&
+          Number.isFinite(targetCount) &&
+          targetCount === 0 &&
+          DATE_STRING_PATTERN.test(nearestFutureReservationDate ?? '')
+        ) {
+          hasResolvedInitialDateRef.current = true;
+          setSelectedDate(nearestFutureReservationDate);
+          return;
+        }
 
         setReservations(prev => (isAppend ? [...prev, ...safeContent] : safeContent));
         if (Number.isFinite(totalCount)) {
@@ -162,6 +191,10 @@ const ReservationManagement = ({guesthouseId}) => {
         setHasNextPage(next);
         setCurrentPage(Number.isFinite(page) ? page : formData?.page ?? DEFAULT_PAGE);
       } catch (error) {
+        if (requestId !== latestReservationSearchRequestRef.current) {
+          return;
+        }
+
         if (!isAppend) {
           setReservations([]);
           setReservationTotalCount(0);
@@ -170,6 +203,10 @@ const ReservationManagement = ({guesthouseId}) => {
           setCurrentPage(DEFAULT_PAGE);
         }
       } finally {
+        if (requestId !== latestReservationSearchRequestRef.current) {
+          return;
+        }
+
         if (isAppend) {
           setIsLoadingMore(false);
         } else {
@@ -221,7 +258,9 @@ const ReservationManagement = ({guesthouseId}) => {
 
   useFocusEffect(
     useCallback(() => {
-      if (!guesthouseId) return;
+      if (!guesthouseId) {
+        return;
+      }
 
       requestReservationSearch(buildReservationSearchParams(DEFAULT_PAGE), {
         append: false,
@@ -233,10 +272,12 @@ const ReservationManagement = ({guesthouseId}) => {
     ]),
   );
 
-  const refreshReservations = useCallback(() => {
-    if (!guesthouseId) return;
+  const refreshReservations = useCallback(async () => {
+    if (!guesthouseId) {
+      return;
+    }
 
-    requestReservationSearch(buildReservationSearchParams(DEFAULT_PAGE), {
+    await requestReservationSearch(buildReservationSearchParams(DEFAULT_PAGE), {
       append: false,
     });
   }, [guesthouseId, buildReservationSearchParams, requestReservationSearch]);
@@ -260,7 +301,7 @@ const ReservationManagement = ({guesthouseId}) => {
           <View style={styles.dateSelectBox}>
             <TouchableOpacity
               onPress={() => {
-                setSelectedDate(prev => shiftDate(prev, -1));
+                updateSelectedDate(shiftDate(selectedDate, -1));
                 setIsCalendarOpen(false);
               }}>
               <ChevronLeft width={24} height={24} />
@@ -277,7 +318,7 @@ const ReservationManagement = ({guesthouseId}) => {
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => {
-                setSelectedDate(prev => shiftDate(prev, 1));
+                updateSelectedDate(shiftDate(selectedDate, 1));
                 setIsCalendarOpen(false);
               }}>
               <ChevronRight width={24} height={24} />
@@ -291,7 +332,7 @@ const ReservationManagement = ({guesthouseId}) => {
                 {...CALENDAR_COMMON_PROPS}
                 markedDates={markedDates}
                 onDayPress={day => {
-                  setSelectedDate(day.dateString);
+                  updateSelectedDate(day.dateString);
                   setIsCalendarOpen(false);
                 }}
                 theme={CALENDAR_THEME}

@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {ScrollView, Text, TouchableOpacity, View} from 'react-native';
 
 import {FONTS} from '@constants/fonts';
@@ -11,8 +11,16 @@ import styles from './RoomReservation.styles';
 
 const chips = ['예약 관리', '예약 캘린더', '방관리', '객실 목록', '알림 설정'];
 
-const RoomReservation = ({guesthouseId}) => {
-  const [activeChip, setActiveChip] = useState(chips[0]);
+const RoomReservation = ({guesthouseId, initialChip}) => {
+  const [activeChip, setActiveChip] = useState(
+    chips.includes(initialChip) ? initialChip : chips[0],
+  );
+
+  useEffect(() => {
+    if (chips.includes(initialChip)) {
+      setActiveChip(initialChip);
+    }
+  }, [initialChip]);
 
   return (
     <View style={styles.container}>

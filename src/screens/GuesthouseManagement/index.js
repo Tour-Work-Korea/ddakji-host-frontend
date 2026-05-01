@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 
 import { FONTS } from '@constants/fonts';
@@ -15,7 +15,8 @@ import notificationApi from '@utils/api/notificationApi';
 import PartyInfo from './PartyInfo';
 import PartyReservation from './PartyReservation';
 import RoomReservation from './RoomReservation';
-import LogoIcon from '@assets/images/logo_orange.svg';
+import Staff from './Staff';
+import LogoIcon from '@assets/images/logo_blue.svg';
 import BellIcon from '@assets/images/bell_gray.svg';
 import MenuIcon from '@assets/images/menu_gray.svg';
 import ChevronDownIcon from '@assets/images/chevron_down_gray.svg';
@@ -27,6 +28,7 @@ const INFO_TAB = '게하 정보';
 const ROOM_RESERVATION_TAB = '객실 예약';
 const PARTY_INFO_TAB = '파티 정보';
 const PARTY_RESERVATION_TAB = '파티 예약';
+const STAFF_TAB = '스탭';
 
 const tabs = [
   HOME_TAB,
@@ -34,6 +36,7 @@ const tabs = [
   ROOM_RESERVATION_TAB,
   PARTY_INFO_TAB,
   PARTY_RESERVATION_TAB,
+  STAFF_TAB,
 ];
 
 const RESERVATION_POLICY_TO_METHOD = {
@@ -49,6 +52,10 @@ const GuesthouseManagement = () => {
   const routeProfileKey = route.params?.profileKey;
   const routeBusinessName = route.params?.businessName || '게스트하우스';
   const routeReservationMethod = route.params?.reservationMethod;
+  const routeInitialTab = tabs.includes(route.params?.initialTab)
+    ? route.params.initialTab
+    : HOME_TAB;
+  const routeInitialChip = route.params?.initialChip;
   const initialProfileKey =
     routeProfileKey != null
       ? String(routeProfileKey)
@@ -62,7 +69,7 @@ const GuesthouseManagement = () => {
   const [guesthouseDetail, setGuesthouseDetail] = useState(null);
   const [hasPartyTemplate, setHasPartyTemplate] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [activeTab, setActiveTab] = useState(HOME_TAB);
+  const [activeTab, setActiveTab] = useState(routeInitialTab);
   const [selectedProfileKey, setSelectedProfileKey] = useState(initialProfileKey);
   const lastSyncedRouteProfileKeyRef = useRef(initialProfileKey);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -86,8 +93,14 @@ const GuesthouseManagement = () => {
     lastSyncedRouteProfileKeyRef.current = nextRouteProfileKey;
     setSelectedProfileKey(nextRouteProfileKey);
 
-    setActiveTab(HOME_TAB);
-  }, [initialProfileKey]);
+    setActiveTab(routeInitialTab);
+  }, [initialProfileKey, routeInitialTab]);
+
+  useEffect(() => {
+    if (tabs.includes(routeInitialTab)) {
+      setActiveTab(routeInitialTab);
+    }
+  }, [routeInitialTab]);
 
   useEffect(() => {
     if (!guesthouseProfiles.length) {
@@ -230,20 +243,32 @@ const GuesthouseManagement = () => {
   );
 
   useEffect(() => {
+    const isRouteRequestedTab =
+      routeInitialTab === activeTab && routeInitialTab !== HOME_TAB;
+
     if (
       !guesthouseDetail &&
       activeTab !== HOME_TAB &&
-      activeTab !== INFO_TAB
+      activeTab !== INFO_TAB &&
+      !isRouteRequestedTab
     ) {
       setActiveTab(HOME_TAB);
     }
-  }, [activeTab, guesthouseDetail]);
+  }, [activeTab, guesthouseDetail, routeInitialTab]);
 
   useEffect(() => {
-    if (activeTab === PARTY_RESERVATION_TAB && !hasPartyTemplate) {
+    const isRouteRequestedPartyReservationTab =
+      routeInitialTab === PARTY_RESERVATION_TAB &&
+      activeTab === PARTY_RESERVATION_TAB;
+
+    if (
+      activeTab === PARTY_RESERVATION_TAB &&
+      !hasPartyTemplate &&
+      !isRouteRequestedPartyReservationTab
+    ) {
       setActiveTab(HOME_TAB);
     }
-  }, [activeTab, hasPartyTemplate]);
+  }, [activeTab, hasPartyTemplate, routeInitialTab]);
 
   const businessName = selectedGuesthouse?.name || routeBusinessName;
   const thumbnailImage =
@@ -351,15 +376,21 @@ const GuesthouseManagement = () => {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.tabRow}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.tabScrollView}
+        contentContainerStyle={styles.tabRow}>
         {tabs.map(tab => {
           const isInactive = guesthouseDetail?.status === 'INACTIVE';
           const isPartyReservationTab = tab === PARTY_RESERVATION_TAB;
+          const isRouteRequestedTab = tab === routeInitialTab && activeTab === tab;
           const isDisabled =
-            (((!guesthouseDetail || isInactive) &&
-              tab !== HOME_TAB &&
-              tab !== INFO_TAB) ||
-              (isPartyReservationTab && !hasPartyTemplate));
+            (!isRouteRequestedTab &&
+              (((!guesthouseDetail || isInactive) &&
+                tab !== HOME_TAB &&
+                tab !== INFO_TAB) ||
+                (isPartyReservationTab && !hasPartyTemplate)));
 
           return (
             <TouchableOpacity
@@ -380,7 +411,7 @@ const GuesthouseManagement = () => {
             </TouchableOpacity>
           );
         })}
-      </View>
+      </ScrollView>
 
       {activeTab === HOME_TAB ? (
         <Home
@@ -400,14 +431,20 @@ const GuesthouseManagement = () => {
           guesthouseAddress={guesthouseAddress}
           routeGuesthouseId={routeGuesthouseId}
           effectiveGuesthouseId={effectiveGuesthouseId}
+          initialChip={routeInitialChip}
           onDelete={handleDelete}
         />
       ) : activeTab === ROOM_RESERVATION_TAB ? (
-        <RoomReservation guesthouseId={effectiveGuesthouseId} />
+        <RoomReservation
+          guesthouseId={effectiveGuesthouseId}
+          initialChip={routeInitialChip}
+        />
       ) : activeTab === PARTY_INFO_TAB ? (
         <PartyInfo guesthouseId={effectiveGuesthouseId} />
-      ) : (
+      ) : activeTab === PARTY_RESERVATION_TAB ? (
         <PartyReservation guesthouseId={effectiveGuesthouseId} />
+      ) : (
+        <Staff guesthouseId={effectiveGuesthouseId} />
       )}
 
       <GuesthouseProfileList

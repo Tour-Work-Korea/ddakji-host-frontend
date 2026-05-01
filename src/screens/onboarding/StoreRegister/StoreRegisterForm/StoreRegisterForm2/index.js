@@ -28,7 +28,7 @@ import styles from '../StoreRegisterForm.styles';
 import Photo from '@assets/images/Photo.svg';
 import NextIcon from '@assets/images/arrow_right_white.svg';
 import NextDisabledIcon from '@assets/images/arrow_right_black.svg';
-import Logo from '@assets/images/logo_orange.svg';
+import Logo from '@assets/images/logo_blue.svg';
 import { COLORS } from '@constants/colors';
 
 const StoreRegisterForm2 = ({ route }) => {
@@ -41,6 +41,9 @@ const StoreRegisterForm2 = ({ route }) => {
     guesthouseName: '',
     profileImg: '',
   });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [errorModal, setErrorModal] = useState({
     visible: false,
     title: '',
@@ -87,6 +90,8 @@ const StoreRegisterForm2 = ({ route }) => {
   };
 
   const handleSubmit = async () => {
+    if (isSubmitting) return;
+
     const validationErrors = validateStoreForm(formData);
 
     if (validationErrors.length > 0) {
@@ -97,15 +102,19 @@ const StoreRegisterForm2 = ({ route }) => {
       return;
     }
 
+    setIsSubmitting(true);
+
     const form = new FormData();
     const dto = {
       name: formData.name,
-      employeeCount: 0,
-      address: formData.address,
       managerName: hostProfile?.name ?? '',
       managerEmail: hostProfile?.email ?? '',
-      businessPhone: formData.businessPhone,
-      businessType: formData.businessType,
+      // --- 안 쓰는 항목들은 주석 처리해 둠 ---
+      // address: formData.address,
+      // businessType: formData.businessType,
+      // businessPhone: formData.businessPhone,
+      // employeeCount: 0,
+      // businessRegistrationNumber: '', // 새로 빼달라고 하신 사업자등록번호
     };
 
     form.append('dto', {
@@ -114,10 +123,26 @@ const StoreRegisterForm2 = ({ route }) => {
     });
 
     if (formData.img?.uri) {
-      form.append('img', {
+      form.append('businessCertificate', {
         uri: formData.img.uri,
         name: formData.img.name,
         type: formData.img.type,
+      });
+    }
+
+    if (formData.bankbookImg?.uri) {
+      form.append('bankbookCopy', {
+        uri: formData.bankbookImg.uri,
+        name: formData.bankbookImg.name,
+        type: formData.bankbookImg.type,
+      });
+    }
+
+    if (formData.licenseImg?.uri) {
+      form.append('businessReportCertificate', {
+        uri: formData.licenseImg.uri,
+        name: formData.licenseImg.name,
+        type: formData.licenseImg.type,
       });
     }
 
@@ -144,12 +169,18 @@ const StoreRegisterForm2 = ({ route }) => {
       });
     } catch (error) {
       console.warn('입점신청서 등록 실패:', error);
+      console.warn('에러 응답 상세:', error.response?.data);
+      
+      const errorMessage = error.response?.data?.message 
+        || error.response?.data?.error 
+        || '입점신청서 등록 중 오류가 발생했습니다.';
+
       setErrorModal({
         visible: true,
-        title:
-          error?.response?.data?.message ??
-          '입점신청서 등록 중 오류가 발생했습니다',
+        title: typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage),
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -233,15 +264,16 @@ const StoreRegisterForm2 = ({ route }) => {
                     styles.addButtonLocation,
                     !isNextEnabled && styles.addButtonDisable,
                   ]}
+                  disabled={isSubmitting}
                   onPress={handleSubmit}>
                   <Text
                     style={[
                       styles.addButtonText,
                       !isNextEnabled && styles.addButtonTextDisable,
                     ]}>
-                    등록하기
+                    {isSubmitting ? '등록 중...' : '등록하기'}
                   </Text>
-                  {isNextEnabled ? (
+                  {isNextEnabled && !isSubmitting ? (
                     <NextIcon width={24} height={24} />
                   ) : (
                     <NextDisabledIcon width={24} height={24} />

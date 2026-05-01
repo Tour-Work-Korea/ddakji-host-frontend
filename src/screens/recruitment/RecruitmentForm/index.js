@@ -40,6 +40,9 @@ const sections = [
 ];
 
 const RecruitmentForm = ({route}) => {
+  const fixedGuesthouseId = Number(route.params?.guesthouseId);
+  const hasFixedGuesthouse = Number.isInteger(fixedGuesthouseId) && fixedGuesthouseId > 0;
+  const returnToStaffTab = route.params?.returnToStaffTab === true;
   const [formData, setFormData] = useState({
     recruitTitle: '',
     recruitShortDescription: '',
@@ -60,10 +63,17 @@ const RecruitmentForm = ({route}) => {
     recruitDetail: '',
     recruitImage: [],
     hashtags: [],
-    guesthouseId: 0,
+    guesthouseId: hasFixedGuesthouse ? fixedGuesthouseId : 0,
   });
   const recruitId = route.params?.recruitId ?? null;
   const navigation = useNavigation();
+  const visibleSections = useMemo(
+    () =>
+      hasFixedGuesthouse
+        ? sections.filter(section => section.id !== 'guesthouse')
+        : sections,
+    [hasFixedGuesthouse],
+  );
   const [errorModal, setErrorModal] = useState({
     visible: false,
     title: '',
@@ -95,6 +105,17 @@ const RecruitmentForm = ({route}) => {
   useEffect(() => {
     setValid(computeValidSections(formData));
   }, [formData]);
+
+  useEffect(() => {
+    if (!hasFixedGuesthouse) {
+      return;
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      guesthouseId: fixedGuesthouseId,
+    }));
+  }, [fixedGuesthouseId, hasFixedGuesthouse]);
 
   useEffect(() => {
     const toDate = v => (v ? new Date(v) : null);
@@ -142,14 +163,16 @@ const RecruitmentForm = ({route}) => {
         recruitImage: r.recruitImages ?? [],
         recruitDetail: r.recruitDetail ?? '',
         hashtags: (r.hashtags ?? []).map(t => t.id),
-        guesthouseId: r.guesthouseId ?? 0,
+        guesthouseId: hasFixedGuesthouse
+          ? fixedGuesthouseId
+          : r.guesthouseId ?? 0,
       }));
     };
 
     if (recruitId) {
       getPrevRecruit(recruitId);
     }
-  }, []);
+  }, [fixedGuesthouseId, hasFixedGuesthouse, recruitId]);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -180,6 +203,24 @@ const RecruitmentForm = ({route}) => {
         title: '새로운 공고를 등록했습니다',
         buttonText: '확인',
       });
+      if (returnToStaffTab) {
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [
+              {
+                name: 'GuesthouseManagement',
+                params: {
+                  guesthouseId: fixedGuesthouseId,
+                  initialTab: '스탭',
+                },
+              },
+            ],
+          }),
+        );
+        return;
+      }
+
       navigation.dispatch(
         CommonActions.reset({
           index: 1,
@@ -200,7 +241,7 @@ const RecruitmentForm = ({route}) => {
 
   return (
     <KeyboardAvoidingView
-      style={{flex: 1}}
+      style={styles.keyboardAvoidingView}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={80} // 헤더 등 높이에 따라 조정
     >
@@ -237,7 +278,7 @@ const RecruitmentForm = ({route}) => {
                 <></>
               )}
             </TouchableOpacity>
-            {sections.map(item => (
+            {visibleSections.map(item => (
               <TouchableOpacity
                 key={item.id}
                 style={styles.sectionBox}
@@ -264,16 +305,16 @@ const RecruitmentForm = ({route}) => {
               <TouchableOpacity
                 style={[
                   styles.addButton,
-                  isAllValid && {backgroundColor: COLORS.primary_orange},
+                  isAllValid && styles.addButtonActive,
                 ]}
                 disabled={!isAllValid}
                 onPress={handleSubmit}
                 accessibilityState={{disabled: !isAllValid}}>
                 <Text
-                  style={
-                    (styles.addButtonText,
-                    isAllValid && {color: COLORS.grayscale_0})
-                  }>
+                  style={[
+                    styles.addButtonText,
+                    isAllValid && styles.addButtonTextActive,
+                  ]}>
                   등록하기
                 </Text>
                 {!isAllValid ? (
@@ -291,17 +332,19 @@ const RecruitmentForm = ({route}) => {
             />
 
             {/* 게스트하우스 모달 */}
-            <GuesthouseModal
-              handleInputChange={handleInputChange}
-              formData={formData}
-              visible={modalVisible.guesthouse}
-              onClose={() =>
-                setModalVisible(prev => ({
-                  ...prev,
-                  guesthouse: !prev.guesthouse,
-                }))
-              }
-            />
+            {!hasFixedGuesthouse ? (
+              <GuesthouseModal
+                handleInputChange={handleInputChange}
+                formData={formData}
+                visible={modalVisible.guesthouse}
+                onClose={() =>
+                  setModalVisible(prev => ({
+                    ...prev,
+                    guesthouse: !prev.guesthouse,
+                  }))
+                }
+              />
+            ) : null}
             {/* 공고 요약 */}
             <ShortDescriptionModal
               handleInputChange={handleInputChange}

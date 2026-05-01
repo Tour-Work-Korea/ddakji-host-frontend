@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
   // 게하 추가 버튼
   addButton: {
     alignItems: 'center',
-    backgroundColor: COLORS.primary_orange,
+    backgroundColor: COLORS.primary_blue,
     flexDirection: 'row',
     paddingVertical: 8,
     paddingHorizontal: 12,

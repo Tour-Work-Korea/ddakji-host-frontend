@@ -10,6 +10,7 @@ import {
 import {FONTS} from '@constants/fonts';
 import {COLORS} from '@constants/colors';
 import ButtonScarlet from '@components/ButtonScarlet';
+import CloseIcon from '@assets/images/x_gray.svg';
 
 const PrevRecruitModal = ({visible, items = [], onClose, onPick}) => {
   const [selectedId, setSelectedId] = useState();
@@ -65,9 +66,19 @@ const PrevRecruitModal = ({visible, items = [], onClose, onPick}) => {
       onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View style={styles.container}>
-          <Text style={[FONTS.fs_16_semibold, styles.title]}>
-            불러올 공고를 선택해주세요
-          </Text>
+          <View style={styles.header}>
+            <View style={styles.closeButtonPlaceholder} />
+            <Text style={[FONTS.fs_16_semibold, styles.title]}>
+              불러올 공고를 선택해주세요
+            </Text>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              style={styles.closeButton}
+              onPress={onClose}
+              hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+              <CloseIcon width={20} height={20} />
+            </TouchableOpacity>
+          </View>
 
           <FlatList
             data={items}
@@ -114,7 +125,27 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   primaryText: {color: COLORS.grayscale_600, ...FONTS.fs_12_medium},
-  title: {color: COLORS.grayscale_900, textAlign: 'center', marginBottom: 12},
+  header: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  title: {
+    flex: 1,
+    color: COLORS.grayscale_900,
+    textAlign: 'center',
+  },
+  closeButtonPlaceholder: {
+    width: 28,
+    height: 28,
+  },
+  closeButton: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   secondaryText: {color: COLORS.grayscale_500, ...FONTS.fs_12_medium},
   titleText: {color: COLORS.grayscale_800, ...FONTS.fs_14_medium},
   overlay: {

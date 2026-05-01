@@ -11,7 +11,6 @@ import styles from './Certificate.styles';
 import ButtonWhite from '@components/ButtonWhite';
 import ButtonScarletLogo from '@components/ButtonScarletLogo';
 import AlertModal from '@components/modals/AlertModal';
-import LogoOrange from '@assets/images/logo_orange.svg';
 import LogoBlue from '@assets/images/logo_blue.svg';
 import {COLORS} from '@constants/colors';
 import {useFocusEffect} from '@react-navigation/native';
@@ -39,7 +38,7 @@ export const Email = ({user, onPress}) => {
 
    // 사장님 분기
   const isHost = user === 'HOST';
-  const MainLogo = isHost ? LogoBlue : LogoOrange;
+  const MainLogo = LogoBlue;
   const mainColor = isHost
     ? COLORS.primary_blue
     : COLORS.primary_orange;

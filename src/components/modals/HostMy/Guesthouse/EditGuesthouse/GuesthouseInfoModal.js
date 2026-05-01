@@ -309,13 +309,22 @@ const GuesthouseInfoModal = ({
               도로명 주소 또는 지번 주소를 정확히 입력해주세요.{'\n'}(지도에서 검색 가능한 주소)
             </Text>
             <View style={styles.radioRow}>
-              <TextInput
-                placeholder="주소를 입력해 주세요"
-                value={address}
-                onChangeText={setAddress}
-                placeholderTextColor={COLORS.grayscale_400}
-                style={styles.input}
-              />
+              <View style={[styles.radioBtn]}>
+                <TextInput
+                  placeholder="주소를 입력해 주세요"
+                  value={address}
+                  onChangeText={setAddress}
+                  placeholderTextColor={COLORS.grayscale_400}
+                  style={styles.input}
+                  editable={false}
+                />
+                <TouchableOpacity
+                  style={styles.searchBtn}
+                  onPress={() => setAddressSearchVisible(true)}
+                >
+                  <Text style={[FONTS.fs_14_medium, styles.searchBtnText]}>주소 검색</Text>
+                </TouchableOpacity>
+              </View>
               <View style={[styles.radioBtn]}>
                 <TextInput
                   placeholder="상세 주소를 입력해 주세요"
@@ -324,12 +333,6 @@ const GuesthouseInfoModal = ({
                   style={styles.input}
                   placeholderTextColor={COLORS.grayscale_400}
                 />
-                <TouchableOpacity
-                  style={styles.searchBtn}
-                  onPress={() => setAddressSearchVisible(true)}
-                >
-                  <Text style={[FONTS.fs_14_medium, styles.searchBtnText]}>주소 검색</Text>
-                </TouchableOpacity>
               </View>
             </View>
 
@@ -502,7 +505,7 @@ const styles = StyleSheet.create({
   searchBtn: {
     position: 'absolute',
     right: 4,
-    backgroundColor: COLORS.primary_orange,
+    backgroundColor: COLORS.primary_blue,
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 100,

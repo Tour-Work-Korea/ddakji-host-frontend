@@ -70,9 +70,6 @@ export const validateRegisterProfile = form => {
 export const validateHostRegister = form => {
   return {
     name: form.name?.trim().length > 0,
-    bussinessNum:
-      form.bussinessNum?.trim().length === 10 &&
-      /^\d{10}$/.test(form.bussinessNum),
     password: {
       hasUpperLowercase:
         hasUppercase(form.password) && hasLowercase(form.password),

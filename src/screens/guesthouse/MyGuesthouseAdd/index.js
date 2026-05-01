@@ -13,6 +13,7 @@ import styles from './MyGuesthouseAdd.styles';
 import { FONTS } from '@constants/fonts';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
 import useGuesthouseMetaStore from '@stores/guesthouseMetaStore';
+import {resolveAmenityMetas} from '@utils/guesthouseMeta';
 import Header from '@components/Header';
 import GuesthouseInfoModal from '@components/modals/HostMy/Guesthouse/AddGuesthouse/GuesthouseInfoModal';
 import GuesthouseIntroSummaryModal from '@components/modals/HostMy/Guesthouse/AddGuesthouse/GuesthouseIntroSummaryModal';
@@ -231,7 +232,6 @@ const MyGuesthouseAdd = () => {
           roomMaxCapacity,
           roomDesc: room?.roomDesc ?? '',
           roomPrice: Number(room?.roomPrice),
-          roomExtraFees: Array.isArray(room?.roomExtraFees) ? room.roomExtraFees : [],
           roomImages: Array.isArray(room?.roomImages) ? room.roomImages : [],
         };
       };
@@ -309,13 +309,10 @@ const MyGuesthouseAdd = () => {
     const previewHashtags = guesthouseHashtags.filter(tag =>
       guesthouse.hashtagIds.includes(tag.id),
     );
-    const previewAmenities = guesthouse.amenities
-      .map(item =>
-        guesthouseAmenities.find(
-          amenity => amenity.id === item?.amenityId,
-        ),
-      )
-      .filter(Boolean);
+    const previewAmenities = resolveAmenityMetas(
+      guesthouse.amenities,
+      guesthouseAmenities,
+    );
 
     navigation.navigate('MyGuesthousePreview', {
       hideEditButton: true,

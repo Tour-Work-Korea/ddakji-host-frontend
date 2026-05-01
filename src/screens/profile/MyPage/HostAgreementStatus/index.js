@@ -1,4 +1,4 @@
-import React, {useCallback, useState} from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -7,25 +7,31 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {useFocusEffect} from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
-import {Buffer} from 'buffer';
+import { Buffer } from 'buffer';
 
+import useUserStore from '@stores/userStore';
 import Header from '@components/Header';
-import {FONTS} from '@constants/fonts';
-import {COLORS} from '@constants/colors';
+import GuesthouseProfileList from '@components/modals/HostMy/Guesthouse/GuesthouseProfileList';
+import ChevronDownIcon from '@assets/images/chevron_down_gray.svg';
+import ChevronUpIcon from '@assets/images/chevron_up_gray.svg';
+import { FONTS } from '@constants/fonts';
+import { COLORS } from '@constants/colors';
 import hostDocumentApi from '@utils/api/hostDocumentApi';
-import {formatLocalDateToDot} from '@utils/formatDate';
-import {openWebLink} from '@utils/openWebLink';
+import { formatLocalDateToDot } from '@utils/formatDate';
+import { openWebLink } from '@utils/openWebLink';
 import {
   HOST_DOCUMENT_LABELS,
   HOST_DOCUMENT_TYPES,
 } from '@constants/documentTypes';
-import {useNavigation} from '@react-navigation/native';
+import { useGuesthouseProfiles } from '@hooks/useGuesthouseProfiles';
+import { useNavigation } from '@react-navigation/native';
 import styles from './HostAgreementStatus.styles';
 
 const DEFAULT_DOCUMENTS = Object.values(HOST_DOCUMENT_TYPES).map(type => ({
   documentType: type,
+  available: false,
 }));
 
 const HostAgreementStatus = () => {
@@ -33,14 +39,48 @@ const HostAgreementStatus = () => {
   const [documents, setDocuments] = useState(DEFAULT_DOCUMENTS);
   const [isLoading, setIsLoading] = useState(true);
 
+  const [isGuesthouseListVisible, setIsGuesthouseListVisible] = useState(false);
+  const { guesthouseProfiles } = useGuesthouseProfiles();
+
+  const hostProfile = useUserStore(state => state.hostProfile);
+  const selectedGuesthouseId = useUserStore(state => state.selectedGuesthouseId);
+  const setSelectedGuesthouseId = useUserStore(state => state.setSelectedGuesthouseId);
+
+  const selectedProfile = useMemo(() => {
+    if (!hostProfile?.guesthouseProfiles) return null;
+    return hostProfile.guesthouseProfiles.find(
+      p => String(p.guesthouseId) === String(selectedGuesthouseId) || String(p.profileKey) === String(selectedGuesthouseId)
+    ) || hostProfile.guesthouseProfiles[0];
+  }, [hostProfile, selectedGuesthouseId]);
+
+  const applicationId = selectedProfile?.applicationId;
+  const businessName = selectedProfile?.guesthouseName || '게스트하우스';
+
+  const handleSelectProfile = item => {
+    setSelectedGuesthouseId(item.id);
+    setIsGuesthouseListVisible(false);
+  };
+
   const fetchDocuments = useCallback(async () => {
+    if (!applicationId) {
+      setDocuments(DEFAULT_DOCUMENTS);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
-      const response = await hostDocumentApi.getMyDocuments();
-      const nextDocuments =
-        Array.isArray(response?.data?.items) && response.data.items.length > 0
-        ? response.data.items
-        : DEFAULT_DOCUMENTS;
+      const response = await hostDocumentApi.getMyDocuments(applicationId);
+      console.log('GET /host/my/documents/applications API Response:', response?.data);
+
+      const fetchedItems = Array.isArray(response?.data?.items) ? response.data.items : [];
+      
+      const nextDocuments = DEFAULT_DOCUMENTS.map(defaultDoc => {
+        const found = fetchedItems.find(
+          item => item.documentType === defaultDoc.documentType
+        );
+        return found ? { ...defaultDoc, ...found } : defaultDoc;
+      });
 
       setDocuments(nextDocuments);
     } catch (error) {
@@ -54,7 +94,7 @@ const HostAgreementStatus = () => {
   useFocusEffect(
     useCallback(() => {
       fetchDocuments();
-    }, [fetchDocuments]),
+    }, [fetchDocuments, applicationId]),
   );
 
   const resolveDocumentLink = response => {
@@ -76,7 +116,7 @@ const HostAgreementStatus = () => {
 
   const handleOpenDocument = async (documentType, documentTitle) => {
     try {
-      const response = await hostDocumentApi.getDocumentViewLink(documentType);
+      const response = await hostDocumentApi.getDocumentViewLink(documentType, applicationId);
       const link = resolveDocumentLink(response);
 
       if (!link) {
@@ -101,7 +141,7 @@ const HostAgreementStatus = () => {
 
   const handleDownloadDocument = async (documentType, documentTitle) => {
     try {
-      const response = await hostDocumentApi.downloadDocument(documentType);
+      const response = await hostDocumentApi.downloadDocument(documentType, applicationId);
       const contentType =
         response?.headers?.['content-type'] || 'application/octet-stream';
       const disposition = response?.headers?.['content-disposition'] || '';
@@ -131,7 +171,7 @@ const HostAgreementStatus = () => {
     }
   };
 
-  const renderItem = ({item, index}) => {
+  const renderItem = ({ item, index }) => {
     const documentType = item?.documentType;
     const documentLabel =
       item?.title || HOST_DOCUMENT_LABELS[documentType] || documentType || '문서';
@@ -196,7 +236,24 @@ const HostAgreementStatus = () => {
 
   return (
     <View style={styles.container}>
-      <Header title="계약서 및 개인정보 동의 현황" />
+      <Header title="계약 현황" />
+
+      {/* Guesthouse Selector */}
+      <View style={{ paddingHorizontal: 20, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: COLORS.grayscale_200 }}>
+        <TouchableOpacity
+          style={{ flexDirection: 'row', alignItems: 'center' }}
+          activeOpacity={0.8}
+          onPress={() => setIsGuesthouseListVisible(prev => !prev)}>
+          <Text style={[FONTS.fs_18_semibold, { color: COLORS.grayscale_900, marginRight: 4 }]} numberOfLines={1}>
+            {businessName}
+          </Text>
+          {isGuesthouseListVisible ? (
+            <ChevronUpIcon width={16} height={16} />
+          ) : (
+            <ChevronDownIcon width={16} height={16} />
+          )}
+        </TouchableOpacity>
+      </View>
 
       {isLoading ? (
         <View style={styles.loadingContainer}>
@@ -211,8 +268,21 @@ const HostAgreementStatus = () => {
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          ListFooterComponent={<View style={styles.listFooter} />}
         />
       )}
+
+      <GuesthouseProfileList
+        visible={isGuesthouseListVisible}
+        onClose={() => setIsGuesthouseListVisible(false)}
+        items={guesthouseProfiles}
+        selectedId={selectedProfile?.profileKey || selectedProfile?.guesthouseId || selectedGuesthouseId}
+        onSelect={handleSelectProfile}
+        onAdd={() => {
+          setIsGuesthouseListVisible(false);
+          navigation.navigate('StoreRegisterList');
+        }}
+      />
     </View>
   );
 };

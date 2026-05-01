@@ -196,7 +196,6 @@ const normalizeRooms = (list = []) =>
       dormitoryGenderType: normalizedDormitoryGenderType,
       femaleOnly: r.femaleOnly ?? false,
       roomPrice: r.roomPrice != null ? String(r.roomPrice) : '',
-      roomExtraFees: r.roomExtraFees ?? [],
     };
   });
 
@@ -375,7 +374,6 @@ const GuesthouseRoomModal = ({
       } else {
         const createPayload = {
           ...buildRoomBasicFull(cur),
-          roomExtraFees: Array.isArray(cur.roomExtraFees) ? cur.roomExtraFees : [],
           roomImages: (cur.roomImages || []).map(i => ({
             roomImageUrl: i.roomImageUrl,
             isThumbnail: !!i.isThumbnail,
@@ -705,7 +703,7 @@ const styles = StyleSheet.create({
     color: COLORS.grayscale_800,
   },
   submitButton: {
-    backgroundColor: COLORS.primary_orange,
+    backgroundColor: COLORS.primary_blue,
     alignItems: 'center',
     alignSelf: 'center',
     borderRadius: 100,

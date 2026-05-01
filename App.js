@@ -36,7 +36,7 @@ function SplashOverlay({onFinish}) {
     <View style={styles.splashOverlay}>
       <LottieView
         source={require('@assets/lottie/splash.json')}
-        style={{width: 180, height: 153}}
+        style={StyleSheet.absoluteFillObject}
         autoPlay
         loop={false}
         onAnimationFinish={onFinish}

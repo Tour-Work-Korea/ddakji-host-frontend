@@ -10,7 +10,7 @@ import useUserStore from '@stores/userStore';
 import authApi from '@utils/api/authApi';
 import { tryLogout } from '@utils/auth/login';
 
-import LogoIcon from '@assets/images/logo_orange.svg';
+import LogoIcon from '@assets/images/logo_blue.svg';
 import CloseIcon from '@assets/images/x_gray.svg';
 import GuesthouseIcon from '@assets/images/menu_guesthouse.svg';
 import MemberIcon from '@assets/images/menu_authority.svg';
@@ -71,7 +71,7 @@ const menuSections = [
   },
   {
     key: 'policy',
-    label: '등록 기준/ 정책',
+    label: '이용약관 및 정책',
     icon: PolicyIcon,
     routeName: 'Terms',
   },

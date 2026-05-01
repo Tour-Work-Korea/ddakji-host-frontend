@@ -10,18 +10,17 @@ import {
   Keyboard,
   Image,
 } from 'react-native';
-import {useEffect, useMemo, useState, useRef} from 'react';
+import {useEffect, useMemo, useState} from 'react';
 import {launchImageLibrary} from 'react-native-image-picker';
 import {useNavigation} from '@react-navigation/native';
 
 import AlertModal from '@components/modals/AlertModal';
-import AddressSearchModal from '@components/modals/AddressSearchModal';
 import {validateStoreForm1} from '@utils/validation/storeRegisterValidation';
 import {adaptiveCompressToJPEG} from '@utils/imageUploadHandler';
 import {hostStorRegisterAgrees} from '@data/agree';
 import styles from '../StoreRegisterForm.styles';
 import {FONTS} from '@constants/fonts';
-import Logo from '@assets/images/logo_orange.svg';
+import Logo from '@assets/images/logo_blue.svg';
 import {COLORS} from '@constants/colors';
 import NextIcon from '@assets/images/arrow_right_white.svg';
 import NextDisabledIcon from '@assets/images/arrow_right_black.svg';
@@ -33,16 +32,12 @@ const StoreRegisterForm1 = () => {
   const navigation = useNavigation();
   const [formData, setFormData] = useState({
     name: '',
-    address: '',
     img: {uri: ''},
-    businessPhone: '',
-    businessType: '',
+    bankbookImg: {uri: ''},
+    licenseImg: {uri: ''},
   });
-  const [detailAddress, setDetailAddress] = useState('');
-  const detailAddressRef = useRef(null);
   const [agreements, setAgreements] = useState(hostStorRegisterAgrees);
   const [isAllAgreed, setIsAllAgreed] = useState(false);
-  const [addressSearchVisible, setAddressSearchVisible] = useState(false);
   const [errorModal, setErrorModal] = useState({
     visible: false,
     title: '',
@@ -89,7 +84,7 @@ const StoreRegisterForm1 = () => {
     </View>
   );
 
-  const pickImage = async () => {
+  const pickImage = async (field) => {
     const result = await launchImageLibrary({mediaType: 'photo'});
     if (!result.didCancel && result.assets?.length > 0) {
       const selected = result.assets[0];
@@ -106,15 +101,15 @@ const StoreRegisterForm1 = () => {
           stepQuality: 0.1,
         });
       } catch (error) {
-        console.warn('[StoreRegisterForm1] business cert compress failed:', error);
+        console.warn(`[StoreRegisterForm1] ${field} compress failed:`, error);
       }
 
       setFormData(prev => ({
         ...prev,
-        img: {
+        [field]: {
           uri: compressedUri,
           type: 'image/jpeg',
-          name: selected.fileName ?? 'business_cert.jpg',
+          name: selected.fileName ?? `${field}.jpg`,
         },
       }));
     }
@@ -142,7 +137,6 @@ const StoreRegisterForm1 = () => {
     navigation.navigate('StoreRegisterForm2', {
       prevData: {
         ...formData,
-        address: `${formData.address} ${detailAddress}`.trim(),
       },
     });
   };
@@ -167,9 +161,6 @@ const StoreRegisterForm1 = () => {
                     <Text style={styles.titleText}>
                       등록을 위한 필수 정보를 입력해주세요
                     </Text>
-                    <Text style={[FONTS.fs_14_medium, { color: COLORS.semantic_red, marginTop: 4 }]}>
-                      사업자등록증에 있는 정보로 작성해주세요
-                    </Text>
                   </View>
                 </View>
 
@@ -191,37 +182,27 @@ const StoreRegisterForm1 = () => {
                   </View>
 
                   <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>사업자 유형</Text>
-                    <View style={styles.inputBox}>
-                      <TextInput
-                        style={styles.textInput}
-                        placeholder="사업장 유형을 입력해주세요"
-                        placeholderTextColor={COLORS.grayscale_400}
-                        value={formData.businessType}
-                        onChangeText={text =>
-                          handleInputChange('businessType', text)
-                        }
-                      />
-                    </View>
-                  </View>
-
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>사업장 전화번호</Text>
-                    <View style={styles.inputBox}>
-                      <TextInput
-                        style={styles.textInput}
-                        value={formData.businessPhone}
-                        placeholder="-없이 입력해주세요"
-                        placeholderTextColor={COLORS.grayscale_400}
-                        onChangeText={text =>
-                          handleInputChange(
-                            'businessPhone',
-                            text.replace(/[^0-9]/g, ''),
-                          )
-                        }
-                        keyboardType="number-pad"
-                      />
-                    </View>
+                    <Text style={styles.inputLabel}>사업자 등록증 사본</Text>
+                    <Text style={styles.hintText}>
+                      주민등록번호 등 민감한 개인정보는 가리고 업로드해주세요.
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.documentUploadBox}
+                      onPress={() => pickImage('img')}
+                      activeOpacity={0.8}>
+                      {formData?.img?.uri ? (
+                        <Image
+                          source={{uri: formData.img.uri}}
+                          style={styles.photoBox}
+                          resizeMode="cover"
+                        />
+                      ) : (
+                        <View style={styles.photoContainer}>
+                          <Photo width={30} height={30} />
+                          <Text style={styles.imageUploadHint}>사진 업로드</Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
                   </View>
 
                   <View style={styles.inputContainer}>
@@ -237,7 +218,7 @@ const StoreRegisterForm1 = () => {
                       <TouchableOpacity
                         style={[
                           styles.inputButtonAbsolute,
-                          {backgroundColor: COLORS.primary_orange},
+                          {backgroundColor: COLORS.primary_blue},
                         ]}
                         onPress={() => setAddressSearchVisible(true)}>
                         <Text
@@ -263,24 +244,27 @@ const StoreRegisterForm1 = () => {
                   </View>
 
                   <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>사업자 등록증 업로드</Text>
-                    <View style={[styles.inputBox, styles.imageBox]}>
-                      <TouchableOpacity
-                        style={styles.photoBox}
-                        onPress={pickImage}>
-                        {formData?.img?.uri ? (
-                          <Image
-                            source={{uri: formData.img.uri}}
-                            style={styles.photoBox}
-                            resizeMode="cover"
-                          />
-                        ) : (
-                          <View style={styles.photoContainer}>
-                            <Photo width={30} height={30} />
-                          </View>
-                        )}
-                      </TouchableOpacity>
-                    </View>
+                    <Text style={styles.inputLabel}>영업 신고증 사본</Text>
+                    <Text style={styles.hintText}>
+                      최근 발급된 유효한 영업 신고증 사본을 업로드해주세요.
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.documentUploadBox}
+                      onPress={() => pickImage('licenseImg')}
+                      activeOpacity={0.8}>
+                      {formData?.licenseImg?.uri ? (
+                        <Image
+                          source={{uri: formData.licenseImg.uri}}
+                          style={styles.photoBox}
+                          resizeMode="cover"
+                        />
+                      ) : (
+                        <View style={styles.photoContainer}>
+                          <Photo width={30} height={30} />
+                          <Text style={styles.imageUploadHint}>사진 업로드</Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
                   </View>
 
                   <View style={styles.agreeGap}>
@@ -362,18 +346,6 @@ const StoreRegisterForm1 = () => {
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
-
-        <AddressSearchModal
-          visible={addressSearchVisible}
-          onClose={() => setAddressSearchVisible(false)}
-          onSelected={data => {
-            setFormData(prev => ({...prev, address: data.address}));
-            setAddressSearchVisible(false);
-            setTimeout(() => {
-              detailAddressRef.current?.focus();
-            }, 300);
-          }}
-        />
 
         <AlertModal
           visible={errorModal.visible}

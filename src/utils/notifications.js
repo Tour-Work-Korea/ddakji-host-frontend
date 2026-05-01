@@ -29,6 +29,29 @@ const normalizeNumber = value => {
   return Number.isNaN(parsed) ? null : parsed;
 };
 
+const normalizeNotificationPayload = notification => {
+  const data = notification?.data ?? notification ?? {};
+
+  return {
+    ...data,
+    title: data.title ?? notification?.notification?.title,
+    body: data.body ?? notification?.notification?.body,
+  };
+};
+
+const normalizeNotificationType = payload =>
+  String(payload?.type || payload?.targetType || '').toUpperCase();
+
+const getFallbackGuesthouseId = () => {
+  const {hostProfile, selectedGuesthouseId} = useUserStore.getState();
+
+  return (
+    normalizeNumber(selectedGuesthouseId) ??
+    normalizeNumber(hostProfile?.guesthouseProfiles?.[0]?.guesthouseId) ??
+    normalizeNumber(hostProfile?.guesthouseProfiles?.[0]?.profileKey)
+  );
+};
+
 const getCurrentAccessToken = () => useUserStore.getState().accessToken;
 
 export const subscribeForegroundNotification = listener => {
@@ -120,25 +143,59 @@ export const unmapDeviceToken = async jwtToken => {
   }
 };
 
-const resolveNotificationTarget = remoteMessage => {
-  const data = remoteMessage?.data ?? {};
-  const type = String(data.type || data.targetType || '').toUpperCase();
+export const markNotificationAsRead = async notification => {
+  const data = normalizeNotificationPayload(notification);
+  const notificationId =
+    normalizeNumber(data.notificationId) ??
+    normalizeNumber(data.alarmId) ??
+    normalizeNumber(data.id);
+
+  if (!notificationId) {
+    return false;
+  }
+
+  try {
+    await notificationApi.getDetail(notificationId);
+    return true;
+  } catch (error) {
+    console.warn(
+      '[notifications] markNotificationAsRead failed:',
+      error?.message,
+    );
+    return false;
+  }
+};
+
+export const resolveNotificationTarget = notification => {
+  const data = normalizeNotificationPayload(notification);
+  const type = normalizeNotificationType(data);
   const deepLink = data.deepLink || data.link || data.url || null;
   const explicitScreen = data.screen || data.targetScreen || data.routeName;
+  const isPartyNotification =
+    type.startsWith('PARTY_') ||
+    type.includes('PARTY') ||
+    type.includes('MEET');
+  const isRoomReservationNotification =
+    type.includes('GUESTHOUSE_RESERVATION') ||
+    type.includes('ROOM_RESERVATION') ||
+    (type.includes('RESERVATION') && !isPartyNotification);
+  const isRoomReservationRequestNotification =
+    isRoomReservationNotification && type.includes('NEW');
+  const guesthouseId = normalizeNumber(data.guesthouseId);
+  const fallbackGuesthouseId = guesthouseId ?? getFallbackGuesthouseId();
+  const roomId = normalizeNumber(data.roomId);
   const noticeId =
     normalizeNumber(data.noticeId) ??
-    normalizeNumber(data.targetId) ??
-    (type === 'NOTICE' ? normalizeNumber(data.id) : null);
+    (type === 'NOTICE' ? normalizeNumber(data.targetId) : null);
   const reservationId =
     normalizeNumber(data.reservationId) ??
-    (type.includes('RESERVATION') || type.includes('BOOKING')
-      ? normalizeNumber(data.id)
-      : null);
+    normalizeNumber(data.targetReservationId);
   const partyId =
-    normalizeNumber(data.partyId) ??
-    (type.includes('PARTY') || type.includes('MEET')
-      ? normalizeNumber(data.id)
-      : null);
+    normalizeNumber(data.partyId) ?? normalizeNumber(data.targetPartyId);
+  const reviewId =
+    normalizeNumber(data.reviewId) ?? normalizeNumber(data.targetReviewId);
+  const batchId =
+    normalizeNumber(data.batchId) ?? normalizeNumber(data.settlementId);
 
   if (deepLink) {
     return {kind: 'link', value: deepLink};
@@ -162,19 +219,87 @@ const resolveNotificationTarget = remoteMessage => {
     };
   }
 
-  if (reservationId) {
+  if ((type.includes('NOTICE') || type.includes('EVENT')) && guesthouseId) {
     return {
       kind: 'screen',
-      value: 'MyGuesthouseReservationDetail',
-      params: {reservationId},
+      value: 'GuesthouseManagement',
+      params: {guesthouseId},
     };
   }
 
-  if (partyId) {
+  if (type.includes('NOTICE') || type.includes('EVENT')) {
     return {
       kind: 'screen',
-      value: 'MyMeetDetail',
-      params: {partyId},
+      value: 'NoticeList',
+    };
+  }
+
+  if (isPartyNotification) {
+    return {
+      kind: 'screen',
+      value: 'GuesthouseManagement',
+      params: {
+        guesthouseId: fallbackGuesthouseId,
+        initialTab: '파티 예약',
+        reservationId,
+        partyId,
+      },
+    };
+  }
+
+  if (isRoomReservationRequestNotification && guesthouseId) {
+    return {
+      kind: 'screen',
+      value: 'GuesthouseManagement',
+      params: {
+        guesthouseId,
+        initialTab: '객실 예약',
+        initialChip: '예약 관리',
+        reservationId,
+        roomId,
+      },
+    };
+  }
+
+  if (reservationId && isRoomReservationNotification) {
+    return {
+      kind: 'screen',
+      value: 'MyGuesthouseReservationDetail',
+      params: {reservationId, guesthouseId, roomId},
+    };
+  }
+
+  if (type.includes('REVIEW') && guesthouseId) {
+    return {
+      kind: 'screen',
+      value: 'GuesthouseManagement',
+      params: {
+        guesthouseId,
+        initialTab: '게하 정보',
+        initialChip: '리뷰 관리',
+        reviewId,
+      },
+    };
+  }
+
+  if (type.includes('SETTLEMENT')) {
+    return {
+      kind: 'screen',
+      value: batchId ? 'SettlementDetail' : 'SettlementManagement',
+      params: batchId ? {batchId, guesthouseId} : {guesthouseId},
+    };
+  }
+
+  if (guesthouseId) {
+    return {
+      kind: 'screen',
+      value: 'GuesthouseManagement',
+      params: {
+        guesthouseId,
+        ...(isRoomReservationNotification
+          ? {initialTab: '객실 예약', initialChip: '예약 관리'}
+          : {}),
+      },
     };
   }
 
@@ -186,8 +311,16 @@ const resolveNotificationTarget = remoteMessage => {
 
 export const openNotificationTarget = async remoteMessage => {
   const target = resolveNotificationTarget(remoteMessage);
+  const data = normalizeNotificationPayload(remoteMessage);
+  const guesthouseId = normalizeNumber(data.guesthouseId);
 
   try {
+    await markNotificationAsRead(remoteMessage);
+
+    if (guesthouseId) {
+      useUserStore.getState().setSelectedGuesthouseId(guesthouseId);
+    }
+
     if (target.kind === 'link' && target.value) {
       await Linking.openURL(target.value);
       return;

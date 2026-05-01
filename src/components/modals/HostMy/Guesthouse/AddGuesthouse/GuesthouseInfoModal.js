@@ -167,7 +167,14 @@ const GuesthouseInfoModal = ({ visible, onClose, onSelect, shouldResetOnClose })
                   value={customAddress}
                   onChangeText={setCustomAddress}
                   style={styles.input}
+                  editable={false}
                 />
+                <TouchableOpacity
+                  style={styles.searchBtn}
+                  onPress={() => setAddressSearchVisible(true)}
+                >
+                  <Text style={[FONTS.fs_14_medium, styles.searchBtnText]}>주소 검색</Text>
+                </TouchableOpacity>
               </View>
               <View style={styles.radioBtn}>
                 <TextInput
@@ -176,12 +183,6 @@ const GuesthouseInfoModal = ({ visible, onClose, onSelect, shouldResetOnClose })
                   onChangeText={setCustomAddressDetail}
                   style={styles.input}
                 />
-                <TouchableOpacity
-                  style={styles.searchBtn}
-                  onPress={() => setAddressSearchVisible(true)}
-                >
-                  <Text style={[FONTS.fs_14_medium, styles.searchBtnText]}>주소 검색</Text>
-                </TouchableOpacity>
               </View>
             </View>
 
@@ -356,7 +357,7 @@ const styles = StyleSheet.create({
   searchBtn: {
     position: 'absolute',
     right: 4,
-    backgroundColor: COLORS.primary_orange,
+    backgroundColor: COLORS.primary_blue,
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 100,

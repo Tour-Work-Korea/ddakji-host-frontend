@@ -408,9 +408,10 @@ const styles = StyleSheet.create({
   horizontalRow: {
   },
   horizontalRadioRow: {
+    alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
   },
 
   // 가격
@@ -445,7 +446,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.grayscale_100,
   },
   applyButton: {
-    backgroundColor: COLORS.primary_orange,
+    backgroundColor: COLORS.primary_blue,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 100,
