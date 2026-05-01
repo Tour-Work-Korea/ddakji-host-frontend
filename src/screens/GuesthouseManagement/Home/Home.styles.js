@@ -221,8 +221,8 @@ export default StyleSheet.create({
     color: COLORS.grayscale_800,
   },
   reservationButtonPrimary: {
-    backgroundColor: COLORS.primary_orange,
-    borderColor: COLORS.primary_orange,
+    backgroundColor: COLORS.primary_blue,
+    borderColor: COLORS.primary_blue,
   },
   reservationButtonTextPrimary: {
     color: COLORS.grayscale_0,

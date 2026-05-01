@@ -20,7 +20,7 @@ import { navigate } from '@utils/navigationService';
 import notificationApi from '@utils/api/notificationApi';
 import { useFocusEffect } from '@react-navigation/native';
 
-import LogoIcon from '@assets/images/logo_orange.svg';
+import LogoIcon from '@assets/images/logo_blue.svg';
 import BellIcon from '@assets/images/bell_gray.svg';
 import MenuIcon from '@assets/images/menu_gray.svg';
 import RightArrowIcon from '@assets/images/chevron_right_gray.svg';

@@ -33,7 +33,7 @@ const AlertModal = ({
   buttonText2 = null, // 버튼 2개일 때 왼쪽 (회색 바탕에 검은 글씨)
   onPress, // 버튼 1개일 때 or 버튼 2개일 때 오른쪽
   onPress2 = null, // 버튼 2개일 때 왼쪽
-  color = COLORS.primary_orange, // buttonText의 배경색 (기본 주황색)
+  color = COLORS.primary_blue, // buttonText의 배경색 (기본 파란색)
   imageUri,
   imageSource,   // png/jpg 같은 이미지
   iconElement,   // SVG

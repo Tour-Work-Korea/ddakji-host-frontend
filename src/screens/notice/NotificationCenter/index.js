@@ -3,6 +3,7 @@ import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 import notificationApi from '@utils/api/notificationApi';
+import {openNotificationTarget} from '@utils/notifications';
 import { FONTS } from '@constants/fonts';
 import { COLORS } from '@constants/colors';
 import useUserStore from '@stores/userStore';
@@ -239,7 +240,7 @@ const NotificationCenter = () => {
     if (selectedGuesthouse) {
       result = result.filter(
         item =>
-          item.type === 'notice' || // 시스템 공지사항(notice) 타입만 전체 허용
+          (item.type === 'notice' && !item.guesthouseId) || // 게하 id가 없는 시스템 공지만 전체 허용
           (selectedGuesthouse.guesthouseId && String(item.guesthouseId) === String(selectedGuesthouse.guesthouseId))
       );
     }
@@ -271,36 +272,22 @@ const NotificationCenter = () => {
     }
   };
 
-  const handlePressItem = (item) => {
+  const handlePressItem = async (item) => {
     // 1. 알림 클릭 시 해당 알림의 게스트하우스 컨텍스트로 전역 상태 변경
     const targetGuesthouseId = item.guesthouseId || item.rawItem?.guesthouseId;
     if (targetGuesthouseId) {
       setSelectedGuesthouseId(targetGuesthouseId);
     }
 
-    // 2. 각 타입별 화면 이동
-    if (item.type === 'roomReservation') {
-      const reservationId = item.rawItem?.reservationId;
-      if (reservationId) {
-        navigation.navigate('MyGuesthouseReservationDetail', {
-          reservationId,
-        });
-      }
-    } else if (item.type === 'settlement') {
-      const batchId = item.rawItem?.batchId;
-      if (batchId) {
-        navigation.navigate('SettlementDetail', { batchId });
-      } else {
-        navigation.navigate('SettlementManagement');
-      }
-    } else if (item.type === 'notice') {
-      const noticeId = item.rawItem?.noticeId;
-      if (noticeId) {
-        navigation.navigate('NoticeDetail', { noticeId });
-      } else {
-        navigation.navigate('NoticeList');
-      }
-    }
+    setNotifications(prev =>
+      prev.map(notification =>
+        notification.notificationId === item.notificationId
+          ? {...notification, isRead: true}
+          : notification,
+      ),
+    );
+
+    await openNotificationTarget(item.rawItem);
   };
 
   return (

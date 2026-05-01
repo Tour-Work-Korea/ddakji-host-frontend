@@ -19,20 +19,35 @@ const ServiceInfoModal = ({ visible, onClose, selectedAmenities = [] }) => {
     state => state.guesthouseAmenities,
   );
   const amenitySections = groupAmenitiesBySection(guesthouseAmenities);
-  // 선택된 항목의 이름만 뽑아냄
-  const selectedNames = selectedAmenities
+  const selectedKeys = new Set(selectedAmenities
     .map(a => {
-      if (typeof a === 'string') return a;
-      return a?.amenityType || a?.name || a?.amenityName;
+      if (typeof a === 'string') {
+        return [a];
+      }
+
+      const isDetailAmenity = a?.amenityName;
+
+      return [
+        a?.amenityId,
+        isDetailAmenity ? null : a?.id,
+        a?.name,
+        a?.amenityName,
+        a?.amenityType,
+      ];
     })
-    .filter(Boolean);
+    .flat()
+    .filter(value => value !== undefined && value !== null)
+    .map(String));
 
   const renderSection = (title, items) => (
     <View key={title}>
       <Text style={[FONTS.fs_16_medium, styles.sectionTitle]}>{title}</Text>
       <View style={styles.tagWrapper}>
         {items.map((item) => {
-          const isSelected = selectedNames.includes(item.name);
+          const isSelected =
+            selectedKeys.has(String(item.id)) ||
+            selectedKeys.has(String(item.name)) ||
+            selectedKeys.has(String(item.amenityType));
           return (
             <View key={item.id} style={styles.tag}>
               <Text
@@ -91,7 +106,7 @@ const styles = StyleSheet.create({
 
   // 헤더
   header: {
-    paddingVertical: 20, 
+    paddingVertical: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -116,8 +131,8 @@ const styles = StyleSheet.create({
     alignContent: 'center',
   },
   tag: {
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     height: 40,
     padding: 10,
     width: '48%',

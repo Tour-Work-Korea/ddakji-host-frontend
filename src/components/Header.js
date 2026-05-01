@@ -4,7 +4,7 @@ import {useNavigation} from '@react-navigation/native';
 import {COLORS} from '@constants/colors';
 import {FONTS} from '@constants/fonts';
 import ChevronLeft from '@assets/images/chevron_left_gray.svg';
-import Logo from '@assets/images/logo_orange.svg';
+import Logo from '@assets/images/logo_blue.svg';
 
 // Header 사용법
 // - title이 있으면 중앙 제목 헤더, 없으면 중앙 로고 헤더를 렌더링

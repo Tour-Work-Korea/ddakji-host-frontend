@@ -24,7 +24,7 @@ const ButtonScarlet = ({title, to, onPress, Icon, disabled = false, style}) => {
         {
           backgroundColor: disabled
             ? COLORS.grayscale_200
-            : COLORS.primary_orange,
+            : COLORS.primary_blue,
         },
         style,
       ]}
@@ -51,7 +51,7 @@ const ButtonScarlet = ({title, to, onPress, Icon, disabled = false, style}) => {
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: COLORS.primary_orange,
+    backgroundColor: COLORS.primary_blue,
     paddingVertical: 10,
     paddingHorizontal: 20,
     flexDirection: 'row',
