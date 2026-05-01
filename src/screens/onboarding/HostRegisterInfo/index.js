@@ -38,19 +38,15 @@ const HostRegisterInfo = ({ route }) => {
     password: '',
     passwordConfirm: '',
     name: '',
-    bussinessNum: '',
     email: email,
     userRole: 'HOST',
     phoneNum: phoneNumber,
   });
   const [formValid, setFormValid] = useState({
     name: false,
-    bussinessNum: false,
     password: [],
     passwordConfirm: [],
   });
-  const [isBussinessNumChecked, setIsBussinessNumChecked] = useState(false);
-  const [isBussinessNumbVerified, setIsBussinessNumVerified] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isPasswordCheckVisible, setIsPasswordCheckVisible] = useState(false);
   const [errorModal, setErrorModal] = useState({
@@ -66,7 +62,6 @@ const HostRegisterInfo = ({ route }) => {
         password: '',
         passwordConfirm: '',
         name: '',
-        bussinessNum: '',
         agreements,
         email: email,
         userRole: 'HOST',
@@ -75,13 +70,10 @@ const HostRegisterInfo = ({ route }) => {
 
       setFormValid({
         name: false,
-        bussinessNum: false,
         password: [],
         passwordConfirm: [],
       });
 
-      setIsBussinessNumChecked(false);
-      setIsBussinessNumVerified(false);
       setIsPasswordVisible(false);
       setIsPasswordCheckVisible(false);
       setErrorModal({
@@ -106,15 +98,6 @@ const HostRegisterInfo = ({ route }) => {
       name: validateHostRegister({ ...formData, name: text }).name,
     });
   };
-  const handleBussinessNumChange = text => {
-    updateField('bussinessNum', text);
-    setIsBussinessNumChecked(false);
-    setFormValid({
-      ...formValid,
-      bussinessNum: validateHostRegister({ ...formData, bussinessNum: text })
-        .bussinessNum,
-    });
-  };
   const handlePasswordChange = text => {
     updateField('password', text);
     const nextValid = {
@@ -137,29 +120,15 @@ const HostRegisterInfo = ({ route }) => {
     }));
   };
 
-  const verifybussinessNum = async () => {
-    try {
-      await authApi.verifyBusiness(formData.bussinessNum);
-      setIsBussinessNumChecked(true);
-      setIsBussinessNumVerified(true);
-    } catch (error) {
-      setIsBussinessNumChecked(false);
-      setIsBussinessNumVerified(false);
-      setErrorModal({
-        visible: true,
-        message: '유효하지 않은 사업자등록번호입니다',
-        buttonText: '확인',
-        onPress: () => setErrorModal(prev => ({ ...prev, visible: false })),
-      });
-    }
-  };
+
 
   const handleSubmit = async () => {
     try {
       await authApi.hostSignUp(formData);
       navigation.navigate('Result', {
         onPress: afterSuccessRegister,
-        buttonTitle: '시작하기',
+        onClose: afterSuccessRegisterGoHome,
+        buttonTitle: '게스트하우스 등록 시작하기',
         nickname: formData.name,
         role: 'HOST',
       });
@@ -180,39 +149,44 @@ const HostRegisterInfo = ({ route }) => {
       await tryLogin(formData.email, formData.password, 'HOST');
       navigation.dispatch(
         CommonActions.reset({
-          index: 0,
+          index: 1,
           routes: [
-            { name: 'MainTabs', params: { screen: '마이' } },
-            {
-              name: 'Result',
-              params: {
-                nickname: formData.name,
-                role: formData.userRole,
-                onPress: () =>
-                  navigation.dispatch(
-                    CommonActions.reset({
-                      index: 0,
-                      routes: [{ name: 'MainTabs', params: { screen: '마이' } }],
-                    }),
-                  ),
-              },
-            },
+            { name: 'MainTabs', params: { screen: '홈' } },
+            { name: 'StoreRegisterForm1' },
           ],
         }),
       );
     } catch (error) {
-      setErrorModal({
-        visible: true,
-        message: '자동 로그인에 실패했습니다\n로그인 페이지로 이동합니다',
-        buttonText: '확인',
-        onPress: () => {
-          navigation.navigate('Login');
-          setErrorModal(prev => ({ ...prev, visible: false }));
-        },
-      });
-      console.warn('지동 로그인 실패:', error);
+      console.log('Login failed', error);
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'AuthIntro' }],
+        }),
+      );
     }
   };
+
+  const afterSuccessRegisterGoHome = async () => {
+    try {
+      await tryLogin(formData.email, formData.password, 'HOST');
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'MainTabs', params: { screen: '홈' } }],
+        }),
+      );
+    } catch (error) {
+      console.log('Login failed', error);
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'AuthIntro' }],
+        }),
+      );
+    }
+  };
+
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
@@ -254,61 +228,6 @@ const HostRegisterInfo = ({ route }) => {
                         maxLength={30}
                       />
                     </View>
-                  </View>
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>사업자등록번호</Text>
-                    <View style={[styles.inputBox, styles.inputRelative]}>
-                      <TextInput
-                        style={styles.textInput}
-                        placeholder="사업자등록번호를 입력해주세요"
-                        placeholderTextColor={COLORS.grayscale_400}
-                        value={formData.bussinessNum}
-                        onChangeText={text => {
-                          const filtered = text.replace(/[^0-9]/g, '');
-                          handleBussinessNumChange(filtered);
-                        }}
-                        maxLength={10}
-                        keyboardType="number-pad"
-                      />
-                      <TouchableOpacity
-                        disabled={!formValid.bussinessNum}
-                        style={[
-                          styles.inputButtonAbsolute,
-                          {
-                            backgroundColor: formValid.bussinessNum
-                              ? COLORS.primary_blue
-                              : COLORS.grayscale_200,
-                          },
-                        ]}
-                        onPress={verifybussinessNum}>
-                        <Text
-                          style={{
-                            ...FONTS.fs_14_medium,
-                            color: formValid.bussinessNum
-                              ? COLORS.grayscale_0
-                              : COLORS.grayscale_400,
-                          }}>
-                          확인
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                    {isBussinessNumChecked ? (
-                      <View style={styles.validBox}>
-                        <Text
-                          style={[
-                            styles.validDefaultText,
-                            isBussinessNumbVerified
-                              ? styles.validText
-                              : styles.invalidText,
-                          ]}>
-                          {isBussinessNumbVerified
-                            ? '유효한 사업자등록번호입니다'
-                            : '유효하지 않은 사업자등록번호입니다.'}
-                        </Text>
-                      </View>
-                    ) : (
-                      ''
-                    )}
                   </View>
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>비밀번호</Text>
