@@ -4,7 +4,7 @@ import {FONTS} from '@constants/fonts';
 export default StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.light_gray,
+    backgroundColor: COLORS.grayscale_0,
   },
   body: {
     flex: 1,
@@ -21,6 +21,8 @@ export default StyleSheet.create({
   applicantCard: {
     backgroundColor: COLORS.grayscale_0,
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.grayscale_200,
     padding: 12,
     gap: 12,
     marginBottom: 8,

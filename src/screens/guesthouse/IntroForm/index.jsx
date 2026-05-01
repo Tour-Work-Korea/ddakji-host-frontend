@@ -348,7 +348,7 @@ export default function MyGuesthouseIntroForm({route}) {
               <TouchableOpacity
                 style={[
                   styles.addButton,
-                  isAllValid && {backgroundColor: COLORS.primary_orange},
+                  isAllValid && {backgroundColor: COLORS.primary_blue},
                 ]}
                 disabled={!isAllValid}
                 onPress={handleSubmit}

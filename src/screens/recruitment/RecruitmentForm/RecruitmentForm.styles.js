@@ -5,11 +5,15 @@ import {FONTS} from '@constants/fonts';
 const styles = StyleSheet.create({
   outContainer: {
     flex: 1,
-    backgroundColor: COLORS.grayscale_100,
+    backgroundColor: COLORS.grayscale_0,
+  },
+  keyboardAvoidingView: {
+    flex: 1,
   },
   scrollContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 24,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 140,
     gap: 16,
     flex: 1,
   },
@@ -21,6 +25,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 8,
     gap: 20,
+    borderWidth: 1,
+    borderColor: COLORS.grayscale_200,
   },
   titleBox: {flexDirection: 'row', justifyContent: 'space-between'},
   titleText: {
@@ -51,10 +57,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 100,
     gap: 10,
+    alignItems: 'center',
+    backgroundColor: COLORS.grayscale_100,
+  },
+  addButtonActive: {
+    backgroundColor: COLORS.primary_blue,
   },
   addButtonText: {
     color: COLORS.grayscale_800,
     ...FONTS.fs_14_medium,
+  },
+  addButtonTextActive: {
+    color: COLORS.grayscale_0,
   },
 
   //모달

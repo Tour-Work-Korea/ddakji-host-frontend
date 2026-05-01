@@ -17,7 +17,7 @@ export default StyleSheet.create({
     marginRight: 8,
   },
   chipActive: {
-    backgroundColor: COLORS.primary_orange,
+    backgroundColor: COLORS.primary_blue,
   },
   chipText: {
     color: COLORS.grayscale_700,

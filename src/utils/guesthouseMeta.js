@@ -1,10 +1,57 @@
 const AMENITY_SECTION_ORDER = ['숙소 공용시설', '객실 내 시설', '기타 시설 및 서비스'];
 
-const normalizeMetaValue = value =>
+export const normalizeMetaValue = value =>
   String(value || '')
     .trim()
     .replace(/\s+/g, '_')
     .toUpperCase();
+
+const toKey = value => String(value ?? '').trim();
+
+export const findHashtagMeta = (hashtags = [], value) => {
+  const id = value?.id ?? value?.hashtagId ?? value;
+  const hashtag = value?.hashtag ?? value?.name ?? value;
+  const hashtagType = value?.hashtagType ?? value?.type;
+
+  return hashtags.find(
+    item =>
+      String(item.id) === String(id) ||
+      toKey(item.hashtag) === toKey(hashtag) ||
+      toKey(item.hashtagType) === toKey(hashtagType),
+  );
+};
+
+export const findAmenityMeta = (amenities = [], value) => {
+  const isDetailAmenity = value && typeof value === 'object' && value.amenityName;
+  const id = value?.amenityId ?? (isDetailAmenity ? undefined : value?.id) ?? value;
+  const name = value?.name ?? value?.amenityName ?? value;
+  const amenityType = value?.amenityType ?? value?.type ?? value?.code;
+  const candidates = new Set(
+    [name, amenityType, value?.amenityName, value?.type, value?.code]
+      .map(toKey)
+      .filter(Boolean),
+  );
+
+  return amenities.find(
+    item =>
+      String(item.id) === String(id) ||
+      candidates.has(toKey(item.name)) ||
+      candidates.has(toKey(item.amenityType)),
+  );
+};
+
+export const resolveHashtagMetas = (values = [], hashtags = []) =>
+  (values || [])
+    .map(value => findHashtagMeta(hashtags, value))
+    .filter(Boolean);
+
+export const resolveAmenityMetas = (values = [], amenities = []) =>
+  (values || [])
+    .map(value => findAmenityMeta(amenities, value))
+    .filter(Boolean);
+
+export const resolveAmenityIds = (values = [], amenities = []) =>
+  resolveAmenityMetas(values, amenities).map(amenity => amenity.id);
 
 export const getAmenitySectionLabel = amenity => {
   const rawCategory = String(amenity?.category || '');

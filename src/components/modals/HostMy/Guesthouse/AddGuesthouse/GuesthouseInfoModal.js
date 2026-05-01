@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
   searchBtn: {
     position: 'absolute',
     right: 4,
-    backgroundColor: COLORS.primary_orange,
+    backgroundColor: COLORS.primary_blue,
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 100,

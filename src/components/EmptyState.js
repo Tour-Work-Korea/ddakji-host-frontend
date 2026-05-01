@@ -59,7 +59,7 @@ const styles = {
   },
   button: {
     marginTop: 20,
-    backgroundColor: COLORS.primary_orange,
+    backgroundColor: COLORS.primary_blue,
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 100,

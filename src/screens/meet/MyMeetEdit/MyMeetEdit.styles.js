@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     alignItems: 'center',
     gap: 8,
-    backgroundColor: COLORS.primary_orange,
+    backgroundColor: COLORS.primary_blue,
   },
   submitText: {
     color: COLORS.grayscale_0,

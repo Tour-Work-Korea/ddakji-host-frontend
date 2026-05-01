@@ -47,6 +47,10 @@ const HostRegisterInfo = ({ route }) => {
     password: [],
     passwordConfirm: [],
   });
+  const [isBussinessNumChecked, setIsBussinessNumChecked] = useState(false);
+  const [isBussinessNumbVerified, setIsBussinessNumVerified] = useState(false);
+  const [bussinessNumVerifyMessage, setBussinessNumVerifyMessage] =
+    useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isPasswordCheckVisible, setIsPasswordCheckVisible] = useState(false);
   const [errorModal, setErrorModal] = useState({
@@ -74,6 +78,9 @@ const HostRegisterInfo = ({ route }) => {
         passwordConfirm: [],
       });
 
+      setIsBussinessNumChecked(false);
+      setIsBussinessNumVerified(false);
+      setBussinessNumVerifyMessage('');
       setIsPasswordVisible(false);
       setIsPasswordCheckVisible(false);
       setErrorModal({
@@ -95,7 +102,17 @@ const HostRegisterInfo = ({ route }) => {
     updateField('name', text);
     setFormValid({
       ...formValid,
-      name: validateHostRegister({ ...formData, name: text }).name,
+      name: validateHostRegister({...formData, name: text}).name,
+    });
+  };
+  const handleBussinessNumChange = text => {
+    updateField('bussinessNum', text);
+    setIsBussinessNumChecked(false);
+    setBussinessNumVerifyMessage('');
+    setFormValid({
+      ...formValid,
+      bussinessNum: validateHostRegister({...formData, bussinessNum: text})
+        .bussinessNum,
     });
   };
   const handlePasswordChange = text => {
@@ -120,7 +137,26 @@ const HostRegisterInfo = ({ route }) => {
     }));
   };
 
-
+  const verifybussinessNum = async () => {
+    try {
+      const response = await authApi.verifyBusiness(formData.bussinessNum);
+      setIsBussinessNumChecked(true);
+      setIsBussinessNumVerified(true);
+      setBussinessNumVerifyMessage(response?.data?.message ?? '');
+    } catch (error) {
+      const message =
+        error?.response?.data?.message || '유효하지 않은 사업자등록번호입니다';
+      setIsBussinessNumChecked(true);
+      setIsBussinessNumVerified(false);
+      setBussinessNumVerifyMessage(message);
+      setErrorModal({
+        visible: true,
+        message,
+        buttonText: '확인',
+        onPress: () => setErrorModal(prev => ({...prev, visible: false})),
+      });
+    }
+  };
 
   const handleSubmit = async () => {
     try {
@@ -228,6 +264,62 @@ const HostRegisterInfo = ({ route }) => {
                         maxLength={30}
                       />
                     </View>
+                  </View>
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.inputLabel}>사업자등록번호</Text>
+                    <View style={[styles.inputBox, styles.inputRelative]}>
+                      <TextInput
+                        style={styles.textInput}
+                        placeholder="사업자등록번호를 입력해주세요"
+                        placeholderTextColor={COLORS.grayscale_400}
+                        value={formData.bussinessNum}
+                        onChangeText={text => {
+                          const filtered = text.replace(/[^0-9]/g, '');
+                          handleBussinessNumChange(filtered);
+                        }}
+                        maxLength={10}
+                        keyboardType="number-pad"
+                      />
+                      <TouchableOpacity
+                        disabled={!formValid.bussinessNum}
+                        style={[
+                          styles.inputButtonAbsolute,
+                          {
+                            backgroundColor: formValid.bussinessNum
+                              ? COLORS.primary_blue
+                              : COLORS.grayscale_200,
+                          },
+                        ]}
+                        onPress={verifybussinessNum}>
+                        <Text
+                          style={{
+                            ...FONTS.fs_14_medium,
+                            color: formValid.bussinessNum
+                              ? COLORS.grayscale_0
+                              : COLORS.grayscale_400,
+                          }}>
+                          확인
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                    {isBussinessNumChecked ? (
+                      <View style={styles.validBox}>
+                        <Text
+                          style={[
+                            styles.validDefaultText,
+                            isBussinessNumbVerified
+                              ? styles.validText
+                              : styles.invalidText,
+                          ]}>
+                          {bussinessNumVerifyMessage ||
+                          (isBussinessNumbVerified
+                            ? '유효한 사업자등록번호입니다'
+                            : '유효하지 않은 사업자등록번호입니다.')}
+                        </Text>
+                      </View>
+                    ) : (
+                      ''
+                    )}
                   </View>
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>비밀번호</Text>

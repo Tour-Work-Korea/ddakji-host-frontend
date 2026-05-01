@@ -22,7 +22,7 @@ import ImageModal from '@components/modals/ImageModal';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
 import Loading from '@components/Loading';
 import useGuesthouseMetaStore from '@stores/guesthouseMetaStore';
-import {getAmenitySectionLabel} from '@utils/guesthouseMeta';
+import {findAmenityMeta, getAmenitySectionLabel} from '@utils/guesthouseMeta';
 
 import EmptyHeart from '@assets/images/heart_empty.svg';
 import LeftArrow from '@assets/images/chevron_left_white.svg';
@@ -55,6 +55,7 @@ const normalizeAmenityToken = (v) => {
   const koToToken = {
     '무선인터넷': 'WIFI',
     '무선 인터넷': 'WIFI',
+    '와이파이': 'WIFI',
     '반려동물 동반': 'PET_FRIENDLY',
     '반려견동반': 'PET_FRIENDLY',
     '짐보관': 'BAGGAGE_STORAGE',
@@ -72,8 +73,8 @@ const MyGuesthousePreview = ({ route }) => {
   const guesthouseAmenities = useGuesthouseMetaStore(
     state => state.guesthouseAmenities,
   );
-  const amenityNameMap = useMemo(
-    () => new Map(guesthouseAmenities.map(amenity => [amenity.name, amenity])),
+  const amenityIdMap = useMemo(
+    () => new Map(guesthouseAmenities.map(amenity => [amenity.id, amenity])),
     [guesthouseAmenities],
   );
   // 사진
@@ -117,9 +118,10 @@ const MyGuesthousePreview = ({ route }) => {
       setDetail(previewData);
     }
 
-    if (previewData) {
+    if (!id) {
       return;
     }
+
     try {
       const response = await hostGuesthouseApi.getGuesthouseDetail(id);
       setDetail(response.data);
@@ -140,14 +142,39 @@ const MyGuesthousePreview = ({ route }) => {
     return new Set(
       list
         .map(a => {
-          if (typeof a === 'string') return normalizeAmenityToken(a);
-          if (a?.amenityName)     return normalizeAmenityToken(a.amenityName);
-          if (a?.amenityType)     return normalizeAmenityToken(a.amenityType);
+          if (typeof a === 'string') {
+            return normalizeAmenityToken(a);
+          }
+
+          const meta =
+            amenityIdMap.get(a?.amenityId) ||
+            amenityIdMap.get(a?.id);
+          if (meta?.amenityType) {
+            return normalizeAmenityToken(meta.amenityType);
+          }
+          if (meta?.name) {
+            return normalizeAmenityToken(meta.name);
+          }
+          if (a?.amenityName) {
+            return normalizeAmenityToken(a.amenityName);
+          }
+          if (a?.amenityType) {
+            return normalizeAmenityToken(a.amenityType);
+          }
+          if (a?.name) {
+            return normalizeAmenityToken(a.name);
+          }
+          if (a?.type) {
+            return normalizeAmenityToken(a.type);
+          }
+          if (a?.code) {
+            return normalizeAmenityToken(a.code);
+          }
           return '';
         })
         .filter(Boolean)
     );
-  }, [detail?.amenities]);
+  }, [amenityIdMap, detail?.amenities]);
 
   // 썸네일을 맨 앞으로 정렬한 이미지 리스트
   const sortedImages = useMemo(() => {
@@ -206,25 +233,25 @@ const MyGuesthousePreview = ({ route }) => {
 
   const selectedAmenitiesForModal = useMemo(() => {
     const am = detail?.amenities ?? [];
-    if (!previewData) return am;
-    if (am.length && typeof am[0] !== 'string') return am;
 
-    return am.map((name, idx) => {
+    return am.map((item, idx) => {
+      const name =
+        typeof item === 'string'
+          ? item
+          : item?.name || item?.amenityName || item?.amenityType;
       const amenity =
-        amenityNameMap.get(name) ||
-        Array.from(amenityNameMap.values()).find(
-          item => item.amenityType === name,
-        ) || {id: idx + 1, name};
+        findAmenityMeta(guesthouseAmenities, item) ||
+        (item && typeof item === 'object' ? item : {id: idx + 1, name});
 
       return {
         ...amenity,
-        amenityName: normalizeAmenityToken(amenity.amenityType || name),
+        amenityName: amenity.name || name,
         amenityType: amenity.amenityType || name,
         category: getAmenitySectionLabel(amenity),
         count: 1,
       };
     });
-  }, [amenityNameMap, detail?.amenities, previewData]);
+  }, [detail?.amenities, guesthouseAmenities]);
 
   if (!detail) {
     return <Loading title="게스트하우스를 불러오고 있어요" />;

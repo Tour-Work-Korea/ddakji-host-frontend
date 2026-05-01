@@ -20,7 +20,7 @@ import {adaptiveCompressToJPEG} from '@utils/imageUploadHandler';
 import {hostStorRegisterAgrees} from '@data/agree';
 import styles from '../StoreRegisterForm.styles';
 import {FONTS} from '@constants/fonts';
-import Logo from '@assets/images/logo_orange.svg';
+import Logo from '@assets/images/logo_blue.svg';
 import {COLORS} from '@constants/colors';
 import NextIcon from '@assets/images/arrow_right_white.svg';
 import NextDisabledIcon from '@assets/images/arrow_right_black.svg';
@@ -206,27 +206,41 @@ const StoreRegisterForm1 = () => {
                   </View>
 
                   <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>통장 사본</Text>
-                    <Text style={styles.warningHintText}>
-                      * 사업자등록증의 대표자명과 동일한 명의의 통장 사본을 업로드해주세요.
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.documentUploadBox}
-                      onPress={() => pickImage('bankbookImg')}
-                      activeOpacity={0.8}>
-                      {formData?.bankbookImg?.uri ? (
-                        <Image
-                          source={{uri: formData.bankbookImg.uri}}
-                          style={styles.photoBox}
-                          resizeMode="cover"
-                        />
-                      ) : (
-                        <View style={styles.photoContainer}>
-                          <Photo width={30} height={30} />
-                          <Text style={styles.imageUploadHint}>사진 업로드</Text>
-                        </View>
-                      )}
-                    </TouchableOpacity>
+                    <Text style={styles.inputLabel}>사업자 주소</Text>
+                    <View style={[styles.inputBox, styles.inputRelative]}>
+                      <TextInput
+                        style={[styles.textInput, styles.flex]}
+                        placeholder="주소를 입력해주세요"
+                        placeholderTextColor={COLORS.grayscale_400}
+                        value={formData.address}
+                        editable={false}
+                      />
+                      <TouchableOpacity
+                        style={[
+                          styles.inputButtonAbsolute,
+                          {backgroundColor: COLORS.primary_blue},
+                        ]}
+                        onPress={() => setAddressSearchVisible(true)}>
+                        <Text
+                          style={{
+                            ...FONTS.fs_14_medium,
+                            color: COLORS.grayscale_0,
+                          }}>
+                          주소 검색
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    <View style={styles.inputBox}>
+                      <TextInput
+                        ref={detailAddressRef}
+                        style={styles.textInput}
+                        placeholder="상세 주소를 입력해주세요"
+                        placeholderTextColor={COLORS.grayscale_400}
+                        value={detailAddress}
+                        onChangeText={setDetailAddress}
+                      />
+                    </View>
                   </View>
 
                   <View style={styles.inputContainer}>

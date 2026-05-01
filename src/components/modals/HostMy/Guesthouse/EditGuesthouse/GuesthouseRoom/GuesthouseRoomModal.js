@@ -703,7 +703,7 @@ const styles = StyleSheet.create({
     color: COLORS.grayscale_800,
   },
   submitButton: {
-    backgroundColor: COLORS.primary_orange,
+    backgroundColor: COLORS.primary_blue,
     alignItems: 'center',
     alignSelf: 'center',
     borderRadius: 100,

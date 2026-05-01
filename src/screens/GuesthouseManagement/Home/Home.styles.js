@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 
 import { COLORS } from '@constants/colors';
 import { FONTS } from '@constants/fonts';
@@ -51,7 +51,7 @@ export default StyleSheet.create({
     height: 32,
     borderRadius: 100,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: Platform.OS === 'ios' ? 8 : 0,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -74,6 +74,14 @@ export default StyleSheet.create({
     },
   },
   noticeBadgeText: {
+    ...Platform.select({
+      android: {
+        lineHeight: 18,
+        includeFontPadding: false,
+        width: 80,
+      },
+    }),
+    textAlign: 'center',
   },
   noticeBadgeBlueText: {
     color: COLORS.semantic_blue,
@@ -213,8 +221,8 @@ export default StyleSheet.create({
     color: COLORS.grayscale_800,
   },
   reservationButtonPrimary: {
-    backgroundColor: COLORS.primary_orange,
-    borderColor: COLORS.primary_orange,
+    backgroundColor: COLORS.primary_blue,
+    borderColor: COLORS.primary_blue,
   },
   reservationButtonTextPrimary: {
     color: COLORS.grayscale_0,
