@@ -145,8 +145,21 @@ export default StyleSheet.create({
   },
   bottomSection: {flexDirection: 'column', gap: 20},
   buttonSection: {flexDirection: 'column', gap: 8},
-  findSection: {flexDirection: 'row', justifyContent: 'center', gap: 20},
-  findText: {...FONTS.fs_16_semibold},
+  findSection: {
+    flexDirection: 'row', 
+    justifyContent: 'center', 
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 8,
+  },
+  findText: {
+    ...FONTS.fs_14_medium,
+    color: COLORS.grayscale_500,
+  },
+  findSeparator: {
+    ...FONTS.fs_12_medium,
+    color: COLORS.grayscale_300,
+  },
   findEmailBox: {
     backgroundColor: COLORS.grayscale_200,
     borderRadius: 8,

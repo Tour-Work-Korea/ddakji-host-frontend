@@ -100,7 +100,6 @@ export default function LoginByEmail({route}) {
             <View style={styles.groupParent}>
               <LogoBlue width={60} height={29} />
               <Text style={[styles.titleText]}>이메일로 로그인해주세요</Text>
-              <Text style={styles.subTitleText}>비즈니스 로그인</Text>
             </View>
             <View style={styles.inputGroup}>
               <View style={styles.inputContainer}>
@@ -160,10 +159,11 @@ export default function LoginByEmail({route}) {
             </View>
             <View style={styles.findSection}>
               <TouchableOpacity onPress={moveToFindId}>
-                <Text style={styles.findText}>아이디찾기</Text>
+                <Text style={styles.findText}>아이디 찾기</Text>
               </TouchableOpacity>
+              <Text style={styles.findSeparator}>|</Text>
               <TouchableOpacity onPress={moveToFindPassword}>
-                <Text style={styles.findText}>비밀번호찾기</Text>
+                <Text style={styles.findText}>비밀번호 찾기</Text>
               </TouchableOpacity>
             </View>
           </View>

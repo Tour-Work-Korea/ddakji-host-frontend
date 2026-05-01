@@ -1,13 +1,14 @@
 import api from './axiosInstance';
 
 const hostDocumentApi = {
-  getMyDocuments: () => api.get('/host/my/documents'),
+  getMyDocuments: applicationId => 
+    api.get(`/host/my/documents/applications/${applicationId}`),
 
-  getDocumentViewLink: documentType =>
-    api.get(`/host/my/documents/${documentType}/view-link`),
+  getDocumentViewLink: (documentType, applicationId) =>
+    api.get(`/host/my/documents/applications/${applicationId}/${documentType}/view-link`),
 
-  downloadDocument: documentType =>
-    api.get(`/host/my/documents/${documentType}/download`, {
+  downloadDocument: (documentType, applicationId) =>
+    api.get(`/host/my/documents/applications/${applicationId}/${documentType}/download`, {
       responseType: 'arraybuffer',
     }),
 };

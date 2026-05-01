@@ -71,7 +71,7 @@ const menuSections = [
   },
   {
     key: 'policy',
-    label: '등록 기준/ 정책',
+    label: '이용약관 및 정책',
     icon: PolicyIcon,
     routeName: 'Terms',
   },
