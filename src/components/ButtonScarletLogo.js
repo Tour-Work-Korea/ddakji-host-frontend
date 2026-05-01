@@ -32,7 +32,7 @@ const ButtonScarletLogo = ({to, onPress, disabled = false}) => {
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: COLORS.primary_orange,
+    backgroundColor: COLORS.primary_blue,
     paddingVertical: 10,
     paddingHorizontal: 20,
     flexDirection: 'row',

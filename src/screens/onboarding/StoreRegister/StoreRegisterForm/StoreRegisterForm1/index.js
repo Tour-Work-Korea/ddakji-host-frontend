@@ -21,7 +21,7 @@ import {adaptiveCompressToJPEG} from '@utils/imageUploadHandler';
 import {hostStorRegisterAgrees} from '@data/agree';
 import styles from '../StoreRegisterForm.styles';
 import {FONTS} from '@constants/fonts';
-import Logo from '@assets/images/logo_orange.svg';
+import Logo from '@assets/images/logo_blue.svg';
 import {COLORS} from '@constants/colors';
 import NextIcon from '@assets/images/arrow_right_white.svg';
 import NextDisabledIcon from '@assets/images/arrow_right_black.svg';
@@ -237,7 +237,7 @@ const StoreRegisterForm1 = () => {
                       <TouchableOpacity
                         style={[
                           styles.inputButtonAbsolute,
-                          {backgroundColor: COLORS.primary_orange},
+                          {backgroundColor: COLORS.primary_blue},
                         ]}
                         onPress={() => setAddressSearchVisible(true)}>
                         <Text

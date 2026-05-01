@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 
 import { FONTS } from '@constants/fonts';
@@ -9,8 +9,21 @@ import styles from './GuesthouseInfo.styles';
 const chips = ['나의 게하', '리뷰 관리'];
 
 const GuesthouseInfo = props => {
-  const [activeChip, setActiveChip] = useState(chips[0]);
-  const hasGuesthouseDetail = !!props.guesthouseDetail;
+  const [activeChip, setActiveChip] = useState(
+    chips.includes(props.initialChip) ? props.initialChip : chips[0],
+  );
+  const reviewGuesthouseId =
+    props.guesthouseDetail?.id ??
+    props.effectiveGuesthouseId ??
+    props.routeGuesthouseId ??
+    null;
+  const hasReviewGuesthouse = !!reviewGuesthouseId;
+
+  useEffect(() => {
+    if (chips.includes(props.initialChip)) {
+      setActiveChip(props.initialChip);
+    }
+  }, [props.initialChip]);
 
   return (
     <>
@@ -28,11 +41,11 @@ const GuesthouseInfo = props => {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          activeOpacity={hasGuesthouseDetail ? 0.8 : 1}
+          activeOpacity={hasReviewGuesthouse ? 0.8 : 1}
           style={[styles.chip, activeChip === chips[1] && styles.chipActive]}
-          disabled={!hasGuesthouseDetail}
+          disabled={!hasReviewGuesthouse}
           onPress={() => {
-            if (!hasGuesthouseDetail) {
+            if (!hasReviewGuesthouse) {
               return;
             }
             setActiveChip(chips[1]);
@@ -47,8 +60,8 @@ const GuesthouseInfo = props => {
         </TouchableOpacity>
       </View>
 
-      {activeChip === chips[1] && hasGuesthouseDetail ? (
-        <ReviewManagement guesthouseId={props.guesthouseDetail.id} />
+      {activeChip === chips[1] && hasReviewGuesthouse ? (
+        <ReviewManagement guesthouseId={reviewGuesthouseId} />
       ) : (
         <MyGuesthouse {...props} />
       )}

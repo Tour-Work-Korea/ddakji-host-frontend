@@ -468,7 +468,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 100,
-    backgroundColor: COLORS.primary_orange,
+    backgroundColor: COLORS.primary_blue,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,

@@ -21,6 +21,11 @@ import GuesthouseDetailInfoModal from '@components/modals/HostMy/Guesthouse/Edit
 import GuesthouseRulesModal from '@components/modals/HostMy/Guesthouse/EditGuesthouse/GuesthouseRulesModal';
 import GuesthouseAmenitiesModal from '@components/modals/HostMy/Guesthouse/EditGuesthouse/GuesthouseAmenitiesModal';
 import useGuesthouseMetaStore from '@stores/guesthouseMetaStore';
+import {
+  findHashtagMeta,
+  resolveAmenityIds,
+  resolveAmenityMetas,
+} from '@utils/guesthouseMeta';
 
 import ChevronRight from '@assets/images/chevron_right_black.svg';
 import CheckWhite from '@assets/images/check_white.svg';
@@ -34,25 +39,9 @@ const MyGuesthouseEdit = () => {
   const guesthouseAmenities = useGuesthouseMetaStore(
     state => state.guesthouseAmenities,
   );
-  const hashtagNameToId = useMemo(
-    () => Object.fromEntries(guesthouseHashtags.map(tag => [tag.hashtag, tag.id])),
-    [guesthouseHashtags],
-  );
   const hashtagIdToName = useMemo(
     () => Object.fromEntries(guesthouseHashtags.map(tag => [tag.id, tag.hashtag])),
     [guesthouseHashtags],
-  );
-  const amenityNameToId = useMemo(
-    () => Object.fromEntries(guesthouseAmenities.map(amenity => [amenity.name, amenity.id])),
-    [guesthouseAmenities],
-  );
-  const amenityTypeToId = useMemo(
-    () => Object.fromEntries(guesthouseAmenities.map(amenity => [amenity.amenityType, amenity.id])),
-    [guesthouseAmenities],
-  );
-  const amenityIdToMeta = useMemo(
-    () => Object.fromEntries(guesthouseAmenities.map(amenity => [amenity.id, amenity])),
-    [guesthouseAmenities],
   );
 
   const [guesthouse, setGuesthouse] = useState({
@@ -81,38 +70,18 @@ const MyGuesthouseEdit = () => {
     if (!initial) return;
 
     // 해시태그 처리
-    const hashtagNames = Array.isArray(initial.hashtags) ? initial.hashtags : [];
-    const hashtagIds = hashtagNames
-      .map(name => hashtagNameToId[name])
-      .filter(v => v !== null && v !== undefined);
+    const initialHashtags = Array.isArray(initial.hashtags)
+      ? initial.hashtags
+      : [];
+    const hashtagMetas = initialHashtags
+      .map(item => findHashtagMeta(guesthouseHashtags, item))
+      .filter(Boolean);
+    const hashtagIds = hashtagMetas.map(tag => tag.id);
+    const hashtagNames = hashtagMetas.map(tag => tag.hashtag);
 
     // 어매너티 문자열(amenityType 라벨) | { amenityId } | (상세의) { amenityType } 모두 대응
     const initAmenities = initial.amenities || [];
-    let selectedIds = [];
-
-    if (initAmenities.length > 0) {
-        const first = initAmenities[0];
-      if (typeof first === 'string') {
-        selectedIds = initAmenities
-          .map(name => amenityNameToId[name])
-          .filter(Boolean);
-      } else if (first && typeof first === 'object') {
-        if ('amenityId' in first) {
-          selectedIds = initAmenities
-            .map(a => a.amenityId)
-            .filter(v => v != null);
-        } else if ('amenityType' in first) {
-          selectedIds = initAmenities
-            .map(
-              a =>
-                amenityTypeToId[a.amenityType] ||
-                amenityNameToId[a.name] ||
-                amenityNameToId[a.amenityType],
-            )
-            .filter(Boolean);
-        }
-      }
-    }
+    const selectedIds = resolveAmenityIds(initAmenities, guesthouseAmenities);
 
     setGuesthouse(prev => ({
       ...prev,
@@ -123,7 +92,7 @@ const MyGuesthouseEdit = () => {
       amenities: selectedIds.map(id => ({ amenityId: id, count: 1 })),
     }));
     setSelectedAmenities(selectedIds);
-  }, [amenityNameToId, amenityTypeToId, hashtagNameToId, route.params]);
+  }, [guesthouseAmenities, guesthouseHashtags, route.params]);
 
   // 게스트하우스 정보 모달
   const [infoModalVisible, setInfoModalVisible] = useState(false);
@@ -236,6 +205,29 @@ const MyGuesthouseEdit = () => {
     navigation.goBack()
   };
 
+  const handlePreview = () => {
+    const previewHashtags = (guesthouse?.hashtags || [])
+      .map(name => {
+        const meta = findHashtagMeta(guesthouseHashtags, name);
+        return meta || null;
+      })
+      .filter(Boolean);
+
+    const previewAmenities = resolveAmenityMetas(
+      guesthouse?.amenities || [],
+      guesthouseAmenities,
+    );
+
+    navigation.navigate('MyGuesthousePreview', {
+      hideEditButton: true,
+      previewData: {
+        ...guesthouse,
+        hashtags: previewHashtags,
+        amenities: previewAmenities,
+      },
+    });
+  };
+
   const renderSectionRow = (title, onPress) => (
     <TouchableOpacity
       style={styles.section}
@@ -293,56 +285,14 @@ const MyGuesthouseEdit = () => {
       </ScrollView>
 
       <View style={styles.bottomContainer}>
-        {/* <TouchableOpacity 
+        <TouchableOpacity
           style={styles.previewButton}
-          onPress={() => {
-            // 해시태그: 이름 -> {id, hashtag}
-            const previewHashtags = (guesthouse?.hashtags || [])
-              .map(name => {
-                const id = hashtagNameToId[name];
-                return id ? {id, hashtag: name} : {id: null, hashtag: name};
-              })
-              .filter(t => t.id !== null);
-
-            // 어매니티: 상태가 어떤 형태든 메타 객체 기준으로 통일
-            const previewAmenities = (guesthouse?.amenities || [])
-              .map(a => {
-                if (typeof a === 'string') {
-                  const amenityId =
-                    amenityTypeToId[a] || amenityNameToId[a];
-                  return amenityId ? amenityIdToMeta[amenityId] : null;
-                }
-                if (typeof a === 'number') return amenityIdToMeta[a];
-                if (a && typeof a === 'object') {
-                  if ('amenityId' in a) return amenityIdToMeta[a.amenityId];
-                  if ('amenityType' in a) {
-                    const amenityId =
-                      amenityTypeToId[a.amenityType] ||
-                      amenityNameToId[a.name] ||
-                      amenityNameToId[a.amenityType];
-                    return amenityId ? amenityIdToMeta[amenityId] : a;
-                  }
-                }
-                return null;
-              })
-              .filter(Boolean);
-
-            const previewData = {
-              ...guesthouse,
-              hashtags: previewHashtags,
-              amenities: previewAmenities,
-            };
-
-            navigation.navigate('MyGuesthousePreview', {
-              hideEditButton: true,
-              previewData,
-            });
-          }}
-        >
+          activeOpacity={0.8}
+          onPress={handlePreview}>
           <Text style={[FONTS.fs_14_medium, styles.previewButtonText]}>
             미리보기
           </Text>
-        </TouchableOpacity> */}
+        </TouchableOpacity>
         <TouchableOpacity 
           style={styles.submitButton}
           onPress={handleSubmit}
@@ -373,7 +323,7 @@ const MyGuesthouseEdit = () => {
         defaultCheckOut={guesthouse?.checkOut || '11:00:00'}
         defaultHashtags={
           (guesthouse?.hashtags || [])
-            .map(name => guesthouseHashtags.find(t => t.hashtag === name))
+            .map(name => findHashtagMeta(guesthouseHashtags, name))
             .filter(Boolean)
         }
         onSelect={handleInfoSelect}

@@ -78,15 +78,12 @@ const Stack = createNativeStackNavigator();
 const RootNavigation = () => {
   const accessToken = useUserStore(state => state.accessToken);
   const userRole = useUserStore(state => state.userRole);
-  const hasLoadedGuesthouseMeta = useGuesthouseMetaStore(
-    state => state.hasLoadedGuesthouseMeta,
-  );
   const setGuesthouseMeta = useGuesthouseMetaStore(
     state => state.setGuesthouseMeta,
   );
 
   useEffect(() => {
-    if (!accessToken || userRole !== 'HOST' || hasLoadedGuesthouseMeta) {
+    if (!accessToken || userRole !== 'HOST') {
       return;
     }
 
@@ -104,12 +101,8 @@ const RootNavigation = () => {
         }
 
         setGuesthouseMeta({
-          hashtags: Array.isArray(hashtagsResponse?.data)
-            ? hashtagsResponse.data
-            : [],
-          amenities: Array.isArray(amenitiesResponse?.data)
-            ? amenitiesResponse.data
-            : [],
+          hashtags: hashtagsResponse?.data,
+          amenities: amenitiesResponse?.data,
         });
       } catch (error) {
         console.warn('게스트하우스 메타데이터 로드 실패:', error);
@@ -121,7 +114,7 @@ const RootNavigation = () => {
     return () => {
       isMounted = false;
     };
-  }, [accessToken, hasLoadedGuesthouseMeta, setGuesthouseMeta, userRole]);
+  }, [accessToken, setGuesthouseMeta, userRole]);
 
   return (
     <NavigationContainer ref={navigationRef}>

@@ -78,7 +78,7 @@ export default function WorkInfoSection({
               </Text>
               <Text style={recruitStyle.lengthTextAll}>
                 <Text style={recruitStyle.lengthText}>
-                  {limitImage - formData.recruitImage.length}
+                  {formData.recruitImage.length}
                 </Text>
                 /{limitImage}
               </Text>

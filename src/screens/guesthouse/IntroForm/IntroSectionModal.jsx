@@ -408,7 +408,7 @@ const local = StyleSheet.create({
   addBlockText: {...FONTS.fs_14_semibold, color: COLORS.grayscale_700},
 
   saveBtn: {
-    backgroundColor: COLORS.primary_orange,
+    backgroundColor: COLORS.primary_blue,
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',

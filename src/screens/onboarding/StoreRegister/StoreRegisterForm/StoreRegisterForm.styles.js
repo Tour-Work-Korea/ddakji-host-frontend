@@ -104,7 +104,7 @@ export default StyleSheet.create({
   },
   addButton: {
     alignItems: 'center',
-    backgroundColor: COLORS.primary_orange,
+    backgroundColor: COLORS.primary_blue,
     flexDirection: 'row',
     paddingVertical: 8,
     paddingHorizontal: 12,

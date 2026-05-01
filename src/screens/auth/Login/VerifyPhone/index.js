@@ -16,7 +16,6 @@ import AlertModal from '@components/modals/AlertModal';
 
 import styles from '../Login.styles';
 import {COLORS} from '@constants/colors';
-import LogoOrange from '@assets/images/logo_orange.svg';
 import LogoBlue from '@assets/images/logo_blue.svg';
 
 const VerifyPhone = ({route}) => {
@@ -182,7 +181,7 @@ const VerifyPhone = ({route}) => {
 
   // 사장님 분기
     const isHost = userRole === 'HOST';
-    const MainLogo = isHost ? LogoBlue : LogoOrange;
+    const MainLogo = LogoBlue;
     const mainColor = isHost
       ? COLORS.primary_blue
       : COLORS.primary_orange;

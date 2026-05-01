@@ -23,7 +23,7 @@ import styles from '../StoreRegisterForm.styles';
 import Photo from '@assets/images/Photo.svg';
 import CheckWhiteIcon from '@assets/images/check_white.svg';
 import BackIcon from '@assets/images/chevron_left_black.svg';
-import Logo from '@assets/images/logo_orange.svg';
+import Logo from '@assets/images/logo_blue.svg';
 import {COLORS} from '@constants/colors';
 
 const StoreRegisterEditForm = () => {

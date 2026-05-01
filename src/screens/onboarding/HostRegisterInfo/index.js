@@ -51,6 +51,8 @@ const HostRegisterInfo = ({route}) => {
   });
   const [isBussinessNumChecked, setIsBussinessNumChecked] = useState(false);
   const [isBussinessNumbVerified, setIsBussinessNumVerified] = useState(false);
+  const [bussinessNumVerifyMessage, setBussinessNumVerifyMessage] =
+    useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isPasswordCheckVisible, setIsPasswordCheckVisible] = useState(false);
   const [errorModal, setErrorModal] = useState({
@@ -82,6 +84,7 @@ const HostRegisterInfo = ({route}) => {
 
       setIsBussinessNumChecked(false);
       setIsBussinessNumVerified(false);
+      setBussinessNumVerifyMessage('');
       setIsPasswordVisible(false);
       setIsPasswordCheckVisible(false);
       setErrorModal({
@@ -109,6 +112,7 @@ const HostRegisterInfo = ({route}) => {
   const handleBussinessNumChange = text => {
     updateField('bussinessNum', text);
     setIsBussinessNumChecked(false);
+    setBussinessNumVerifyMessage('');
     setFormValid({
       ...formValid,
       bussinessNum: validateHostRegister({...formData, bussinessNum: text})
@@ -139,15 +143,19 @@ const HostRegisterInfo = ({route}) => {
 
   const verifybussinessNum = async () => {
     try {
-      await authApi.verifyBusiness(formData.bussinessNum);
+      const response = await authApi.verifyBusiness(formData.bussinessNum);
       setIsBussinessNumChecked(true);
       setIsBussinessNumVerified(true);
+      setBussinessNumVerifyMessage(response?.data?.message ?? '');
     } catch (error) {
-      setIsBussinessNumChecked(false);
+      const message =
+        error?.response?.data?.message || '유효하지 않은 사업자등록번호입니다';
+      setIsBussinessNumChecked(true);
       setIsBussinessNumVerified(false);
+      setBussinessNumVerifyMessage(message);
       setErrorModal({
         visible: true,
-        message: '유효하지 않은 사업자등록번호입니다',
+        message,
         buttonText: '확인',
         onPress: () => setErrorModal(prev => ({...prev, visible: false})),
       });
@@ -301,9 +309,10 @@ const HostRegisterInfo = ({route}) => {
                               ? styles.validText
                               : styles.invalidText,
                           ]}>
-                          {isBussinessNumbVerified
+                          {bussinessNumVerifyMessage ||
+                          (isBussinessNumbVerified
                             ? '유효한 사업자등록번호입니다'
-                            : '유효하지 않은 사업자등록번호입니다.'}
+                            : '유효하지 않은 사업자등록번호입니다.')}
                         </Text>
                       </View>
                     ) : (
@@ -407,9 +416,9 @@ const HostRegisterInfo = ({route}) => {
               </View>
 
               <View>
-                <ButtonWhite 
-                  title="다음" 
-                  onPress={handleSubmit} 
+                <ButtonWhite
+                  title="다음"
+                  onPress={handleSubmit}
                   backgroundColor={COLORS.primary_blue}
                   textColor={COLORS.grayscale_0}
                 />

@@ -58,7 +58,8 @@ const styles = StyleSheet.create({
   postingCard: {
     marginBottom: 8,
     backgroundColor: COLORS.grayscale_0,
-    padding: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
   },
   guestHouseText: {
     ...FONTS.fs_12_medium,
@@ -127,6 +128,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.4,
     borderColor: COLORS.grayscale_300,
     marginVertical: 4,
+    marginHorizontal: 20,
   },
 });
 
