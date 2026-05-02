@@ -127,7 +127,7 @@ const mapNoticeSummary = item => ({
   publishedAt: item?.publishedAt || item?.updatedAt || '',
 });
 
-const Home = ({ reservationMethod = 'closed', guesthouseId }) => {
+const Home = ({ reservationMethod = 'closed', pendingReservationPolicyRequest, guesthouseId }) => {
   const navigation = useNavigation();
   const [latestNotice, setLatestNotice] = useState(null);
   const [settlementData, setSettlementData] = useState(null);
@@ -317,9 +317,16 @@ const Home = ({ reservationMethod = 'closed', guesthouseId }) => {
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}>
       <View style={styles.card}>
-        <Text style={[FONTS.fs_16_semibold, styles.cardTitle]}>
-          {reservationMethodContent.title}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+          <Text style={[FONTS.fs_16_semibold, styles.cardTitle, { marginBottom: 0 }]}>
+            {reservationMethodContent.title}
+          </Text>
+          {pendingReservationPolicyRequest && (
+            <View style={styles.pendingBadge}>
+              <Text style={styles.pendingBadgeText}>변경 승인 대기중</Text>
+            </View>
+          )}
+        </View>
         {reservationMethodContent.description.map(line => (
           <Text key={line} style={[FONTS.fs_14_medium, styles.cardDescription]}>
             {line}
