@@ -24,6 +24,17 @@ export default StyleSheet.create({
     color: COLORS.grayscale_800,
     marginBottom: 4,
   },
+  pendingBadge: {
+    marginLeft: 8,
+    backgroundColor: COLORS.secondary_blue,
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  pendingBadgeText: {
+    color: COLORS.primary_blue,
+    fontSize: 10,
+  },
   cardDescription: {
     color: COLORS.grayscale_600,
     lineHeight: 20,

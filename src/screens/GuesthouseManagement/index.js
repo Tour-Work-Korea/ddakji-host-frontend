@@ -76,6 +76,7 @@ const GuesthouseManagement = () => {
   const [reservationMethod, setReservationMethod] = useState(
     routeReservationMethod || 'closed',
   );
+  const [pendingReservationPolicyRequest, setPendingReservationPolicyRequest] = useState(null);
 
   const { guesthouseProfiles } = useGuesthouseProfiles();
 
@@ -192,9 +193,15 @@ const GuesthouseManagement = () => {
         response?.data?.data?.currentPolicy ??
         response?.data;
 
+      const pendingReq =
+        response?.data?.pendingRequest ??
+        response?.data?.data?.pendingRequest ??
+        null;
+
       setReservationMethod(
         RESERVATION_POLICY_TO_METHOD[reservationPolicy] || 'closed',
       );
+      setPendingReservationPolicyRequest(pendingReq);
     } catch (error) {
       console.warn(
         '[GuesthouseManagement] failed to fetch reservation policy:',
@@ -420,6 +427,7 @@ const GuesthouseManagement = () => {
           guesthouseDetail={guesthouseDetail}
           hasPartyTemplate={hasPartyTemplate}
           reservationMethod={reservationMethod}
+          pendingReservationPolicyRequest={pendingReservationPolicyRequest}
           guesthouseId={effectiveGuesthouseId}
           onMoveTab={setActiveTab}
         />

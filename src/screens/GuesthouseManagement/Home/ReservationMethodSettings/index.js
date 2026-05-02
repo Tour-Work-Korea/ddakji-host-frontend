@@ -11,20 +11,21 @@ import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
 import styles from './ReservationMethodSettings.styles';
 
 import DisabledRadioButton from '@assets/images/radio_button_disabled.svg';
-import EnabledRadioButton from '@assets/images/radio_button_enabled.svg';
-import ReservationRequestOrange from '@assets/images/reservation_request_orange.svg';
+import EnabledRadioButton from '@assets/images/radio_button_enabled_blue.svg';
+import ReservationRequestBlue from '@assets/images/reservation_request_blue.svg';
 import ReservationRequestBlack from '@assets/images/reservation_request_black.svg';
 import ReservationInstantBlack from '@assets/images/reservation_instant_black.svg';
-import ReservationInstantOrange from '@assets/images/reservation_instant_orange.svg';
-import UnbookedOrange from '@assets/images/unbooked_orange.svg';
+import ReservationInstantBlue from '@assets/images/reservation_instant_blue.svg';
+import UnbookedBlue from '@assets/images/unbooked_blue.svg';
 import UnbookedBlack from '@assets/images/unbooked_black.svg';
 import TrendingIcon from '@assets/images/trending_red.svg';
+import XGrayIcon from '@assets/images/x_gray.svg';
 
 const RESERVATION_OPTIONS = [
   {
     key: 'closed',
     icons: {
-      selected: UnbookedOrange,
+      selected: UnbookedBlue,
       default: UnbookedBlack,
     },
     title: '예약 마감',
@@ -36,7 +37,7 @@ const RESERVATION_OPTIONS = [
   {
     key: 'request',
     icons: {
-      selected: ReservationRequestOrange,
+      selected: ReservationRequestBlue,
       default: ReservationRequestBlack,
     },
     title: '예약 요청 후 확정',
@@ -49,7 +50,7 @@ const RESERVATION_OPTIONS = [
   {
     key: 'instant',
     icons: {
-      selected: ReservationInstantOrange,
+      selected: ReservationInstantBlue,
       default: ReservationInstantBlack,
     },
     title: '즉시 예약 확정',
@@ -86,6 +87,10 @@ const ReservationMethodSettings = () => {
   const [canChangeToClosed, setCanChangeToClosed] = useState(true);
   const [isBlockedClosedModalVisible, setIsBlockedClosedModalVisible] =
     useState(false);
+  const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
+  const [pendingRequest, setPendingRequest] = useState(null);
+  const [latestRequest, setLatestRequest] = useState(null);
+  const [isRejectedBannerDismissed, setIsRejectedBannerDismissed] = useState(false);
 
   const selectedItem = useMemo(
     () =>
@@ -118,6 +123,8 @@ const ReservationMethodSettings = () => {
         setCanChangeToClosed(
           reservationPolicyResponse?.canChangeToClosed !== false,
         );
+        setPendingRequest(reservationPolicyResponse?.pendingRequest || null);
+        setLatestRequest(reservationPolicyResponse?.latestRequest || null);
       } catch (error) {
         if (isMounted) {
           Alert.alert('조회 실패', '예약 방식을 불러오지 못했습니다.');
@@ -149,24 +156,18 @@ const ReservationMethodSettings = () => {
     setIsSubmitting(true);
 
     try {
-      await hostGuesthouseApi.updateGuesthouseReservationPolicy(
+      const response = await hostGuesthouseApi.updateGuesthouseReservationPolicy(
         guesthouseId,
         OPTION_TO_POLICY[selectedOption],
       );
 
-      const state = navigation.getState();
-      const previousRoute = state.routes[state.index - 1];
-
-      if (previousRoute) {
-        navigation.dispatch({
-          ...CommonActions.setParams({
-            reservationMethod: selectedOption,
-          }),
-          source: previousRoute.key,
-        });
+      const updatedData = response?.data?.data ?? response?.data;
+      if (updatedData) {
+        setPendingRequest(updatedData.pendingRequest || null);
+        setLatestRequest(updatedData.latestRequest || null);
       }
 
-      navigation.goBack();
+      setIsSuccessModalVisible(true);
     } catch (error) {
       Alert.alert('저장 실패', '잠시 후 다시 시도해주세요.');
     } finally {
@@ -174,8 +175,78 @@ const ReservationMethodSettings = () => {
     }
   };
 
+  const handleSuccessModalConfirm = () => {
+    setIsSuccessModalVisible(false);
+    const state = navigation.getState();
+    const previousRoute = state.routes[state.index - 1];
+
+    if (previousRoute) {
+      navigation.dispatch({
+        ...CommonActions.setParams({
+          reservationMethod: selectedOption,
+        }),
+        source: previousRoute.key,
+      });
+    }
+
+    navigation.goBack();
+  };
+
   const handleSelectOption = optionKey => {
     setSelectedOption(optionKey);
+  };
+
+  const renderStatusBanner = () => {
+    if (pendingRequest) {
+      const requestedOptionTitle =
+        RESERVATION_OPTIONS.find(
+          o => o.key === POLICY_TO_OPTION[pendingRequest.requestedPolicy],
+        )?.title || '알 수 없음';
+
+      return (
+        <View style={[styles.statusBanner, styles.pendingBanner]}>
+          <Text style={[FONTS.fs_14_semibold, styles.statusBannerTitle, styles.pendingBannerTitle]}>
+            변경 승인 대기 중
+          </Text>
+          <Text style={[FONTS.fs_13_medium, styles.statusBannerText]}>
+            현재 '{requestedOptionTitle}' 방식으로 변경을 요청하여 관리자 승인을 기다리고 있습니다.
+          </Text>
+        </View>
+      );
+    }
+
+    if (latestRequest && latestRequest.status === 'REJECTED' && !isRejectedBannerDismissed) {
+      const requestedOptionTitle =
+        RESERVATION_OPTIONS.find(
+          o => o.key === POLICY_TO_OPTION[latestRequest.requestedPolicy],
+        )?.title || '알 수 없음';
+
+      return (
+        <View style={[styles.statusBanner, styles.rejectedBanner]}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <View style={{ flex: 1, paddingRight: 8 }}>
+              <Text style={[FONTS.fs_14_semibold, styles.statusBannerTitle, styles.rejectedBannerTitle]}>
+                변경 요청 반려됨
+              </Text>
+              <Text style={[FONTS.fs_13_medium, styles.statusBannerText]}>
+                '{requestedOptionTitle}' 방식 변경 요청이 반려되었습니다.
+                {latestRequest.rejectedReason
+                  ? `\n사유: ${latestRequest.rejectedReason}`
+                  : ''}
+              </Text>
+            </View>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => setIsRejectedBannerDismissed(true)}
+              style={{ padding: 4 }}>
+              <XGrayIcon width={16} height={16} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      );
+    }
+
+    return null;
   };
 
   return (
@@ -187,12 +258,14 @@ const ReservationMethodSettings = () => {
           운영 상황에 맞는 예약 방식을 선택해주세요
         </Text>
         <Text style={[FONTS.fs_14_medium, styles.subtitle]}>
-          선택하신 설정은 저장 즉시 모든 예약 상품에 적용됩니다
+          선택하신 설정은 관리자 승인 후 모든 예약 상품에 적용됩니다
         </Text>
+
+        {renderStatusBanner()}
 
         {isLoading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color={COLORS.primary_orange} />
+            <ActivityIndicator size="small" color={COLORS.primary_blue} />
           </View>
         ) : (
           <View style={styles.optionList}>
@@ -228,7 +301,19 @@ const ReservationMethodSettings = () => {
                           {option.title}
                         </Text>
 
-                        {option.recommended ? (
+                        {pendingRequest &&
+                        POLICY_TO_OPTION[pendingRequest.requestedPolicy] ===
+                          option.key ? (
+                          <View style={styles.pendingOptionBadge}>
+                            <Text
+                              style={[
+                                FONTS.fs_12_medium,
+                                styles.pendingOptionBadgeText,
+                              ]}>
+                              승인 대기 중
+                            </Text>
+                          </View>
+                        ) : option.recommended ? (
                           <View style={styles.recommendedBadge}>
                             <Text
                               style={[
@@ -289,6 +374,13 @@ const ReservationMethodSettings = () => {
         }
         buttonText="확인"
         onPress={() => setIsBlockedClosedModalVisible(false)}
+      />
+      
+      <AlertModal
+        visible={isSuccessModalVisible}
+        message={'예약 방식 변경이 요청되었습니다.\n관리자 승인 후 반영됩니다.'}
+        buttonText="확인"
+        onPress={handleSuccessModalConfirm}
       />
     </View>
   );
