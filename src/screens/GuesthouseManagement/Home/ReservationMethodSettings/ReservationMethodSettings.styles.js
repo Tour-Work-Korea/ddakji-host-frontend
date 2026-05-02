@@ -20,6 +20,30 @@ export default StyleSheet.create({
     color: COLORS.grayscale_400,
     marginBottom: 20,
   },
+  statusBanner: {
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  pendingBanner: {
+    backgroundColor: COLORS.grayscale_100,
+  },
+  rejectedBanner: {
+    backgroundColor: COLORS.secondary_red,
+  },
+  statusBannerTitle: {
+    marginBottom: 4,
+  },
+  pendingBannerTitle: {
+    color: COLORS.primary_blue,
+  },
+  rejectedBannerTitle: {
+    color: COLORS.semantic_red,
+  },
+  statusBannerText: {
+    color: COLORS.grayscale_700,
+    lineHeight: 20,
+  },
   optionList: {
     gap: 16,
   },
@@ -37,7 +61,7 @@ export default StyleSheet.create({
   },
   optionCardSelected: {
     borderWidth: 2,
-    borderColor: COLORS.primary_orange,
+    borderColor: COLORS.primary_blue,
     padding: 19,
   },
   optionHeader: {
@@ -62,17 +86,28 @@ export default StyleSheet.create({
     color: COLORS.grayscale_800,
   },
   optionTitleSelected: {
-    color: COLORS.primary_orange,
+    color: COLORS.primary_blue,
   },
   recommendedBadge: {
     marginLeft: 8,
-    backgroundColor: COLORS.primary_orange,
+    backgroundColor: COLORS.primary_blue,
     borderRadius: 4,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
   recommendedBadgeText: {
     color: COLORS.grayscale_0,
+    fontSize: 10,
+  },
+  pendingOptionBadge: {
+    marginLeft: 8,
+    backgroundColor: COLORS.grayscale_200,
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  pendingOptionBadgeText: {
+    color: COLORS.grayscale_600,
     fontSize: 10,
   },
   descriptionWrap: {
