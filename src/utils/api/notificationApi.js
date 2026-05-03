@@ -11,17 +11,17 @@ const notificationApi = {
   upsertToken: ({deviceId, fcmToken}, jwtToken = null) =>
     api.post(
       '/notifications/token',
-      {deviceId, fcmToken},
+      {deviceId, fcmToken, appType: 'HOST'},
       {
         withAuth: false,
         headers: buildAuthHeaders(jwtToken),
       },
     ),
 
-  logoutToken: jwtToken =>
+  logoutToken: (deviceId, jwtToken) =>
     api.post(
       '/notifications/token/logout',
-      {},
+      {deviceId, appType: 'HOST'},
       {
         withAuth: false,
         headers: buildAuthHeaders(jwtToken),
