@@ -106,12 +106,16 @@ const getApprovalDeadlineText = (reservation, now) => {
 
   const diffMs = Math.max(0, deadlineMeta.deadline.getTime() - now.getTime());
 
-  if (deadlineMeta.unit === 'minute') {
-    const minutes = Math.floor(diffMs / MINUTE_MS);
+  if (diffMs === 0) {
+    return '기한 만료';
+  }
+
+  if (deadlineMeta.unit === 'minute' || diffMs < HOUR_MS) {
+    const minutes = Math.ceil(diffMs / MINUTE_MS);
     return `${minutes}분 내 승인 필요`;
   }
 
-  const hours = Math.floor(diffMs / HOUR_MS);
+  const hours = Math.ceil(diffMs / HOUR_MS);
   return `${hours}시간 내 승인 필요`;
 };
 

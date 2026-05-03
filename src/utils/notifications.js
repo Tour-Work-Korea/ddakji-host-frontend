@@ -135,7 +135,8 @@ export const unmapDeviceToken = async jwtToken => {
   }
 
   try {
-    await notificationApi.logoutToken(jwtToken);
+    const deviceId = await DeviceInfo.getUniqueId();
+    await notificationApi.logoutToken(deviceId, jwtToken);
     return true;
   } catch (error) {
     console.warn('[notifications] unmapDeviceToken failed:', error?.message);
