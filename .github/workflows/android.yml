@@ -90,7 +90,12 @@ jobs:
 
       - name: Decode google-services.json
         run: |
-          echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 --decode > android/app/google-services.json
+          BRANCH="${GITHUB_REF##*/}"
+          if [ "$BRANCH" = "develop" ]; then
+            echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 --decode > android/app/google-services.json
+          else
+            echo "${{ secrets.GOOGLE_SERVICES_JSON_PROD_BASE64 }}" | base64 --decode > android/app/google-services.json
+          fi
 
       - name: Set keystore env
         run: |
