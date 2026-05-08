@@ -330,7 +330,7 @@ const HostHome = () => {
                 <View style={styles.registerLinkTextWrap}>
                   <View style={styles.registerLinkBgLine} />
                   <Text style={[FONTS.fs_18_semibold, styles.registerLinkText]}>
-                    게스트하우스 등록하기
+                    입점 신청하기
                   </Text>
                 </View>
                 <RightArrowIcon width={24} height={24} />

@@ -112,7 +112,7 @@ const GuesthouseRulesModal = ({ visible, onClose, onSelect, shouldResetOnClose }
             <View style={styles.body}>
               <View style={styles.title}>
                 <Text style={[FONTS.fs_16_medium]}>
-                  이용규칙 및 환불규정을 작성해주세요
+                  이용규칙을 작성해주세요
                 </Text>
                 <Text style={[FONTS.fs_12_light, styles.countText]}>
                   <Text style={{color: COLORS.primary_orange}}>{text.length}</Text>/5,000

@@ -367,10 +367,10 @@ const MyGuesthouseAdd = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
         <View style={styles.bodyContainer}>
-          {renderSectionRow('게스트하우스 정보', isInfoDone, () =>
+          {renderSectionRow('정보', isInfoDone, () =>
             setInfoModalVisible(true),
           )}
-          {renderSectionRow('게스트하우스 소개요약', isIntroDone, () =>
+          {renderSectionRow('소개요약', isIntroDone, () =>
             setIntroModalVisible(true),
           )}
           {renderSectionRow('객실', isRoomDone, () => setRoomModalVisible(true))}

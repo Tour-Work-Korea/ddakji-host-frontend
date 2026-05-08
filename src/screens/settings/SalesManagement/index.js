@@ -1,10 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import useUserStore from '@stores/userStore';
 import statisticsApi from '@utils/api/statisticsApi';
 import GuesthouseProfileList from '@components/modals/HostMy/Guesthouse/GuesthouseProfileList';
-import Header from '@components/Header';
 import { useGuesthouseProfiles } from '@hooks/useGuesthouseProfiles';
 import MonthPickerModal from '@components/modals/MonthPickerModal';
 import ChevronLeftBlack from '@assets/images/chevron_left_black.svg';
@@ -16,13 +14,37 @@ import Svg, { Circle, G } from 'react-native-svg';
 import styles from './SalesManagement.styles';
 import { COLORS } from '@constants/colors';
 
+const RESERVATION_METRIC_ROUTE_MAP = {
+  application: {
+    title: '신청',
+    status: '대기',
+  },
+  completed: {
+    title: '이용완료',
+    status: '완료',
+  },
+  cancelled: {
+    title: '취소',
+    status: '취소',
+  },
+  confirmed: {
+    title: '확정',
+    status: '확정',
+  },
+};
 
+const unwrapApiPayload = response => {
+  let result = response?.data ?? response;
+  if (result?.data) {
+    result = result.data;
+  }
+  return result;
+};
 
 const SalesManagement = () => {
   const navigation = useNavigation();
   const route = useRoute();
 
-  const hostProfile = useUserStore(state => state.hostProfile);
   const passedGuesthouseId = route.params?.guesthouseId;
   const [isGuesthouseListVisible, setIsGuesthouseListVisible] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState(passedGuesthouseId ? String(passedGuesthouseId) : null);
@@ -34,29 +56,44 @@ const SalesManagement = () => {
     [guesthouseProfiles, selectedProfileId],
   );
 
-  const [viewMode, setViewMode] = useState('MONTHLY'); // 'MONTHLY'
   const [reservationMetricMode, setReservationMetricMode] = useState('count'); // 'count' | 'person'
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isMonthPickerVisible, setIsMonthPickerVisible] = useState(false);
   const [salesData, setSalesData] = useState(null);
+  const [reservationMetricsData, setReservationMetricsData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const fetchSalesData = async () => {
-      if (!selectedGuesthouse?.id) return;
+      if (!selectedGuesthouse?.id) {
+        return;
+      }
       setIsLoading(true);
       try {
         const yearMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-        const response = await statisticsApi.getSalesDashboard(selectedGuesthouse.id, yearMonth);
-        let result = response.data || response;
-        if (result && result.data && result.data.salesSummary) {
-          result = result.data;
+        const [salesResponse, reservationMetricsResponse] = await Promise.allSettled([
+          statisticsApi.getSalesDashboard(selectedGuesthouse.id, yearMonth),
+          statisticsApi.getReservationMetrics(selectedGuesthouse.id, yearMonth),
+        ]);
+
+        if (salesResponse.status === 'fulfilled') {
+          setSalesData(unwrapApiPayload(salesResponse.value));
+        } else {
+          console.warn('Sales Dashboard Fetch Error:', salesResponse.reason);
+          setSalesData(null);
         }
-        setSalesData(result);
+
+        if (reservationMetricsResponse.status === 'fulfilled') {
+          setReservationMetricsData(unwrapApiPayload(reservationMetricsResponse.value));
+        } else {
+          console.warn('Reservation Metrics Fetch Error:', reservationMetricsResponse.reason);
+          setReservationMetricsData(null);
+        }
       } catch (err) {
         console.warn('Sales Dashboard Fetch Error:', err);
         setSalesData(null);
+        setReservationMetricsData(null);
       } finally {
         setIsLoading(false);
       }
@@ -80,7 +117,23 @@ const SalesManagement = () => {
   const isPrevDisabled = false;
   const isNextDisabled = currentDate.getFullYear() === new Date().getFullYear() && currentDate.getMonth() === new Date().getMonth();
 
+  const selectedYearMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
   const displayDateStr = `${currentDate.getFullYear()}년 ${currentDate.getMonth() + 1}월`;
+  const reservationMetrics = reservationMetricsData?.metrics ?? salesData?.reservationMetrics;
+
+  const handleReservationMetricPress = metricKey => {
+    const config = RESERVATION_METRIC_ROUTE_MAP[metricKey];
+    if (!config || !selectedGuesthouse?.id) {
+      return;
+    }
+
+    navigation.navigate('SalesReservationMetricList', {
+      guesthouseId: selectedGuesthouse.id,
+      title: `${config.title} 예약`,
+      yearMonth: selectedYearMonth,
+      initialReservationStatus: config.status,
+    });
+  };
 
   let maxCancelCount = 1;
   let maleDonutLength = 0;
@@ -116,7 +169,11 @@ const SalesManagement = () => {
             onPress={() => setIsGuesthouseListVisible(true)}
             activeOpacity={0.8}
           >
-            <Text style={styles.customHeaderTitleText}>
+            <Text
+              style={styles.customHeaderTitleText}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
               {selectedGuesthouse?.name || '매출 분석'}
             </Text>
             {isGuesthouseListVisible ? (
@@ -212,7 +269,7 @@ const SalesManagement = () => {
               </View>
             </View>
             {/* Reservation Metrics */}
-            {salesData.reservationMetrics && (
+            {reservationMetrics && (
               <View style={{ marginBottom: 16 }}>
                 <View style={[styles.rankHeaderRow, { justifyContent: 'space-between' }]}>
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -237,27 +294,35 @@ const SalesManagement = () => {
                 <View style={styles.metricGrid}>
                   {(() => {
                     const getMetric = (baseMetric) => {
-                      if (!baseMetric) return { count: 0, diffCount: 0, diffPercent: 0 };
+                      if (!baseMetric) {
+                        return { count: 0, diffCount: 0, diffPercent: 0 };
+                      }
                       const target = reservationMetricMode === 'count' ? baseMetric.reservationCount : baseMetric.guestCount;
-                      if (!target) return { count: 0, diffCount: 0, diffPercent: 0 };
+                      if (!target) {
+                        return { count: 0, diffCount: 0, diffPercent: 0 };
+                      }
                       return {
                         count: target.current || 0,
                         diffCount: target.delta || 0,
-                        diffPercent: target.deltaRate || 0
+                        diffPercent: target.deltaRate || 0,
                       };
                     };
 
-                    const mApplied = getMetric(salesData.reservationMetrics.application);
-                    const mCompleted = getMetric(salesData.reservationMetrics.completed);
-                    const mCanceled = getMetric(salesData.reservationMetrics.cancelled);
-                    const mConfirmed = getMetric(salesData.reservationMetrics.confirmed);
+                    const mApplied = getMetric(reservationMetrics.application);
+                    const mCompleted = getMetric(reservationMetrics.completed);
+                    const mCanceled = getMetric(reservationMetrics.cancelled);
+                    const mConfirmed = getMetric(reservationMetrics.confirmed);
 
                     const unitText = reservationMetricMode === 'count' ? '건' : '명';
 
                     return (
                       <>
                         {/* 신청 (Applied) */}
-                        <View style={styles.metricCardBox}>
+                        <TouchableOpacity
+                          style={styles.metricCardBox}
+                          activeOpacity={0.85}
+                          onPress={() => handleReservationMetricPress('application')}
+                        >
                           <Text style={styles.metricCardTitle}>신청</Text>
                           <View style={styles.metricCardMainRow}>
                             <Text style={styles.metricCardMain}>{mApplied.count}</Text>
@@ -273,10 +338,14 @@ const SalesManagement = () => {
                               {mApplied.diffPercent > 0 ? '+' : ''}{mApplied.diffPercent}%
                             </Text>
                           </View>
-                        </View>
+                        </TouchableOpacity>
 
                         {/* 이용완료 (Completed) */}
-                        <View style={styles.metricCardBox}>
+                        <TouchableOpacity
+                          style={styles.metricCardBox}
+                          activeOpacity={0.85}
+                          onPress={() => handleReservationMetricPress('completed')}
+                        >
                           <Text style={styles.metricCardTitle}>이용완료</Text>
                           <View style={styles.metricCardMainRow}>
                             <Text style={styles.metricCardMain}>{mCompleted.count}</Text>
@@ -292,10 +361,14 @@ const SalesManagement = () => {
                               {mCompleted.diffPercent > 0 ? '+' : ''}{mCompleted.diffPercent}%
                             </Text>
                           </View>
-                        </View>
+                        </TouchableOpacity>
 
                         {/* 취소 (Canceled) */}
-                        <View style={styles.metricCardBox}>
+                        <TouchableOpacity
+                          style={styles.metricCardBox}
+                          activeOpacity={0.85}
+                          onPress={() => handleReservationMetricPress('cancelled')}
+                        >
                           <Text style={styles.metricCardTitle}>취소</Text>
                           <View style={styles.metricCardMainRow}>
                             <Text style={styles.metricCardMain}>{mCanceled.count}</Text>
@@ -311,10 +384,14 @@ const SalesManagement = () => {
                               {mCanceled.diffPercent > 0 ? '+' : ''}{mCanceled.diffPercent}%
                             </Text>
                           </View>
-                        </View>
+                        </TouchableOpacity>
 
                         {/* 확정 (Confirmed) */}
-                        <View style={styles.metricCardBox}>
+                        <TouchableOpacity
+                          style={styles.metricCardBox}
+                          activeOpacity={0.85}
+                          onPress={() => handleReservationMetricPress('confirmed')}
+                        >
                           <Text style={styles.metricCardTitle}>확정</Text>
                           <View style={styles.metricCardMainRow}>
                             <Text style={styles.metricCardMain}>{mConfirmed.count}</Text>
@@ -330,7 +407,7 @@ const SalesManagement = () => {
                               {mConfirmed.diffPercent > 0 ? '+' : ''}{mConfirmed.diffPercent}%
                             </Text>
                           </View>
-                        </View>
+                        </TouchableOpacity>
                       </>
                     );
                   })()}

@@ -207,7 +207,11 @@ const SettlementManagement = () => {
             onPress={() => setIsGuesthouseListVisible(true)}
             activeOpacity={0.8}
           >
-            <Text style={styles.customHeaderTitleText}>
+            <Text
+              style={styles.customHeaderTitleText}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
               {selectedGuesthouse?.name || '정산 관리'}
             </Text>
             {isGuesthouseListVisible ? (

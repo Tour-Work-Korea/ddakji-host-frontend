@@ -53,7 +53,7 @@ const normalizeInventory = (inventory = {}, fallbackRoom = {}) => ({
 });
 
 
-const RoomManagement = ({ guesthouseId }) => {
+const RoomManagement = ({ guesthouseId, initialDate }) => {
   const getTodayLocalDate = () => {
     const today = new Date();
     const year = today.getFullYear();
@@ -86,6 +86,13 @@ const RoomManagement = ({ guesthouseId }) => {
     visible: false,
     message: '',
   });
+
+  useEffect(() => {
+    if (initialDate) {
+      setSelectedDate(initialDate);
+      setIsCalendarOpen(false);
+    }
+  }, [initialDate]);
 
   useEffect(() => {
     const fetchGuesthousesWithRooms = async () => {

@@ -25,6 +25,7 @@ import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
 import XBtn from '@assets/images/x_gray.svg';
 import AddImage from '@assets/images/add_image_gray.svg';
 import CheckIcon from '@assets/images/star_filled.svg';
+import EmptyStarIcon from '@assets/images/star_empty.svg';
 
 const MODAL_HEIGHT = Math.round(Dimensions.get('window').height * 0.9);
 
@@ -254,7 +255,7 @@ const GuesthouseIntroSummaryModal = ({
               </Text>
             </View>
             <Text style={[FONTS.fs_12_medium, styles.subText]}>
-              대표로 보여줄 사진을 선택해주세요{'\n'}(선택된 사진에는 별이 표시됩니다)
+              별모양을 클릭해 대표 사진을 선택할 수 있어요
             </Text>
             <View style={styles.infoRow}>
               <ScrollView
@@ -278,11 +279,13 @@ const GuesthouseIntroSummaryModal = ({
                         source={{ uri: item.guesthouseImageUrl }}
                         style={styles.uploadedImage}
                       />
-                      {item.isThumbnail && (
-                        <View style={styles.checkIconContainer}>
+                      <View style={styles.checkIconContainer}>
+                        {item.isThumbnail ? (
                           <CheckIcon width={14} height={14} />
-                        </View>
-                      )}
+                        ) : (
+                          <EmptyStarIcon width={14} height={14} />
+                        )}
+                      </View>
                     </TouchableOpacity>
 
                     {/* 삭제 버튼 */}

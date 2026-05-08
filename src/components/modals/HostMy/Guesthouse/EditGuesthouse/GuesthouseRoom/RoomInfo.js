@@ -18,6 +18,7 @@ import { uploadMultiImage } from '@utils/imageUploadHandler';
 import XBtn from '@assets/images/x_gray.svg';
 import AddImage from '@assets/images/add_image_gray.svg';
 import CheckIcon from '@assets/images/star_filled.svg';
+import EmptyStarIcon from '@assets/images/star_empty.svg';
 import ArrowRight from '@assets/images/arrow_right_black.svg';
 import DisabledRadio from '@assets/images/radio_button_disabled.svg';
 import EnabledRadio from '@assets/images/radio_button_enabled.svg';
@@ -160,7 +161,7 @@ const RoomInfo = ({ data, setData, onNext }) => {
             </Text>
           </View>
           <Text style={[FONTS.fs_12_medium, styles.subText]}>
-            대표로 보여줄 사진을 선택해주세요{'\n'}(선택된 사진에는 별이 표시됩니다)
+            별모양을 클릭해 대표 사진을 선택할 수 있어요
           </Text>
         </View>
 
@@ -189,11 +190,13 @@ const RoomInfo = ({ data, setData, onNext }) => {
               <View>
                 <Image source={{ uri: item.roomImageUrl }} style={styles.image} />
 
-                {item.isThumbnail && (
-                  <View style={styles.checkIconContainer}>
+                <View style={styles.checkIconContainer}>
+                  {item.isThumbnail ? (
                     <CheckIcon width={14} height={14} />
-                  </View>
-                )}
+                  ) : (
+                    <EmptyStarIcon width={14} height={14} />
+                  )}
+                </View>
 
                 <TouchableOpacity
                   style={styles.deleteBtn}

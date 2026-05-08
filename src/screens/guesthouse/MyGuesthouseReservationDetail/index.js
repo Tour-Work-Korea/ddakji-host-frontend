@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 import ButtonWhite from '@components/ButtonWhite';
 import Header from '@components/Header';
@@ -11,6 +12,7 @@ import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
 import { formatLocalDateToDotWithDay } from '@utils/formatDate';
 import Toast from 'react-native-toast-message';
 import styles from './MyGuesthouseReservationDetail.styles';
+import InfoIcon from '@assets/images/info_circle_red.svg';
 
 const STATUS_STYLE = {
   대기: {
@@ -43,6 +45,95 @@ const STATUS_LABEL_MAP = {
 };
 const REJECT_REASON_OPTIONS = ['객실 만실', '숙소 내부 사정', '예약 조건 미충족', '직접 입력'];
 const DIRECT_INPUT_REASON = '직접 입력';
+const APPROVAL_LIMIT_HOUR = 11;
+const MINUTE_MS = 60 * 1000;
+const HOUR_MS = 60 * MINUTE_MS;
+const DAY_MS = 24 * HOUR_MS;
+
+const getDateString = value => {
+  if (!value) {
+    return '';
+  }
+
+  return String(value).split('T')[0];
+};
+
+const getRoomIdFromReservation = reservation =>
+  reservation?.roomId ??
+  reservation?.roomInfoId ??
+  reservation?.guesthouseRoomId ??
+  reservation?.room?.roomId ??
+  reservation?.room?.id ??
+  null;
+
+const toDate = value => {
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const formatDateKey = date => {
+  if (!(date instanceof Date)) {
+    return '';
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getApprovalDeadlineMeta = reservation => {
+  const createdAt = toDate(reservation?.createdAt);
+  if (!createdAt) {
+    const fallbackDeadline = toDate(reservation?.approvalDeadlineAt);
+
+    return fallbackDeadline
+      ? {
+          deadline: fallbackDeadline,
+          unit: 'hour',
+        }
+      : null;
+  }
+
+  const checkInDate = reservation?.checkInDate?.split?.('T')?.[0] ?? reservation?.checkInDate;
+  const isSameDayReservation = checkInDate && formatDateKey(createdAt) === checkInDate;
+  const isSameDayAfterEleven = isSameDayReservation && createdAt.getHours() >= APPROVAL_LIMIT_HOUR;
+  const limitMs = isSameDayAfterEleven ? 30 * MINUTE_MS : DAY_MS;
+
+  return {
+    deadline: new Date(createdAt.getTime() + limitMs),
+    unit: isSameDayAfterEleven ? 'minute' : 'hour',
+  };
+};
+
+const getApprovalDeadlineText = (reservation, now) => {
+  if (reservation?.status !== '대기') {
+    return '';
+  }
+
+  const deadlineMeta = getApprovalDeadlineMeta(reservation);
+  if (!deadlineMeta?.deadline) {
+    return '';
+  }
+
+  const diffMs = Math.max(0, deadlineMeta.deadline.getTime() - now.getTime());
+
+  if (diffMs === 0) {
+    return '기한 만료';
+  }
+
+  if (deadlineMeta.unit === 'minute' || diffMs < HOUR_MS) {
+    const minutes = Math.ceil(diffMs / MINUTE_MS);
+    return `${minutes}분 내 승인 필요`;
+  }
+
+  const hours = Math.ceil(diffMs / HOUR_MS);
+  return `${hours}시간 내 승인 필요`;
+};
 
 const mapReservationDetailToViewData = (reservation = {}) => {
   let status = STATUS_LABEL_MAP[reservation?.status] || reservation?.status || '완료';
@@ -103,7 +194,10 @@ const mapReservationDetailToViewData = (reservation = {}) => {
 };
 
 const formatDateWithTime = (dateStr) => {
-  if (!dateStr) return '';
+  if (!dateStr) {
+    return '';
+  }
+
   const d = new Date(dateStr);
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -114,19 +208,29 @@ const formatDateWithTime = (dateStr) => {
 };
 
 const MyGuesthouseReservationDetail = ({ route }) => {
+  const navigation = useNavigation();
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const [decisionModalType, setDecisionModalType] = useState(null);
   const [decisionReasonOpen, setDecisionReasonOpen] = useState(false);
   const [decisionReason, setDecisionReason] = useState('');
   const [decisionReasonInput, setDecisionReasonInput] = useState('');
   const [decisionSubmitting, setDecisionSubmitting] = useState(false);
+  const [roomCloseModal, setRoomCloseModal] = useState({
+    visible: false,
+    roomId: null,
+    date: '',
+    submitting: false,
+  });
+  const [now, setNow] = useState(() => new Date());
   const reservationId = route?.params?.reservationId;
   const [reservation, setReservation] = useState(
     mapReservationDetailToViewData(route?.params?.reservation || {}),
   );
 
-  const fetchReservationDetail = async () => {
-    if (!reservationId) return;
+  const fetchReservationDetail = useCallback(async () => {
+    if (!reservationId) {
+      return;
+    }
 
     try {
       const response = await hostGuesthouseApi.getGuesthouseReservationDetail(reservationId);
@@ -138,11 +242,19 @@ const MyGuesthouseReservationDetail = ({ route }) => {
     } catch (error) {
       console.error('게스트하우스 예약 상세 조회 실패:', error);
     }
-  };
+  }, [reservationId]);
 
   useEffect(() => {
     fetchReservationDetail();
-  }, [reservationId]);
+  }, [fetchReservationDetail]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, MINUTE_MS);
+
+    return () => clearInterval(timer);
+  }, []);
 
   const cancelModalReservation = {
     reservationId: reservation.reservationId || reservation.id,
@@ -178,8 +290,140 @@ const MyGuesthouseReservationDetail = ({ route }) => {
     setDecisionReasonInput('');
   };
 
+  const resolveGuesthouseId = () =>
+    reservation?.guesthouseId ??
+    route?.params?.guesthouseId ??
+    route?.params?.reservation?.guesthouseId ??
+    null;
+
+  const resolveReservationRoomId = async () => {
+    const directRoomId = getRoomIdFromReservation(reservation);
+    const guesthouseId = resolveGuesthouseId();
+    if (directRoomId) {
+      return directRoomId;
+    }
+
+    if (!guesthouseId || !reservation?.room) {
+      return null;
+    }
+
+    try {
+      const response = await hostGuesthouseApi.getMyGuesthousesWithRooms();
+      const payload = response?.data?.data ?? response?.data ?? [];
+      const guesthouses = Array.isArray(payload) ? payload : [];
+      const currentGuesthouse = guesthouses.find(
+        item => String(item?.guesthouseId ?? item?.id) === String(guesthouseId),
+      );
+      const rooms = Array.isArray(currentGuesthouse?.rooms) ? currentGuesthouse.rooms : [];
+      const matchedRoom = rooms.find(room => room?.roomName === reservation.room);
+
+      return matchedRoom?.roomId ?? matchedRoom?.id ?? null;
+    } catch (error) {
+      return null;
+    }
+  };
+
+  const getRoomClosePromptInfo = async () => {
+    const guesthouseId = resolveGuesthouseId();
+    const date = getDateString(reservation?.checkInDate);
+    const roomId = await resolveReservationRoomId();
+
+    if (!guesthouseId || !roomId || !date) {
+      return null;
+    }
+
+    try {
+      const response = await hostGuesthouseApi.getRoomInventoryCalendar(
+        guesthouseId,
+        roomId,
+        date,
+        date,
+      );
+      const payload = response?.data?.data ?? response?.data ?? {};
+      const list =
+        payload?.inventories ??
+        payload?.calendar ??
+        payload?.content ??
+        (Array.isArray(payload) ? payload : null) ??
+        [];
+      const inventory = Array.isArray(list)
+        ? list.find(item => item?.date === date) ?? list[0]
+        : payload;
+
+      return inventory?.isClosed === false
+        ? {
+            guesthouseId,
+            roomId,
+            date,
+          }
+        : null;
+    } catch (error) {
+      return null;
+    }
+  };
+
+  const closeRoomCloseModal = async () => {
+    setRoomCloseModal({
+      visible: false,
+      roomId: null,
+      date: '',
+      submitting: false,
+    });
+    Toast.show({
+      type: 'success',
+      text1: '예약이 반려되었어요.',
+      position: 'top',
+      visibilityTime: 2000,
+    });
+    await fetchReservationDetail();
+  };
+
+  const handleCloseRejectedRoom = async () => {
+    const guesthouseId = resolveGuesthouseId();
+    const {roomId, date, submitting} = roomCloseModal;
+    if (!guesthouseId || !roomId || !date || submitting) {
+      return;
+    }
+
+    try {
+      setRoomCloseModal(prev => ({...prev, submitting: true}));
+      await hostGuesthouseApi.updateRoomStatusByDate(guesthouseId, roomId, {
+        date,
+        isClosed: true,
+      });
+      setRoomCloseModal({
+        visible: false,
+        roomId: null,
+        date: '',
+        submitting: false,
+      });
+      Toast.show({
+        type: 'success',
+        text1: '객실이 마감 처리되었어요.',
+        position: 'top',
+        visibilityTime: 2000,
+      });
+      navigation.navigate('GuesthouseManagement', {
+        guesthouseId,
+        initialTab: '객실 예약',
+        initialChip: '방관리',
+        initialRoomManagementDate: date,
+      });
+    } catch (error) {
+      setRoomCloseModal(prev => ({...prev, submitting: false}));
+      Toast.show({
+        type: 'error',
+        text1: '객실 마감 처리에 실패했어요.',
+        position: 'top',
+        visibilityTime: 2000,
+      });
+    }
+  };
+
   const handleConfirmDecision = async () => {
-    if (!reservationId || decisionSubmitting) return;
+    if (!reservationId || decisionSubmitting) {
+      return;
+    }
 
     if (decisionModalType === 'reject') {
       const finalReason =
@@ -194,14 +438,24 @@ const MyGuesthouseReservationDetail = ({ route }) => {
         await hostGuesthouseApi.rejectGuesthouseReservationByHost(reservationId, {
           rejectReason: finalReason,
         });
+        const roomClosePromptInfo = await getRoomClosePromptInfo();
         resetDecisionModal();
-        Toast.show({
-          type: 'success',
-          text1: '예약이 반려되었어요.',
-          position: 'top',
-          visibilityTime: 2000,
-        });
-        await fetchReservationDetail();
+        if (roomClosePromptInfo) {
+          setRoomCloseModal({
+            visible: true,
+            roomId: roomClosePromptInfo.roomId,
+            date: roomClosePromptInfo.date,
+            submitting: false,
+          });
+        } else {
+          Toast.show({
+            type: 'success',
+            text1: '예약이 반려되었어요.',
+            position: 'top',
+            visibilityTime: 2000,
+          });
+          await fetchReservationDetail();
+        }
       } catch (error) {
         setDecisionSubmitting(false);
         Toast.show({
@@ -247,6 +501,7 @@ const MyGuesthouseReservationDetail = ({ route }) => {
   const requestsText = reservation?.requests?.trim?.() || '';
 
   const statusStyle = STATUS_STYLE[reservation.status] || STATUS_STYLE.완료;
+  const approvalDeadlineText = getApprovalDeadlineText(reservation, now);
 
   return (
     <View style={styles.container}>
@@ -261,7 +516,17 @@ const MyGuesthouseReservationDetail = ({ route }) => {
           </View>
 
           <View style={styles.headerTextWrap}>
-            <Text style={[FONTS.fs_16_semibold, styles.nameText]}>{reservation.name}</Text>
+            <View style={styles.nameRow}>
+              <Text style={[FONTS.fs_16_semibold, styles.nameText]}>{reservation.name}</Text>
+              {approvalDeadlineText ? (
+                <View style={styles.approvalDeadlineWrap}>
+                  <InfoIcon width={16} height={16} />
+                  <Text style={[FONTS.fs_12_medium, styles.approvalDeadlineText]}>
+                    {approvalDeadlineText}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
             <Text style={[FONTS.fs_12_medium, isRejected ? { color: COLORS.primary_orange } : styles.highlightText]}>{reservation.statusText}</Text>
           </View>
         </View>
@@ -339,7 +604,7 @@ const MyGuesthouseReservationDetail = ({ route }) => {
             <ButtonWhite
               title="예약 확정"
               onPress={() => handleOpenDecisionModal('approve')}
-              backgroundColor={COLORS.primary_orange}
+              backgroundColor={COLORS.primary_blue}
               textColor={COLORS.grayscale_0}
               style={styles.pendingActionButton}
             />
@@ -413,6 +678,19 @@ const MyGuesthouseReservationDetail = ({ route }) => {
         customInputValue={decisionReasonInput}
         customInputPlaceholder="반려 사유를 입력해 주세요"
         onChangeCustomInput={setDecisionReasonInput}
+      />
+
+      <AlertModal
+        visible={roomCloseModal.visible}
+        title="해당 객실을 마감 처리할까요?"
+        message={
+          '예약 신청이 반려된 객실이\n현재 판매 중으로 노출되고 있어요\n다른 플랫폼에서 이미 예약되었다면 마감 처리를 권장드려요'
+        }
+        buttonText="객실 마감 하기"
+        buttonText2="취소"
+        onPress={handleCloseRejectedRoom}
+        onPress2={closeRoomCloseModal}
+        buttonDisabled={roomCloseModal.submitting}
       />
     </View>
   );
