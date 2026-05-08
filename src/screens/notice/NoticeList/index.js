@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Platform,
   Pressable,
   Text,
   TextInput,
@@ -9,8 +10,10 @@ import {
   View,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import Header from '@components/Header';
+import IosNoticeBannerAd from '@components/ads/IosNoticeBannerAd';
 import {COLORS} from '@constants/colors';
 import {FONTS} from '@constants/fonts';
 import adminApi from '@utils/api/adminApi';
@@ -54,6 +57,7 @@ const mapNoticeSummary = item => ({
 
 const NoticeList = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const [selectedCategory, setSelectedCategory] = useState('');
   const [keyword, setKeyword] = useState('');
   const [isSearchTypeOpen, setIsSearchTypeOpen] = useState(false);
@@ -265,7 +269,10 @@ const NoticeList = () => {
         keyExtractor={item => item.key}
         renderItem={renderNoticeCard}
         style={styles.scrollView}
-        contentContainerStyle={styles.listContentContainer}
+        contentContainerStyle={[
+          styles.listContentContainer,
+          Platform.OS === 'ios' && {paddingBottom: insets.bottom + 84},
+        ]}
         ListEmptyComponent={renderEmpty}
         ListFooterComponent={renderFooter}
         onEndReached={handleEndReached}
@@ -273,6 +280,12 @@ const NoticeList = () => {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       />
+
+      {Platform.OS === 'ios' ? (
+        <View style={styles.fixedAdContainer}>
+          <IosNoticeBannerAd />
+        </View>
+      ) : null}
     </View>
   );
 };

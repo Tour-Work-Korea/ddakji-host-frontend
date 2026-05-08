@@ -318,7 +318,10 @@ const NotificationCenter = () => {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.iconButton} activeOpacity={0.8}>
+        <TouchableOpacity
+          style={styles.iconButton}
+          activeOpacity={0.8}
+          onPress={() => navigation.navigate('NotificationSettings')}>
           <SettingIcon width={22} height={22} />
         </TouchableOpacity>
       </View>

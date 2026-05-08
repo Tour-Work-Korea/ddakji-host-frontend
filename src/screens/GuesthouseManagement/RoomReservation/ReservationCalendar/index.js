@@ -17,7 +17,6 @@ import {FONTS} from '@constants/fonts';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
 import {formatLocalDateToDot, formatLocalDateToDotWithDay} from '@utils/formatDate';
 import styles from './ReservationCalendar.styles';
-import EmptyIcon from '@assets/images/search_empty.svg';
 
 const RESERVATION_STATUS_STYLE = {
   대기: {
@@ -318,8 +317,6 @@ const ReservationCalendar = ({guesthouseId}) => {
           ) : reservations.length === 0 ? (
             <View style={styles.emptyContainer}>
               <EmptyState
-                icon={EmptyIcon}
-                iconSize={{width: 72, height: 72}}
                 title="예약 내역이 없어요"
                 description=""
               />

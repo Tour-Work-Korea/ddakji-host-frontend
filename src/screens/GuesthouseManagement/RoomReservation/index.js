@@ -11,9 +11,12 @@ import styles from './RoomReservation.styles';
 
 const chips = ['예약 관리', '예약 캘린더', '방관리', '객실 목록', '알림 설정'];
 
-const RoomReservation = ({guesthouseId, initialChip}) => {
+const RoomReservation = ({guesthouseId, initialChip, initialRoomManagementDate}) => {
   const [activeChip, setActiveChip] = useState(
     chips.includes(initialChip) ? initialChip : chips[0],
+  );
+  const [roomManagementInitialDate, setRoomManagementInitialDate] = useState(
+    initialRoomManagementDate ?? null,
   );
 
   useEffect(() => {
@@ -21,6 +24,12 @@ const RoomReservation = ({guesthouseId, initialChip}) => {
       setActiveChip(initialChip);
     }
   }, [initialChip]);
+
+  useEffect(() => {
+    if (initialRoomManagementDate) {
+      setRoomManagementInitialDate(initialRoomManagementDate);
+    }
+  }, [initialRoomManagementDate]);
 
   return (
     <View style={styles.container}>
@@ -47,11 +56,20 @@ const RoomReservation = ({guesthouseId, initialChip}) => {
       </ScrollView>
 
       {activeChip === chips[0] ? (
-        <ReservationManagement guesthouseId={guesthouseId} />
+        <ReservationManagement
+          guesthouseId={guesthouseId}
+          onMoveRoomManagement={({date}) => {
+            setRoomManagementInitialDate(date || null);
+            setActiveChip('방관리');
+          }}
+        />
       ) : activeChip === chips[1] ? (
         <ReservationCalendar guesthouseId={guesthouseId} />
       ) : activeChip === chips[2] ? (
-        <RoomManagement guesthouseId={guesthouseId} />
+        <RoomManagement
+          guesthouseId={guesthouseId}
+          initialDate={roomManagementInitialDate}
+        />
       ) : activeChip === chips[3] ? (
         <RoomList guesthouseId={guesthouseId} />
       ) : (

@@ -12,6 +12,10 @@ const styles = StyleSheet.create({
     paddingTop: 6,
     paddingHorizontal: 24,
   },
+  loadingWrap: {
+    paddingTop: 24,
+    alignItems: 'center',
+  },
   section: {
     paddingTop: 20,
     paddingBottom: 18,
@@ -32,7 +36,7 @@ const styles = StyleSheet.create({
   },
   pushStatus: {
     ...FONTS.fs_16_medium,
-    color: COLORS.primary_orange,
+    color: COLORS.primary_blue,
   },
   helperText: {
     ...FONTS.fs_16_medium,
@@ -52,6 +56,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 11,
   },
+  listRowDisabled: {
+    opacity: 0.45,
+  },
   itemLabel: {
     ...FONTS.fs_16_medium,
     color: COLORS.grayscale_800,
@@ -67,8 +74,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.grayscale_0,
   },
   checkboxChecked: {
-    backgroundColor: COLORS.primary_orange,
-    borderColor: COLORS.primary_orange,
+    backgroundColor: COLORS.primary_blue,
+    borderColor: COLORS.primary_blue,
   },
 });
 

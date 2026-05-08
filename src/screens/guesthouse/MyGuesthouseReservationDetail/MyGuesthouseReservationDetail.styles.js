@@ -33,9 +33,24 @@ const styles = StyleSheet.create({
   headerTextWrap: {
     flex: 1,
   },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   nameText: {
     color: COLORS.grayscale_800,
+    flex: 1,
     marginBottom: 2,
+  },
+  approvalDeadlineWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  approvalDeadlineText: {
+    color: COLORS.semantic_red,
+    marginLeft: 4,
   },
 
   section: {
@@ -86,7 +101,7 @@ const styles = StyleSheet.create({
   pendingActionRow: {
     flexDirection: 'row',
     marginTop: 20,
-    width: '80%',
+    width: '70%',
     alignSelf: 'flex-end',
   },
   pendingActionButton: {

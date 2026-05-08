@@ -18,7 +18,6 @@ import {COLORS} from '@constants/colors';
 import {FONTS} from '@constants/fonts';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
 import {formatLocalDateToDotWithDay} from '@utils/formatDate';
-import EmptyIcon from '@assets/images/search_empty.svg';
 import InfoIcon from '@assets/images/info_circle_red.svg';
 import Toast from 'react-native-toast-message';
 
@@ -59,6 +58,22 @@ const HOUR_MS = 60 * MINUTE_MS;
 const DAY_MS = 24 * HOUR_MS;
 const REJECT_REASON_OPTIONS = ['객실 만실', '숙소 내부 사정', '예약 조건 미충족', '직접 입력'];
 const DIRECT_INPUT_REASON = '직접 입력';
+
+const getDateString = value => {
+  if (!value) {
+    return '';
+  }
+
+  return String(value).split('T')[0];
+};
+
+const getRoomIdFromReservation = reservation =>
+  reservation?.roomId ??
+  reservation?.roomInfoId ??
+  reservation?.guesthouseRoomId ??
+  reservation?.room?.roomId ??
+  reservation?.room?.id ??
+  null;
 
 const toDate = value => {
   if (!value) return null;
@@ -169,12 +184,15 @@ const normalizeReservation = reservation => {
 };
 
 const ReservationList = ({
+  guesthouseId,
   data,
   totalCount = 0,
   loading,
   loadingMore = false,
+  selectedDate,
   onEndReached,
   onActionComplete,
+  onMoveRoomManagement,
 }) => {
   const navigation = useNavigation();
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
@@ -185,6 +203,12 @@ const ReservationList = ({
   const [decisionReason, setDecisionReason] = useState('');
   const [decisionReasonInput, setDecisionReasonInput] = useState('');
   const [decisionSubmitting, setDecisionSubmitting] = useState(false);
+  const [roomCloseModal, setRoomCloseModal] = useState({
+    visible: false,
+    roomId: null,
+    date: '',
+    submitting: false,
+  });
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -234,6 +258,125 @@ const ReservationList = ({
     setDecisionReasonInput('');
   };
 
+  const resolveReservationRoomId = async reservation => {
+    const directRoomId = getRoomIdFromReservation(reservation);
+    if (directRoomId) {
+      return directRoomId;
+    }
+
+    if (!guesthouseId || !reservation?.room) {
+      return null;
+    }
+
+    try {
+      const response = await hostGuesthouseApi.getMyGuesthousesWithRooms();
+      const payload = response?.data?.data ?? response?.data ?? [];
+      const guesthouses = Array.isArray(payload) ? payload : [];
+      const currentGuesthouse = guesthouses.find(
+        item => String(item?.guesthouseId ?? item?.id) === String(guesthouseId),
+      );
+      const rooms = Array.isArray(currentGuesthouse?.rooms) ? currentGuesthouse.rooms : [];
+      const matchedRoom = rooms.find(room => room?.roomName === reservation.room);
+
+      return matchedRoom?.roomId ?? matchedRoom?.id ?? null;
+    } catch (error) {
+      return null;
+    }
+  };
+
+  const getRoomClosePromptInfo = async reservation => {
+    const date = getDateString(selectedDate) || getDateString(reservation?.checkInDate);
+    const roomId = await resolveReservationRoomId(reservation);
+
+    if (!guesthouseId || !roomId || !date) {
+      return null;
+    }
+
+    try {
+      const response = await hostGuesthouseApi.getRoomInventoryCalendar(
+        guesthouseId,
+        roomId,
+        date,
+        date,
+      );
+      const payload = response?.data?.data ?? response?.data ?? {};
+      const list =
+        payload?.inventories ??
+        payload?.calendar ??
+        payload?.content ??
+        (Array.isArray(payload) ? payload : null) ??
+        [];
+      const inventory = Array.isArray(list)
+        ? list.find(item => item?.date === date) ?? list[0]
+        : payload;
+
+      return inventory?.isClosed === false
+        ? {
+            roomId,
+            date,
+          }
+        : null;
+    } catch (error) {
+      return null;
+    }
+  };
+
+  const closeRoomCloseModal = async () => {
+    setRoomCloseModal({
+      visible: false,
+      roomId: null,
+      date: '',
+      submitting: false,
+    });
+    Toast.show({
+      type: 'success',
+      text1: '예약이 반려되었어요.',
+      position: 'top',
+      visibilityTime: 2000,
+    });
+    await onActionComplete?.();
+  };
+
+  const handleCloseRejectedRoom = async () => {
+    const {roomId, date, submitting} = roomCloseModal;
+    if (!guesthouseId || !roomId || !date || submitting) {
+      return;
+    }
+
+    try {
+      setRoomCloseModal(prev => ({...prev, submitting: true}));
+      await hostGuesthouseApi.updateRoomStatusByDate(guesthouseId, roomId, {
+        date,
+        isClosed: true,
+      });
+      setRoomCloseModal({
+        visible: false,
+        roomId: null,
+        date: '',
+        submitting: false,
+      });
+      Toast.show({
+        type: 'success',
+        text1: '객실이 마감 처리되었어요.',
+        position: 'top',
+        visibilityTime: 2000,
+      });
+      await onActionComplete?.();
+      onMoveRoomManagement?.({
+        date,
+        roomId,
+      });
+    } catch (error) {
+      setRoomCloseModal(prev => ({...prev, submitting: false}));
+      Toast.show({
+        type: 'error',
+        text1: '객실 마감 처리에 실패했어요.',
+        position: 'top',
+        visibilityTime: 2000,
+      });
+    }
+  };
+
   const handleConfirmDecision = async () => {
     const reservationId = selectedReservation?.reservationId ?? selectedReservation?.id;
     if (!reservationId || decisionSubmitting) return;
@@ -251,14 +394,24 @@ const ReservationList = ({
         await hostGuesthouseApi.rejectGuesthouseReservationByHost(reservationId, {
           rejectReason: finalReason,
         });
+        const roomClosePromptInfo = await getRoomClosePromptInfo(selectedReservation);
         resetDecisionModal();
-        Toast.show({
-          type: 'success',
-          text1: '예약이 반려되었어요.',
-          position: 'top',
-          visibilityTime: 2000,
-        });
-        await onActionComplete?.();
+        if (roomClosePromptInfo) {
+          setRoomCloseModal({
+            visible: true,
+            roomId: roomClosePromptInfo.roomId,
+            date: roomClosePromptInfo.date,
+            submitting: false,
+          });
+        } else {
+          Toast.show({
+            type: 'success',
+            text1: '예약이 반려되었어요.',
+            position: 'top',
+            visibilityTime: 2000,
+          });
+          await onActionComplete?.();
+        }
       } catch (error) {
         setDecisionSubmitting(false);
         Toast.show({
@@ -305,8 +458,6 @@ const ReservationList = ({
     return (
       <View style={styles.center}>
         <EmptyState
-          icon={EmptyIcon}
-          iconSize={{width: 100, height: 100}}
           title="예약 내역이 없어요"
           description=""
         />
@@ -370,7 +521,7 @@ const ReservationList = ({
             <ButtonWhite
               title="예약 확정"
               onPress={() => handleOpenDecisionModal('approve', reservation)}
-              backgroundColor={COLORS.primary_orange}
+              backgroundColor={COLORS.primary_blue}
               textColor={COLORS.grayscale_0}
               style={styles.pendingActionButton}
             />
@@ -475,6 +626,19 @@ const ReservationList = ({
         customInputValue={decisionReasonInput}
         customInputPlaceholder="반려 사유를 입력해 주세요"
         onChangeCustomInput={setDecisionReasonInput}
+      />
+
+      <AlertModal
+        visible={roomCloseModal.visible}
+        title="해당 객실을 마감 처리할까요?"
+        message={
+          '예약 신청이 반려된 객실이\n현재 판매 중으로 노출되고 있어요\n다른 플랫폼에서 이미 예약되었다면 마감 처리를 권장드려요'
+        }
+        buttonText="객실 마감 하기"
+        buttonText2="취소"
+        onPress={handleCloseRejectedRoom}
+        onPress2={closeRoomCloseModal}
+        buttonDisabled={roomCloseModal.submitting}
       />
     </View>
   );
@@ -583,7 +747,7 @@ const styles = StyleSheet.create({
   pendingActionRow: {
     flexDirection: 'row',
     marginTop: 16,
-    width: '80%',
+    width: '60%',
     alignSelf: 'flex-end',
   },
   pendingActionButton: {

@@ -68,22 +68,27 @@ const styles = StyleSheet.create({
   // 이름부터 탭들 위쪽까지
   contentTopWrapper: {
   },
-  
+
   nameIconContainer: {
     justifyContent: 'space-between',
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 4,
   },
   name: {
+    flex: 1,
+    flexShrink: 1,
     lineHeight: 28,
+    marginRight: 12,
   },
   // 공유, 좋아요 아이콘 박스
   topIcons: {
     flexDirection: 'row',
+    flexShrink: 0,
     gap: 12,
+    paddingTop: 4,
   },
-  
+
   address: {
     marginBottom: 4,
   },
@@ -139,7 +144,7 @@ const styles = StyleSheet.create({
   shortIntroText: {
     color: COLORS.grayscale_700,
   },
-  
+
   // 객실 서비스
   iconServiceContainer: {
     marginBottom: 28,
@@ -165,7 +170,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-    iconServiceText: {  
+    iconServiceText: {
   },
   readMoreButton: {
     alignItems: 'center',
@@ -302,7 +307,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     marginTop: 24,
   },
-  
+
   // 긴 소개
   introductionContainer: {
     marginBottom: 16,
