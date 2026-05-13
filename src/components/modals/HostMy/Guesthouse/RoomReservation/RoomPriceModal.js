@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
+  Keyboard,
   Modal,
   StyleSheet,
   Text,
@@ -34,6 +35,14 @@ const toastConfig = {
   success: (props) => <BasicToast {...props} />,
 };
 
+const MIN_ROOM_PRICE = 10000;
+const PRICE_FIELD_LABELS = {
+  weekdayPrice: '주중',
+  fridayPrice: '금요일',
+  saturdayPrice: '토요일',
+  sundayPrice: '일요일',
+};
+
 const SEASON_COLORS = {
   SEASON_1: COLORS.secondary_yellow,
   SEASON_2: COLORS.secondary_blue,
@@ -46,6 +55,8 @@ const getSeasonColor = (seasonColorKey) => {
   if (!seasonColorKey) return 'transparent';
   return SEASON_COLORS[seasonColorKey] || COLORS.grayscale_200;
 };
+
+const getPriceNumber = value => parseInt(String(value || '').replace(/[^0-9]/g, '') || 0, 10);
 
 const RoomPriceModal = ({ visible, onClose, room, guesthouseId }) => {
   const [selectedDates, setSelectedDates] = useState(new Set());
@@ -60,6 +71,25 @@ const RoomPriceModal = ({ visible, onClose, room, guesthouseId }) => {
 
   const [datePickerConfig, setDatePickerConfig] = useState({ visible: false, targetIndex: null, targetField: null, currentDate: '' });
   const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '', onConfirm: null });
+  const manualPrice = getPriceNumber(inputPrice);
+  const isManualPriceTooLow = inputPrice.length > 0 && manualPrice < MIN_ROOM_PRICE;
+  const canApplyManualPrice =
+    selectedDates.size > 0 && inputPrice.length > 0 && !isManualPriceTooLow;
+  const invalidSeasonPrice = seasons.find(season =>
+    Object.keys(PRICE_FIELD_LABELS).some(field => getPriceNumber(season[field]) < MIN_ROOM_PRICE),
+  );
+  const canSaveSeasons = seasons.length === 0 || !invalidSeasonPrice;
+
+  const dismissKeyboard = useCallback(() => {
+    if (Platform.OS === 'ios') {
+      Keyboard.dismiss();
+    }
+  }, []);
+
+  const handleClose = useCallback(() => {
+    dismissKeyboard();
+    onClose?.();
+  }, [dismissKeyboard, onClose]);
 
   const showAlert = (title, message, onConfirm = null) => {
     setAlertConfig({ visible: true, title, message, onConfirm });
@@ -149,16 +179,14 @@ const RoomPriceModal = ({ visible, onClose, room, guesthouseId }) => {
   };
 
   const handleApplyPrice = async () => {
-    const numericPrice = inputPrice.replace(/[^0-9]/g, '');
-    if (!numericPrice || numericPrice === '0') {
-      showAlert('오류', '올바른 요금을 입력해주세요.');
+    if (!canApplyManualPrice) {
       return;
     }
     if (selectedDates.size === 0) return;
 
     const payload = Array.from(selectedDates).map(date => ({
       date,
-      price: parseInt(numericPrice, 10),
+      price: manualPrice,
     }));
     
     console.log(`[API Request] 수동 요금 적용 (payload):`, payload);
@@ -235,6 +263,7 @@ const RoomPriceModal = ({ visible, onClose, room, guesthouseId }) => {
   };
 
   const handleOpenDate = (index, field, currentVal) => {
+    dismissKeyboard();
     setDatePickerConfig({ visible: true, targetIndex: index, targetField: field, currentDate: currentVal });
   };
 
@@ -253,6 +282,10 @@ const RoomPriceModal = ({ visible, onClose, room, guesthouseId }) => {
         return;
       }
       validSeasons.push({ name: season.name, start, end });
+    }
+
+    if (!canSaveSeasons) {
+      return;
     }
 
     for (let i = 0; i < validSeasons.length; i++) {
@@ -378,7 +411,16 @@ const RoomPriceModal = ({ visible, onClose, room, guesthouseId }) => {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.applyAllBtn} onPress={handleSaveSeasons}>
+        {!canSaveSeasons && (
+          <Text style={[FONTS.fs_12_medium, styles.priceErrorText]}>
+            시즌별 모든 요금은 10,000원 이상 입력해 주세요.
+          </Text>
+        )}
+        <TouchableOpacity
+          style={[styles.applyAllBtn, !canSaveSeasons && styles.applyAllBtnDisabled]}
+          onPress={handleSaveSeasons}
+          disabled={!canSaveSeasons}
+          activeOpacity={0.8}>
           <Text style={[FONTS.fs_16_semibold, { color: COLORS.grayscale_0 }]}>반영하기</Text>
         </TouchableOpacity>
         <View style={{ height: 40 }} />
@@ -543,9 +585,9 @@ const RoomPriceModal = ({ visible, onClose, room, guesthouseId }) => {
       animationType="slide"
       transparent={true}
       visible={visible}
-      onRequestClose={onClose}>
+      onRequestClose={handleClose}>
       <View style={styles.overlay}>
-        <TouchableWithoutFeedback onPress={onClose}>
+        <TouchableWithoutFeedback onPress={handleClose}>
           <View style={styles.backdrop} />
         </TouchableWithoutFeedback>
 
@@ -553,120 +595,130 @@ const RoomPriceModal = ({ visible, onClose, room, guesthouseId }) => {
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.modalContainer}
         >
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={[FONTS.fs_18_semibold, styles.title]} numberOfLines={1}>
-              {room?.name ?? '객실명 없음'}
-            </Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <XIcon width={24} height={24} />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.tabRow}>
-            <TouchableOpacity
-              style={[styles.tabBtn, activeTab === 'calendar' && styles.tabBtnActive]}
-              onPress={() => setActiveTab('calendar')}
-            >
-              <Text style={[FONTS.fs_16_medium, activeTab === 'calendar' ? styles.tabTextActive : styles.tabText]}>달력</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.tabBtn, activeTab === 'season' && styles.tabBtnActive]}
-              onPress={() => setActiveTab('season')}
-            >
-              <Text style={[FONTS.fs_16_medium, activeTab === 'season' ? styles.tabTextActive : styles.tabText]}>시즌 설정</Text>
-            </TouchableOpacity>
-          </View>
-
-          {activeTab === 'calendar' ? (
-            <>
-              {/* Season Legend */}
-              <View style={styles.legendContainer}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 16, alignItems: 'center', paddingHorizontal: 20 }}>
-                  {activeSeasonLegends.map(s => (
-                    <View style={styles.legendItem} key={`legend_${s.colorKey}`}>
-                      <View style={[styles.legendColorBox, { backgroundColor: getSeasonColor(s.colorKey) }]} />
-                      <Text style={[FONTS.fs_12_medium, styles.legendText]}>{s.name}</Text>
-                    </View>
-                  ))}
-                  <View style={styles.legendItem}>
-                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.primary_orange }} />
-                    <Text style={[FONTS.fs_12_medium, styles.legendText]}>요금 수동 변경</Text>
-                  </View>
-                </ScrollView>
+          <TouchableWithoutFeedback onPress={dismissKeyboard} accessible={false}>
+            <View style={styles.dismissKeyboardArea}>
+              {/* Header */}
+              <View style={styles.header}>
+                <Text style={[FONTS.fs_18_semibold, styles.title]} numberOfLines={1}>
+                  {room?.name ?? '객실명 없음'}
+                </Text>
+                <TouchableOpacity onPress={handleClose} style={styles.closeBtn}>
+                  <XIcon width={24} height={24} />
+                </TouchableOpacity>
               </View>
 
-              {/* Calendar */}
-              <Calendar
-                {...CALENDAR_COMMON_PROPS}
-                onMonthChange={handleMonthChange}
-                dayComponent={renderDay}
-                renderHeader={renderHeader}
-                theme={{
-                  ...CALENDAR_THEME,
-                  'stylesheet.calendar.header': {
-                    dayTextAtIndex0: { color: COLORS.grayscale_400 },
-                    dayTextAtIndex1: { color: COLORS.grayscale_400 },
-                    dayTextAtIndex2: { color: COLORS.grayscale_400 },
-                    dayTextAtIndex3: { color: COLORS.grayscale_400 },
-                    dayTextAtIndex4: { color: COLORS.grayscale_400 },
-                    dayTextAtIndex5: { color: COLORS.grayscale_400 },
-                    dayTextAtIndex6: { color: COLORS.grayscale_400 },
-                  },
-                }}
-                renderArrow={(direction) => (
-                  direction === 'left'
-                    ? <ChevronLeft width={20} height={20} color={COLORS.grayscale_400} />
-                    : <ChevronRight width={20} height={20} color={COLORS.grayscale_400} />
-                )}
-                style={styles.calendarStyle}
-              />
+              <View style={styles.tabRow}>
+                <TouchableOpacity
+                  style={[styles.tabBtn, activeTab === 'calendar' && styles.tabBtnActive]}
+                  onPress={() => setActiveTab('calendar')}
+                >
+                  <Text style={[FONTS.fs_16_medium, activeTab === 'calendar' ? styles.tabTextActive : styles.tabText]}>달력</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.tabBtn, activeTab === 'season' && styles.tabBtnActive]}
+                  onPress={() => setActiveTab('season')}
+                >
+                  <Text style={[FONTS.fs_16_medium, activeTab === 'season' ? styles.tabTextActive : styles.tabText]}>시즌 설정</Text>
+                </TouchableOpacity>
+              </View>
 
-              {/* Bottom Action Bar for Setting Price */}
-              {selectedDates.size > 0 && (
-                <View style={styles.bottomBar}>
-                  <View style={styles.bottomBarTopRow}>
-                    <Text style={[FONTS.fs_14_medium, styles.selectedCountText]}>
-                      {selectedDates.size}개 날짜 선택됨
-                    </Text>
-                    <View style={{ flexDirection: 'row', gap: 16 }}>
-                      {Array.from(selectedDates).some(date => calendarData[date]?.isManualOverride) && (
-                         <TouchableOpacity onPress={handleClearManualPrice}>
-                            <Text style={[FONTS.fs_14_medium, styles.cancelText, { color: COLORS.semantic_red }]}>수동 해제</Text>
-                         </TouchableOpacity>
+              {activeTab === 'calendar' ? (
+                <>
+                  {/* Season Legend */}
+                  <View style={styles.legendContainer}>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 16, alignItems: 'center', paddingHorizontal: 20 }}>
+                      {activeSeasonLegends.map(s => (
+                        <View style={styles.legendItem} key={`legend_${s.colorKey}`}>
+                          <View style={[styles.legendColorBox, { backgroundColor: getSeasonColor(s.colorKey) }]} />
+                          <Text style={[FONTS.fs_12_medium, styles.legendText]}>{s.name}</Text>
+                        </View>
+                      ))}
+                      <View style={styles.legendItem}>
+                        <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.primary_orange }} />
+                        <Text style={[FONTS.fs_12_medium, styles.legendText]}>요금 수동 변경</Text>
+                      </View>
+                    </ScrollView>
+                  </View>
+
+                  {/* Calendar */}
+                  <Calendar
+                    {...CALENDAR_COMMON_PROPS}
+                    onMonthChange={handleMonthChange}
+                    dayComponent={renderDay}
+                    renderHeader={renderHeader}
+                    theme={{
+                      ...CALENDAR_THEME,
+                      'stylesheet.calendar.header': {
+                        dayTextAtIndex0: { color: COLORS.grayscale_400 },
+                        dayTextAtIndex1: { color: COLORS.grayscale_400 },
+                        dayTextAtIndex2: { color: COLORS.grayscale_400 },
+                        dayTextAtIndex3: { color: COLORS.grayscale_400 },
+                        dayTextAtIndex4: { color: COLORS.grayscale_400 },
+                        dayTextAtIndex5: { color: COLORS.grayscale_400 },
+                        dayTextAtIndex6: { color: COLORS.grayscale_400 },
+                      },
+                    }}
+                    renderArrow={(direction) => (
+                      direction === 'left'
+                        ? <ChevronLeft width={20} height={20} color={COLORS.grayscale_400} />
+                        : <ChevronRight width={20} height={20} color={COLORS.grayscale_400} />
+                    )}
+                    style={styles.calendarStyle}
+                  />
+
+                  {/* Bottom Action Bar for Setting Price */}
+                  {selectedDates.size > 0 && (
+                    <View style={styles.bottomBar}>
+                      <View style={styles.bottomBarTopRow}>
+                        <Text style={[FONTS.fs_14_medium, styles.selectedCountText]}>
+                          {selectedDates.size}개 날짜 선택됨
+                        </Text>
+                        <View style={{ flexDirection: 'row', gap: 16 }}>
+                          {Array.from(selectedDates).some(date => calendarData[date]?.isManualOverride) && (
+                            <TouchableOpacity onPress={handleClearManualPrice}>
+                              <Text style={[FONTS.fs_14_medium, styles.cancelText, { color: COLORS.semantic_red }]}>수동 해제</Text>
+                            </TouchableOpacity>
+                          )}
+                          <TouchableOpacity onPress={() => setSelectedDates(new Set())}>
+                            <Text style={[FONTS.fs_14_medium, styles.cancelText]}>선택 해제</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+
+                      <View style={styles.priceInputRow}>
+                        <View style={styles.inputWrap}>
+                          <Text style={[FONTS.fs_14_medium, styles.wonText]}>₩</Text>
+                          <TextInput
+                            style={[FONTS.fs_16_medium, styles.priceInput]}
+                            placeholder="새로운 요금 입력"
+                            placeholderTextColor={COLORS.grayscale_400}
+                            keyboardType="numeric"
+                            value={inputPrice ? formatPrice(inputPrice) : ''}
+                            onChangeText={(t) => setInputPrice(t.replace(/[^0-9]/g, ''))}
+                          />
+                        </View>
+                        <TouchableOpacity
+                          style={[styles.applyBtn, !canApplyManualPrice && styles.applyBtnDisabled]}
+                          onPress={handleApplyPrice}
+                          disabled={!canApplyManualPrice}
+                          activeOpacity={0.8}
+                        >
+                          <Text style={[FONTS.fs_14_medium, styles.applyBtnText]}>요금 적용</Text>
+                        </TouchableOpacity>
+                      </View>
+                      {isManualPriceTooLow && (
+                        <Text style={[FONTS.fs_12_medium, styles.priceErrorText]}>
+                          1박 요금은 10,000원 이상 입력해 주세요.
+                        </Text>
                       )}
-                      <TouchableOpacity onPress={() => setSelectedDates(new Set())}>
-                        <Text style={[FONTS.fs_14_medium, styles.cancelText]}>선택 해제</Text>
-                      </TouchableOpacity>
                     </View>
-                  </View>
-
-                  <View style={styles.priceInputRow}>
-                    <View style={styles.inputWrap}>
-                      <Text style={[FONTS.fs_14_medium, styles.wonText]}>₩</Text>
-                      <TextInput
-                        style={[FONTS.fs_16_medium, styles.priceInput]}
-                        placeholder="새로운 요금 입력"
-                        placeholderTextColor={COLORS.grayscale_400}
-                        keyboardType="numeric"
-                        value={inputPrice ? formatPrice(inputPrice) : ''}
-                        onChangeText={(t) => setInputPrice(t.replace(/[^0-9]/g, ''))}
-                      />
-                    </View>
-                    <TouchableOpacity
-                      style={[styles.applyBtn, !inputPrice && styles.applyBtnDisabled]}
-                      onPress={handleApplyPrice}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={[FONTS.fs_14_medium, styles.applyBtnText]}>요금 적용</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
+                  )}
+                </>
+              ) : (
+                renderSeasonTab()
               )}
-            </>
-          ) : (
-            renderSeasonTab()
-          )}
+            </View>
+          </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
       </View>
       {renderSeasonDatePickerModal()}
@@ -701,6 +753,9 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     overflow: 'hidden',
     paddingTop: 8,
+  },
+  dismissKeyboardArea: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
@@ -847,6 +902,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8,
   },
+  applyAllBtnDisabled: {
+    backgroundColor: COLORS.grayscale_300,
+  },
   calendarStyle: {
     paddingHorizontal: 10,
     paddingBottom: 20,
@@ -926,6 +984,10 @@ const styles = StyleSheet.create({
   },
   cancelText: {
     color: COLORS.grayscale_500,
+  },
+  priceErrorText: {
+    color: COLORS.semantic_red,
+    marginTop: 8,
   },
   priceInputRow: {
     flexDirection: 'row',

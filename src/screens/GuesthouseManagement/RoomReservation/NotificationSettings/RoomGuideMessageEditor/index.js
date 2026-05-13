@@ -1,24 +1,25 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {
-  View,
+  InteractionManager,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   Text,
   TextInput,
   TouchableOpacity,
-  KeyboardAvoidingView,
   TouchableWithoutFeedback,
-  Keyboard,
-  Platform,
+  View,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 
-import Header from '@components/Header';
-import {FONTS} from '@constants/fonts';
-import styles from './RoomGuideMessageEditor.styles';
 import ButtonScarlet from '@components/ButtonScarlet';
+import Header from '@components/Header';
 import {COLORS} from '@constants/colors';
+import {FONTS} from '@constants/fonts';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
+import styles from './RoomGuideMessageEditor.styles';
 
-const RoomGuideMessageEditor = ({route}) => {
+const RoomGuideMessageEditor = ({route, navigation}) => {
   const roomName = route?.params?.roomName ?? '객실';
   const guesthouseId = route?.params?.guesthouseId;
   const roomId = route?.params?.roomId;
@@ -55,10 +56,14 @@ const RoomGuideMessageEditor = ({route}) => {
     setIsSaving(true);
     try {
       await hostGuesthouseApi.updateRoomCheckinNotice(guesthouseId, roomId, message);
-      Toast.show({
-        type: 'success',
-        text1: '저장되었어요!',
-        position: 'top',
+      setIsSaving(false);
+      navigation.goBack();
+      InteractionManager.runAfterInteractions(() => {
+        Toast.show({
+          type: 'success',
+          text1: '체크인 안내문 작성이 완료되었어요.',
+          position: 'top',
+        });
       });
     } catch (error) {
       Toast.show({
@@ -66,7 +71,6 @@ const RoomGuideMessageEditor = ({route}) => {
         text1: '저장에 실패했어요.',
         position: 'top',
       });
-    } finally {
       setIsSaving(false);
     }
   };
@@ -119,7 +123,11 @@ const RoomGuideMessageEditor = ({route}) => {
               <Text style={[FONTS.fs_12_medium, styles.rewriteText]}>다시쓰기</Text>
             </TouchableOpacity>
 
-            <ButtonScarlet title="저장" onPress={handleSave} />
+            <ButtonScarlet
+              title={isSaving ? '저장 중' : '저장'}
+              onPress={handleSave}
+              disabled={isSaving}
+            />
           </View>
         </View>
       </TouchableWithoutFeedback>

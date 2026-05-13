@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import statisticsApi from '@utils/api/statisticsApi';
 import GuesthouseProfileList from '@components/modals/HostMy/Guesthouse/GuesthouseProfileList';
@@ -44,6 +44,7 @@ const unwrapApiPayload = response => {
 const SalesManagement = () => {
   const navigation = useNavigation();
   const route = useRoute();
+  const { width: windowWidth } = useWindowDimensions();
 
   const passedGuesthouseId = route.params?.guesthouseId;
   const [isGuesthouseListVisible, setIsGuesthouseListVisible] = useState(false);
@@ -120,6 +121,11 @@ const SalesManagement = () => {
   const selectedYearMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
   const displayDateStr = `${currentDate.getFullYear()}년 ${currentDate.getMonth() + 1}월`;
   const reservationMetrics = reservationMetricsData?.metrics ?? salesData?.reservationMetrics;
+  const isCompactWidth = windowWidth < 360;
+  const donutSvgWidth = isCompactWidth ? 168 : 200;
+  const donutSvgHeight = donutSvgWidth / 2;
+  const donutLabelSideOffset = isCompactWidth ? 4 : 20;
+  const donutLabelTopOffset = isCompactWidth ? 34 : 40;
 
   const handleReservationMetricPress = metricKey => {
     const config = RESERVATION_METRIC_ROUTE_MAP[metricKey];
@@ -426,8 +432,8 @@ const SalesManagement = () => {
                   <View style={styles.donutContainer}>
 
                     {/* SVG DONUT */}
-                    <View style={styles.donutSvgWrapper}>
-                      <Svg width="200" height="100" viewBox="0 0 200 100">
+                    <View style={[styles.donutSvgWrapper, { height: donutSvgHeight }]}>
+                      <Svg width={donutSvgWidth} height={donutSvgHeight} viewBox="0 0 200 100">
                         <G rotation="-180" origin="100, 100">
                           {/* Male (Blue) Arc */}
                           <Circle
@@ -449,7 +455,7 @@ const SalesManagement = () => {
                     </View>
 
                     {/* Left Male Label */}
-                    <View style={styles.donutLeftLabel}>
+                    <View style={[styles.donutLeftLabel, { left: donutLabelSideOffset, top: donutLabelTopOffset }]}>
                       <Text style={styles.donutPercentText}>{salesData.customerAnalysis.maleShare}<Text style={styles.percentSmall}>%</Text></Text>
                       <View style={styles.genderRow}>
                         <View style={[styles.dot, styles.dotBlue, { width: 6, height: 6 }]} />
@@ -458,7 +464,7 @@ const SalesManagement = () => {
                     </View>
 
                     {/* Right Female Label */}
-                    <View style={styles.donutRightLabel}>
+                    <View style={[styles.donutRightLabel, { right: donutLabelSideOffset, top: donutLabelTopOffset }]}>
                       <Text style={styles.donutPercentText}>{salesData.customerAnalysis.femaleShare}<Text style={styles.percentSmall}>%</Text></Text>
                       <View style={styles.genderRow}>
                         <View style={[styles.dot, styles.dotRed, { width: 6, height: 6, backgroundColor: '#ED5C6A' }]} />

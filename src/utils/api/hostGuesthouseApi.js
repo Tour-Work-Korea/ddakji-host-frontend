@@ -1,3 +1,4 @@
+import qs from 'qs';
 import api from './axiosInstance';
 
 const hostGuesthouseApi = {
@@ -168,6 +169,13 @@ const hostGuesthouseApi = {
   // 게하 예약 검색
   searchGuesthouseReservations: (formData) =>
     api.get('/order/host/reservation/search', { params: formData }),
+
+  // 게하 예약 월별 상태 그룹 조회
+  getGuesthouseReservationMonthlyGroups: formData =>
+    api.get('/order/host/reservation/monthly-groups', {
+      params: formData,
+      paramsSerializer: params => qs.stringify(params, {arrayFormat: 'repeat'}),
+    }),
 
   // 게하 예약 현황 조회
   getGuesthouseReservations: (guesthouseId) =>

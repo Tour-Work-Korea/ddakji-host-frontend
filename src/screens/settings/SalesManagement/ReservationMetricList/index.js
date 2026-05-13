@@ -1,6 +1,5 @@
 import React, {useCallback, useMemo, useRef, useState} from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   StyleSheet,
   Text,
@@ -17,9 +16,8 @@ import {FONTS} from '@constants/fonts';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
 import {formatLocalDateToDotWithDay} from '@utils/formatDate';
 
-const DEFAULT_PAGE = 0;
-const DEFAULT_SIZE = 10;
 const YEAR_MONTH_PATTERN = /^\d{4}-\d{2}$/;
+const SECTION_ORDER = ['APPLICATION', 'CONFIRMED', 'COMPLETED', 'CANCELLED'];
 
 const STATUS_LABEL_MAP = {
   PENDING: '대기',
@@ -28,15 +26,18 @@ const STATUS_LABEL_MAP = {
   COMPLETED: '완료',
 };
 
-const STATUS_VALUE_MAP = {
-  대기: 'PENDING',
+const SECTION_TYPE_MAP = {
+  신청: 'APPLICATION',
+  대기: 'APPLICATION',
   확정: 'CONFIRMED',
-  취소: 'CANCELLED',
   완료: 'COMPLETED',
-  PENDING: 'PENDING',
+  이용완료: 'COMPLETED',
+  취소: 'CANCELLED',
+  APPLICATION: 'APPLICATION',
   CONFIRMED: 'CONFIRMED',
-  CANCELLED: 'CANCELLED',
   COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED',
+  PENDING: 'APPLICATION',
 };
 
 const STATUS_STYLE = {
@@ -116,107 +117,81 @@ const ReservationMetricList = () => {
   const metricYearMonth = YEAR_MONTH_PATTERN.test(yearMonth ?? '')
     ? yearMonth
     : getCurrentYearMonth();
-  const status = STATUS_VALUE_MAP[initialReservationStatus] ?? undefined;
+  const sectionType = SECTION_TYPE_MAP[initialReservationStatus] ?? undefined;
   const latestRequestRef = useRef(0);
 
   const [reservations, setReservations] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
-  const [currentPage, setCurrentPage] = useState(DEFAULT_PAGE);
-  const [hasNextPage, setHasNextPage] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  const requestParams = useCallback(
-    (page = DEFAULT_PAGE) => ({
+  const requestParams = useMemo(
+    () => ({
       guesthouseId,
       yearMonth: metricYearMonth,
-      page,
-      size: DEFAULT_SIZE,
-      ...(status ? {status} : {}),
+      ...(sectionType ? {types: [sectionType]} : {}),
     }),
-    [guesthouseId, metricYearMonth, status],
+    [guesthouseId, metricYearMonth, sectionType],
   );
 
   const fetchReservations = useCallback(
-    async (page = DEFAULT_PAGE, append = false) => {
+    async () => {
       if (!guesthouseId) {
         setReservations([]);
         setTotalCount(0);
-        setHasNextPage(false);
-        setCurrentPage(DEFAULT_PAGE);
         setIsLoading(false);
-        setIsLoadingMore(false);
         return;
       }
 
       const requestId = latestRequestRef.current + 1;
       latestRequestRef.current = requestId;
-
-      if (append) {
-        setIsLoadingMore(true);
-      } else {
-        setIsLoading(true);
-      }
+      setIsLoading(true);
 
       try {
-        const response = await hostGuesthouseApi.searchGuesthouseReservations(
-          requestParams(page),
+        const response = await hostGuesthouseApi.getGuesthouseReservationMonthlyGroups(
+          requestParams,
         );
         const payload = response?.data?.data ?? response?.data ?? {};
-        const content =
-          payload?.reservations ??
-          payload?.content ??
-          response?.data?.reservations ??
-          response?.data?.content ??
-          [];
-        const safeContent = Array.isArray(content) ? content : [];
-        const next = Boolean(payload?.hasNext);
-        const responsePage = Number(payload?.currentPage);
-        const responseTotalCount = Number(payload?.totalCount);
+        const sections = Array.isArray(payload?.sections) ? payload.sections : [];
+        const targetSections = sectionType
+          ? sections.filter(section => section?.type === sectionType)
+          : SECTION_ORDER.map(type => sections.find(section => section?.type === type)).filter(
+              Boolean,
+            );
+        const nextReservations = targetSections.flatMap(section =>
+          Array.isArray(section?.reservations) ? section.reservations : [],
+        );
+        const nextTotalCount = targetSections.reduce((sum, section) => {
+          const sectionCount = Number(section?.count);
+          return sum + (Number.isFinite(sectionCount) ? sectionCount : 0);
+        }, 0);
 
         if (requestId !== latestRequestRef.current) {
           return;
         }
 
-        setReservations(prev => (append ? [...prev, ...safeContent] : safeContent));
-        setTotalCount(prevCount =>
-          Number.isFinite(responseTotalCount)
-            ? responseTotalCount
-            : append
-              ? prevCount + safeContent.length
-              : safeContent.length,
-        );
-        setHasNextPage(next);
-        setCurrentPage(Number.isFinite(responsePage) ? responsePage : page);
+        setReservations(nextReservations);
+        setTotalCount(nextTotalCount || nextReservations.length);
       } catch (error) {
         if (requestId !== latestRequestRef.current) {
           return;
         }
 
-        if (!append) {
-          setReservations([]);
-          setTotalCount(0);
-          setHasNextPage(false);
-          setCurrentPage(DEFAULT_PAGE);
-        }
+        setReservations([]);
+        setTotalCount(0);
       } finally {
         if (requestId !== latestRequestRef.current) {
           return;
         }
 
-        if (append) {
-          setIsLoadingMore(false);
-        } else {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     },
-    [guesthouseId, requestParams],
+    [guesthouseId, requestParams, sectionType],
   );
 
   useFocusEffect(
     useCallback(() => {
-      fetchReservations(DEFAULT_PAGE, false);
+      fetchReservations();
     }, [fetchReservations]),
   );
 
@@ -224,14 +199,6 @@ const ReservationMetricList = () => {
     () => reservations.map(normalizeReservation),
     [reservations],
   );
-
-  const loadNextPage = useCallback(() => {
-    if (isLoading || isLoadingMore || !hasNextPage) {
-      return;
-    }
-
-    fetchReservations(currentPage + 1, true);
-  }, [currentPage, fetchReservations, hasNextPage, isLoading, isLoadingMore]);
 
   const renderItem = ({item: reservation, index}) => {
     const statusStyle = STATUS_STYLE[reservation.status] || STATUS_STYLE.완료;
@@ -302,19 +269,10 @@ const ReservationMetricList = () => {
             renderItem={renderItem}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.listContent}
-            onEndReached={loadNextPage}
-            onEndReachedThreshold={0.3}
             ListHeaderComponent={
               <Text style={[FONTS.fs_18_semibold, styles.title]}>
                 예약 <Text style={styles.titleHighlight}>{totalCount}</Text>건
               </Text>
-            }
-            ListFooterComponent={
-              isLoadingMore ? (
-                <View style={styles.footerLoading}>
-                  <ActivityIndicator color={COLORS.primary_orange} />
-                </View>
-              ) : null
             }
           />
         )}
@@ -412,9 +370,6 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: COLORS.grayscale_200,
     marginTop: 16,
-  },
-  footerLoading: {
-    paddingVertical: 20,
   },
 });
 

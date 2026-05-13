@@ -42,7 +42,9 @@ api.interceptors.request.use(
     if (config.withAuth !== false) {
       log.info(`🔑 [${id}] accessToken=`, mask(token));
     }
-    if (config.data) log.info(`📦 [${id}] body=`, config.data);
+    if (config.data) {
+      log.info(`📦 [${id}] body=`, config.data);
+    }
 
     return config;
   },
@@ -81,7 +83,8 @@ api.interceptors.response.use(
     const status = err.response?.status;
     const errorData = err.response?.data;
 
-    const isExpectedError = status === 403 || status === 404 || status === 400;
+    const isAuthError = status === 401 || status === 403;
+    const isExpectedError = isAuthError || status === 404 || status === 400;
 
     if (isExpectedError) {
       log.warn(
@@ -125,7 +128,7 @@ api.interceptors.response.use(
       return Promise.reject(err);
     }
 
-    if (status === 403 && !original._retry) {
+    if (isAuthError && !original._retry) {
       log.info(`🔁 [${id}] accessToken expired → refresh flow`);
       original._retry = true;
 

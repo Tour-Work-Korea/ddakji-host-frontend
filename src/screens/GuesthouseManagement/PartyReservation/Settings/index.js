@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Switch, Text, TouchableOpacity, View} from 'react-native';
+import {Dimensions, Switch, Text, TouchableOpacity, View} from 'react-native';
 import Toast from 'react-native-toast-message';
 
 import AlertModal from '@components/modals/AlertModal';
@@ -11,6 +11,8 @@ import styles from './Settings.styles';
 import CancelReservationIcon from '@assets/images/unbooked_orange.svg';
 import MinusIcon from '@assets/images/minus_black.svg';
 import PlusIcon from '@assets/images/plus_black.svg';
+
+const CENTER_TOAST_TOP_OFFSET = Dimensions.get('window').height * 0.42;
 
 const Settings = ({guesthouseId}) => {
   const [dailyParty, setDailyParty] = useState(null);
@@ -76,9 +78,10 @@ const Settings = ({guesthouseId}) => {
       Toast.show({
         type: 'success',
         text1: nextValue
-          ? '파티가 노출 상태로 변경되었어요.'
-          : '파티가 미노출 상태로 변경되었어요.',
+          ? '파티가 노출 처리 되었습니다'
+          : '파티가 숨김 처리 되었습니다',
         position: 'top',
+        topOffset: CENTER_TOAST_TOP_OFFSET,
       });
     } catch (error) {
       Toast.show({
@@ -213,10 +216,9 @@ const Settings = ({guesthouseId}) => {
                   onValueChange={handleToggleVisibility}
                   trackColor={{
                     false: COLORS.grayscale_300,
-                    true: COLORS.primary_orange,
+                    true: COLORS.primary_blue,
                   }}
                   thumbColor={COLORS.grayscale_0}
-                  ios_backgroundColor={COLORS.grayscale_300}
                 />
               </View>
             </View>

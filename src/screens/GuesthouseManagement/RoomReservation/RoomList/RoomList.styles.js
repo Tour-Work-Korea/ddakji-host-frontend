@@ -95,13 +95,13 @@ export default StyleSheet.create({
     justifyContent: 'center',
   },
   exposureBadgeOn: {
-    borderColor: COLORS.primary_orange,
+    borderColor: COLORS.primary_blue,
   },
   exposureBadgeOff: {
     borderColor: COLORS.grayscale_500,
   },
   exposureTextOn: {
-    color: COLORS.primary_orange,
+    color: COLORS.primary_blue,
   },
   exposureTextOff: {
     color: COLORS.grayscale_500,
