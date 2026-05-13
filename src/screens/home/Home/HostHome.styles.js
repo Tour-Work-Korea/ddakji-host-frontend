@@ -91,7 +91,7 @@ export default StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: COLORS.secondary_red,
-    height: 6,
+    height: 12,
   },
   registerLinkText: {
     color: COLORS.grayscale_800,

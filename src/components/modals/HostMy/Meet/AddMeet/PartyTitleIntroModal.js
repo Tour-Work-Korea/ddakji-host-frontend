@@ -22,6 +22,7 @@ import useKeyboardAwareScrollView from '@hooks/useKeyboardAwareScrollView';
 import AddImage from '@assets/images/add_image_gray.svg';
 import CheckWhite from '@assets/images/check_white.svg';
 import CheckIcon from '@assets/images/star_filled.svg';
+import EmptyStarIcon from '@assets/images/star_empty.svg';
 import XBtn from '@assets/images/x_gray.svg';
 
 const MODAL_HEIGHT = Math.round(Dimensions.get('window').height * 0.9);
@@ -224,7 +225,7 @@ const PartyTitleIntroModal = ({
                 </Text>
               </View>
               <Text style={[FONTS.fs_12_medium, styles.subText]}>
-                대표로 보여줄 사진을 선택해주세요{'\n'}(선택된 사진에는 별이 표시됩니다)
+                별모양을 클릭해 대표 사진을 선택할 수 있어요
               </Text>
               <View style={styles.imageGrid}>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -239,11 +240,13 @@ const PartyTitleIntroModal = ({
                     <View key={`${item.imageUrl}-${index}`} style={{position: 'relative'}}>
                       <TouchableOpacity onPress={() => handleSelectThumbnail(index)}>
                         <Image source={{uri: item.imageUrl}} style={styles.uploadedImage} />
-                        {item.isThumbnail && (
-                          <View style={styles.checkIconContainer}>
+                        <View style={styles.checkIconContainer}>
+                          {item.isThumbnail ? (
                             <CheckIcon width={14} height={14} />
-                          </View>
-                        )}
+                          ) : (
+                            <EmptyStarIcon width={14} height={14} />
+                          )}
+                        </View>
                       </TouchableOpacity>
 
                       <TouchableOpacity

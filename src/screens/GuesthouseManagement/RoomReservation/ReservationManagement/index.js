@@ -39,7 +39,7 @@ const RESERVATION_STATUS_MAP = {
 };
 const DATE_STRING_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
-const ReservationManagement = ({guesthouseId}) => {
+const ReservationManagement = ({guesthouseId, onMoveRoomManagement}) => {
   const getTodayLocalDate = () => {
     const today = new Date();
     const year = today.getFullYear();
@@ -439,12 +439,15 @@ const ReservationManagement = ({guesthouseId}) => {
         </View>
 
         <ReservationList
+          guesthouseId={guesthouseId}
           data={reservations}
           totalCount={reservationTotalCount}
           loading={isReservationsLoading}
           loadingMore={isLoadingMore}
+          selectedDate={selectedDate}
           onEndReached={loadNextPage}
           onActionComplete={refreshReservations}
+          onMoveRoomManagement={onMoveRoomManagement}
         />
       </View>
     </TouchableWithoutFeedback>

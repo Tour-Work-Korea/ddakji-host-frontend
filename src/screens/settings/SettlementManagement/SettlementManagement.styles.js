@@ -24,6 +24,7 @@ export default StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
+    paddingHorizontal: 60,
   },
   customHeaderLeft: {
     position: 'absolute',
@@ -37,10 +38,15 @@ export default StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    maxWidth: '100%',
+    flexShrink: 1,
+    justifyContent: 'center',
   },
   customHeaderTitleText: {
     ...FONTS.fs_18_semibold,
     color: COLORS.grayscale_800,
+    flexShrink: 1,
+    maxWidth: '100%',
   },
 
   // Cards

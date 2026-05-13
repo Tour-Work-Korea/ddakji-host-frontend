@@ -56,6 +56,7 @@ const GuesthouseManagement = () => {
     ? route.params.initialTab
     : HOME_TAB;
   const routeInitialChip = route.params?.initialChip;
+  const routeInitialRoomManagementDate = route.params?.initialRoomManagementDate;
   const initialProfileKey =
     routeProfileKey != null
       ? String(routeProfileKey)
@@ -446,6 +447,7 @@ const GuesthouseManagement = () => {
         <RoomReservation
           guesthouseId={effectiveGuesthouseId}
           initialChip={routeInitialChip}
+          initialRoomManagementDate={routeInitialRoomManagementDate}
         />
       ) : activeTab === PARTY_INFO_TAB ? (
         <PartyInfo guesthouseId={effectiveGuesthouseId} />

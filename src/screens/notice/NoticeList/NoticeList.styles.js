@@ -18,6 +18,16 @@ export default StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 32,
   },
+  fixedAdContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    paddingTop: 8,
+    paddingBottom: 8,
+    backgroundColor: COLORS.grayscale_0,
+  },
 
   // 검색
   searchRow: {

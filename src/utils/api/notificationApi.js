@@ -28,19 +28,20 @@ const notificationApi = {
       },
     ),
 
-  readAll: () =>
-    api.patch('/notifications/read-all'),
+  readAll: () => api.patch('/notifications/read-all'),
 
-  getDetail: notificationId =>
-    api.get(`/notifications/${notificationId}`),
+  getDetail: notificationId => api.get(`/notifications/${notificationId}`),
 
-  getUnreadCount: () =>
-    api.get('/notifications/unread-count'),
+  getUnreadCount: () => api.get('/notifications/unread-count'),
 
   getMyNotifications: params =>
     api.get('/notifications/me', {
       params,
     }),
+
+  getSettings: () => api.get('/host/notifications/settings'),
+
+  updateSettings: payload => api.put('/host/notifications/settings', payload),
 };
 
 export default notificationApi;
