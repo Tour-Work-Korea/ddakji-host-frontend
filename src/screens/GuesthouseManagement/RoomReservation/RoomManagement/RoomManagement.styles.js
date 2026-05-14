@@ -73,7 +73,7 @@ export default StyleSheet.create({
     color: COLORS.grayscale_900,
   },
   selectedGuesthouseText: {
-    color: COLORS.primary_orange,
+    color: COLORS.primary_blue,
   },
   dateSelectContainer: {
     position: 'relative',
@@ -155,13 +155,13 @@ export default StyleSheet.create({
     borderColor: COLORS.grayscale_500,
   },
   exposureBadgeOn: {
-    borderColor: COLORS.primary_orange,
+    borderColor: COLORS.primary_blue,
   },
   exposureTextOff: {
     color: COLORS.grayscale_500,
   },
   exposureTextOn: {
-    color: COLORS.primary_orange,
+    color: COLORS.primary_blue,
   },
   bedControlRow: {
     flexDirection: 'row',
@@ -187,7 +187,7 @@ export default StyleSheet.create({
   },
   addButton: {
     alignItems: 'center',
-    backgroundColor: COLORS.primary_orange,
+    backgroundColor: COLORS.primary_blue,
     flexDirection: 'row',
     paddingVertical: 8,
     paddingHorizontal: 12,

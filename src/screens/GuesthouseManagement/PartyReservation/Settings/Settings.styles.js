@@ -81,13 +81,13 @@ export default StyleSheet.create({
     borderWidth: 1,
   },
   exposureBadgeVisible: {
-    borderColor: COLORS.primary_orange,
+    borderColor: COLORS.primary_blue,
   },
   exposureBadgeHidden: {
     borderColor: COLORS.grayscale_300,
   },
   exposureBadgeTextVisible: {
-    color: COLORS.primary_orange,
+    color: COLORS.primary_blue,
   },
   exposureBadgeTextHidden: {
     color: COLORS.grayscale_400,
@@ -101,7 +101,7 @@ export default StyleSheet.create({
     marginBottom: 12,
   },
   capacityValue: {
-    color: COLORS.primary_orange,
+    color: COLORS.primary_blue,
   },
   capacityControlRow: {
     flexDirection: 'row',
@@ -133,7 +133,7 @@ export default StyleSheet.create({
   applyButton: {
     alignSelf: 'flex-end',
     marginTop: 14,
-    backgroundColor: COLORS.primary_orange,
+    backgroundColor: COLORS.primary_blue,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 8,

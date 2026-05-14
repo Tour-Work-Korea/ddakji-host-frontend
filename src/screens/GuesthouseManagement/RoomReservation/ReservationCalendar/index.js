@@ -64,7 +64,9 @@ const DEFAULT_FLAG_STATE = {
 };
 
 const getNights = (checkInDate, checkOutDate) => {
-  if (!checkInDate || !checkOutDate) return 1;
+  if (!checkInDate || !checkOutDate) {
+    return 1;
+  }
   const diff = new Date(checkOutDate) - new Date(checkInDate);
   return Math.max(1, Math.round(diff / (1000 * 60 * 60 * 24)));
 };
@@ -199,7 +201,9 @@ const ReservationCalendar = ({guesthouseId}) => {
   }, [guesthouseId, visibleMonth]);
 
   const loadNextPage = async () => {
-    if (isLoading || isLoadingMore || !hasNextPage || !guesthouseId) return;
+    if (isLoading || isLoadingMore || !hasNextPage || !guesthouseId) {
+      return;
+    }
 
     const nextPage = currentPage + 1;
     setIsLoadingMore(true);
@@ -234,8 +238,12 @@ const ReservationCalendar = ({guesthouseId}) => {
     }
   };
 
+  const visibleMonthDate = `${visibleMonth}-01`;
+
   const renderDay = ({date, state}) => {
-    if (!date) return <View style={styles.dayCellContainer} />;
+    if (!date) {
+      return <View style={styles.dayCellContainer} />;
+    }
 
     const dateString = date.dateString;
     const isSelected = dateString === selectedDate;
@@ -286,8 +294,9 @@ const ReservationCalendar = ({guesthouseId}) => {
       <View style={styles.body}>
         <View style={styles.calendarContainer}>
           <Calendar
-            current={selectedDate}
+            initialDate={visibleMonthDate}
             {...CALENDAR_COMMON_PROPS}
+            enableSwipeMonths
             onDayPress={day => setSelectedDate(day.dateString)}
             onMonthChange={month =>
               setVisibleMonth(

@@ -34,7 +34,7 @@ const useUserStore = create(
 
       //사장 프로필 저장 함수
       setHostProfile: profile => set({hostProfile: profile}),
-      
+
       setSelectedGuesthouseId: id => set({selectedGuesthouseId: id}),
 
       // 전체 초기화 (로그아웃 시 사용)
@@ -53,6 +53,7 @@ const useUserStore = create(
             businessNum: '',
             guesthouseProfiles: [],
           },
+          selectedGuesthouseId: null,
         }),
     }),
     {

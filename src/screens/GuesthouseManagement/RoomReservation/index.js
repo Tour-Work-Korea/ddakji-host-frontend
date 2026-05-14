@@ -73,7 +73,7 @@ const RoomReservation = ({guesthouseId, initialChip, initialRoomManagementDate})
       ) : activeChip === chips[3] ? (
         <RoomList guesthouseId={guesthouseId} />
       ) : (
-        <NotificationSettings embedded guesthouseId={guesthouseId} />
+        <NotificationSettings guesthouseId={guesthouseId} />
       )}
     </View>
   );

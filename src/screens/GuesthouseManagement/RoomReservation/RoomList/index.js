@@ -1,5 +1,6 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
+  Dimensions,
   Image,
   ScrollView,
   Switch,
@@ -11,8 +12,8 @@ import Toast from 'react-native-toast-message';
 
 import AlertModal from '@components/modals/AlertModal';
 import GuesthouseRoomModal from '@components/modals/HostMy/Guesthouse/EditGuesthouse/GuesthouseRoom/GuesthouseRoomModal';
-import RoomActionModal from './RoomActionModal';
-import RoomPriceModal from './RoomPriceModal';
+import RoomActionModal from '@components/modals/HostMy/Guesthouse/RoomReservation/RoomActionModal';
+import RoomPriceModal from '@components/modals/HostMy/Guesthouse/RoomReservation/RoomPriceModal';
 import {FONTS} from '@constants/fonts';
 import {COLORS} from '@constants/colors';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
@@ -26,6 +27,7 @@ const ROOM_TYPE_LABEL = {
   DORMITORY: '도미토리',
   PRIVATE: '일반 객실',
 };
+const CENTER_TOAST_TOP_OFFSET = Dimensions.get('window').height * 0.42;
 
 const normalizeRoom = room => ({
   id: String(room?.roomId ?? room?.id ?? ''),
@@ -150,8 +152,9 @@ const RoomList = ({guesthouseId}) => {
       );
       Toast.show({
         type: 'success',
-        text1: nextValue ? '객실이 노출되었어요.' : '객실 노출이 숨김 처리되었어요.',
+        text1: nextValue ? '객실이 노출 처리 되었습니다' : '객실이 숨김 처리 되었습니다',
         position: 'top',
+        topOffset: CENTER_TOAST_TOP_OFFSET,
       });
     } catch (error) {
       const message =
@@ -344,10 +347,9 @@ const RoomList = ({guesthouseId}) => {
                       }
                       trackColor={{
                         false: COLORS.grayscale_300,
-                        true: COLORS.primary_orange,
+                        true: COLORS.primary_blue,
                       }}
                       thumbColor={COLORS.grayscale_0}
-                      ios_backgroundColor={COLORS.grayscale_300}
                     />
                   </View>
 
