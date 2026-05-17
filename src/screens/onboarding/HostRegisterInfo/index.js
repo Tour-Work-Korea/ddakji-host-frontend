@@ -265,6 +265,7 @@ const HostRegisterInfo = ({ route }) => {
                       />
                     </View>
                   </View>
+{/* 사업자등록번호 제외 요청에 따른 주석 처리
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>사업자등록번호</Text>
                     <View style={[styles.inputBox, styles.inputRelative]}>
@@ -321,6 +322,7 @@ const HostRegisterInfo = ({ route }) => {
                       ''
                     )}
                   </View>
+                  */}
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>비밀번호</Text>
                     <View style={styles.inputBox}>
