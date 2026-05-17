@@ -43,7 +43,15 @@ const MyGuesthouse = ({
 
   return (
     <View style={styles.contentContainer}>
-      <View style={styles.guesthouseCard}>
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={() =>
+          navigation.navigate('MyGuesthousePreview', {
+            id: guesthouseDetail.id,
+            previewData: guesthouseDetail,
+          })
+        }>
+        <View style={styles.guesthouseCard}>
         {thumbnailImage ? (
           <Image
             source={{ uri: thumbnailImage }}
@@ -63,15 +71,16 @@ const MyGuesthouse = ({
           </Text>
         </View>
       </View>
+      </TouchableOpacity>
 
       <View style={styles.actionButtonRow}>
         <TouchableOpacity
           activeOpacity={0.8}
           style={styles.actionButton}
           onPress={() =>
-            navigation.navigate('MyGuesthousePreview', {
-              id: guesthouseDetail.id,
-              previewData: guesthouseDetail,
+            navigation.navigate('MyGuesthouseEdit', {
+              guesthouseId: guesthouseDetail.id,
+              initialGuesthouse: guesthouseDetail,
             })
           }>
           <Text style={[FONTS.fs_14_medium, styles.actionButtonText]}>수정하기</Text>

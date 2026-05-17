@@ -220,10 +220,10 @@ const hostGuesthouseApi = {
   updateRoomStatusByDate: (guesthouseId, roomId, payload) =>
     api.put(`/host/guesthouses/${guesthouseId}/rooms/${roomId}/status`, payload),
 
-  // 객실 날짜별 운영 상태 변경 (여러개 동시) -> 웹용
+  // 객실 날짜별 운영 상태 변경 (여러개/전체 동시)
   // body: [{ date: 'YYYY-MM-DD', isClosed: boolean }, ...]
-  // updateRoomStatusesByDates: (guesthouseId, roomId, payload) =>
-  //   api.put(`/host/guesthouses/${guesthouseId}/rooms/${roomId}/statuses`, payload),
+  updateAllRoomsStatusByDate: (guesthouseId, payload) =>
+    api.put(`/host/guesthouses/${guesthouseId}/rooms/statuses`, payload),
 
   // 객실 체크인 안내문 조회
   getRoomCheckinNotice: (guesthouseId, roomId) =>

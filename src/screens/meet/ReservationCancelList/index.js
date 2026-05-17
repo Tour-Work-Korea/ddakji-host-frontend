@@ -55,7 +55,25 @@ const formatActionTime = value => {
   return `${hours}:${minutes} 신청취소`;
 };
 
-const mapGenderLabel = gender => (gender === 'MALE' ? '남' : '여');
+const mapGenderLabel = gender => {
+  if (!gender) return '';
+  const g = String(gender).trim().toUpperCase();
+  if (g === 'MALE' || g === 'M' || g === '남' || g === '남자') return '남';
+  if (g === 'FEMALE' || g === 'F' || g === '여' || g === '여자') return '여';
+  return '여'; // default fallback to avoid empty badge
+};
+
+const formatPhoneNumber = phone => {
+  if (!phone) return '';
+  const cleaned = String(phone).replace(/\D/g, '');
+  if (cleaned.length === 11) {
+    return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 7)}-${cleaned.slice(7)}`;
+  }
+  if (cleaned.length === 10) {
+    return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+  }
+  return phone;
+};
 
 const normalizeCanceledReservation = item => ({
   id: item?.reservationId ?? `${item?.phoneNumber}-${item?.actionTime}`,
@@ -63,7 +81,7 @@ const normalizeCanceledReservation = item => ({
   gender: mapGenderLabel(item?.gender),
   birthYear: item?.birthYear ?? '',
   time: formatActionTime(item?.actionTime),
-  phone: item?.phoneNumber ?? '',
+  phone: formatPhoneNumber(item?.phoneNumber),
 });
 
 const ReservationCancelList = () => {

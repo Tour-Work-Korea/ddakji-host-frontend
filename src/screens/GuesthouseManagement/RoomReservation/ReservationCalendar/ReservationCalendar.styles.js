@@ -1,6 +1,8 @@
-import {StyleSheet} from 'react-native';
+import {StyleSheet, Dimensions} from 'react-native';
 
 import {COLORS} from '@constants/colors';
+
+const {width: screenWidth} = Dimensions.get('window');
 
 export default StyleSheet.create({
   container: {
@@ -84,8 +86,8 @@ export default StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   dayCellContainer: {
-    width: 36,
-    height: 42,
+    width: 44,
+    height: 54,
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
@@ -99,9 +101,9 @@ export default StyleSheet.create({
     opacity: 0.35,
   },
   dayNumberWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -141,12 +143,11 @@ export default StyleSheet.create({
     marginTop: 2,
   },
   listContainer: {
+    marginTop: 8,
     flex: 1,
-    paddingHorizontal: 8,
   },
   listDateTitle: {
     color: COLORS.grayscale_900,
-    marginBottom: 8,
   },
   listScroll: {
     flex: 1,
@@ -187,5 +188,35 @@ export default StyleSheet.create({
   },
   periodText: {
     color: COLORS.grayscale_900,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  },
+  cardWrapper: {
+    width: screenWidth * 0.84,
+    paddingHorizontal: 8,
+    justifyContent: 'center',
+  },
+  bottomSheet: {
+    width: '100%',
+    height: 420,
+    backgroundColor: COLORS.grayscale_0,
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  sheetHeader: {
+    marginBottom: 16,
+    alignItems: 'center',
   },
 });

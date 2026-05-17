@@ -7,23 +7,29 @@ import ReservationManagement from './ReservationManagement';
 import RoomList from './RoomList';
 import RoomManagement from './RoomManagement';
 import NotificationSettings from './NotificationSettings';
+import OpenManagement from './OpenManagement';
 import styles from './RoomReservation.styles';
 
-const chips = ['예약 관리', '예약 캘린더', '방관리', '객실 목록', '알림 설정'];
+import MoreVertIcon from '@assets/images/more_v_gray.svg';
+
+const mainChips = ['예약 관리', '예약 캘린더', '방관리', '객실 목록'];
+const moreChips = ['오픈 관리', '알림 설정'];
 
 const RoomReservation = ({guesthouseId, initialChip, initialRoomManagementDate}) => {
+  const allChips = [...mainChips, ...moreChips];
   const [activeChip, setActiveChip] = useState(
-    chips.includes(initialChip) ? initialChip : chips[0],
+    allChips.includes(initialChip) ? initialChip : mainChips[0],
   );
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [roomManagementInitialDate, setRoomManagementInitialDate] = useState(
     initialRoomManagementDate ?? null,
   );
 
   useEffect(() => {
-    if (chips.includes(initialChip)) {
+    if (allChips.includes(initialChip)) {
       setActiveChip(initialChip);
     }
-  }, [initialChip]);
+  }, [initialChip, allChips]);
 
   useEffect(() => {
     if (initialRoomManagementDate) {
@@ -33,17 +39,28 @@ const RoomReservation = ({guesthouseId, initialChip, initialRoomManagementDate})
 
   return (
     <View style={styles.container}>
+      {isMoreMenuOpen && (
+        <TouchableOpacity
+          style={styles.moreMenuBackdrop}
+          activeOpacity={1}
+          onPress={() => setIsMoreMenuOpen(false)}
+        />
+      )}
+
       <ScrollView
         style={styles.chipScrollView}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.chipRow}>
-        {chips.map(chip => (
+        {mainChips.map(chip => (
           <TouchableOpacity
             key={chip}
             activeOpacity={0.8}
             style={[styles.chip, activeChip === chip && styles.chipActive]}
-            onPress={() => setActiveChip(chip)}>
+            onPress={() => {
+              setActiveChip(chip);
+              setIsMoreMenuOpen(false);
+            }}>
             <Text
               style={[
                 FONTS.fs_14_medium,
@@ -53,9 +70,45 @@ const RoomReservation = ({guesthouseId, initialChip, initialRoomManagementDate})
             </Text>
           </TouchableOpacity>
         ))}
+
+        <TouchableOpacity
+          activeOpacity={0.8}
+          style={[
+            styles.chip,
+            styles.moreChip,
+            moreChips.includes(activeChip) && styles.chipActive,
+          ]}
+          onPress={() => setIsMoreMenuOpen(prev => !prev)}>
+          <MoreVertIcon width={16} height={16} />
+        </TouchableOpacity>
       </ScrollView>
 
-      {activeChip === chips[0] ? (
+      {isMoreMenuOpen && (
+        <View style={styles.moreMenuDropdown}>
+          {moreChips.map(chip => (
+            <TouchableOpacity
+              key={chip}
+              style={styles.moreMenuItem}
+              onPress={() => {
+                setActiveChip(chip);
+                setIsMoreMenuOpen(false);
+              }}>
+              <Text
+                style={[
+                  FONTS.fs_14_medium,
+                  styles.chipText,
+                  activeChip === chip && styles.moreMenuTextActive,
+                ]}>
+                {chip}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
+      {activeChip === '오픈 관리' ? (
+        <OpenManagement guesthouseId={guesthouseId} />
+      ) : activeChip === '예약 관리' ? (
         <ReservationManagement
           guesthouseId={guesthouseId}
           onMoveRoomManagement={({date}) => {
@@ -63,14 +116,14 @@ const RoomReservation = ({guesthouseId, initialChip, initialRoomManagementDate})
             setActiveChip('방관리');
           }}
         />
-      ) : activeChip === chips[1] ? (
+      ) : activeChip === '예약 캘린더' ? (
         <ReservationCalendar guesthouseId={guesthouseId} />
-      ) : activeChip === chips[2] ? (
+      ) : activeChip === '방관리' ? (
         <RoomManagement
           guesthouseId={guesthouseId}
           initialDate={roomManagementInitialDate}
         />
-      ) : activeChip === chips[3] ? (
+      ) : activeChip === '객실 목록' ? (
         <RoomList guesthouseId={guesthouseId} />
       ) : (
         <NotificationSettings guesthouseId={guesthouseId} />
