@@ -747,16 +747,15 @@ const styles = StyleSheet.create({
   pendingActionRow: {
     flexDirection: 'row',
     marginTop: 16,
-    width: '60%',
-    alignSelf: 'flex-end',
+    justifyContent: 'flex-end',
   },
   pendingActionButton: {
-    flex: 1,
-    marginRight: 4,
+    width: 110,
+    paddingHorizontal: 0,
+    marginRight: 8,
   },
   pendingActionButtonLast: {
     marginRight: 0,
-    marginLeft: 4,
   },
   cancelButton: {
     borderWidth: 1,

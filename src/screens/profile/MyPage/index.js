@@ -11,7 +11,6 @@ import MyGuesthouseIcon from '@assets/images/host-my-guesthouse-icon.svg';
 import ReservationCheckIcon from '@assets/images/host-reservation-check-icon.svg';
 import ReservationCalendarIcon from '@assets/images/host-reservation-calendar-icon.svg';
 import RoomManageIcon from '@assets/images/host-room-manage-icon.svg';
-import NotificationSettingIcon from '@assets/images/host-notification-setting-icon.svg';
 import GuesthouseReviewIcon from '@assets/images/host-guesthouse-review-icon.svg';
 import TodayGuesthouseIcon from '@assets/images/host-today-guesthouse-icon.svg';
 import StoreApplyIcon from '@assets/images/host-store-apply-icon.svg';
@@ -27,7 +26,6 @@ import BellIcon from '@assets/images/bell_gray.svg';
 
 import styles from './HostMyPage.styles';
 import {FONTS} from '@constants/fonts';
-import useUserStore from '@stores/userStore';
 import GuesthouseProfileList from '@components/modals/HostMy/Guesthouse/GuesthouseProfileList';
 import { useGuesthouseProfiles } from '@hooks/useGuesthouseProfiles';
 import Avatar from '@components/Avatar';
@@ -35,8 +33,6 @@ import Avatar from '@components/Avatar';
 const HostMyPage = () => {
   const navigation = useNavigation();
 
-  //저장된 호스트 프로필 호출-> 추후 수정
-  const host = useUserStore(state => state.hostProfile);
   const [isGuesthouseListVisible, setIsGuesthouseListVisible] = useState(false);
 
   const { guesthouseProfiles } = useGuesthouseProfiles();
@@ -159,11 +155,6 @@ const HostMyPage = () => {
                   IconComponent={RoomManageIcon}
                   label="방 관리"
                   onPress={() => navigation.navigate('MyRoomManage')}
-                />
-                <MenuItem
-                  IconComponent={NotificationSettingIcon}
-                  label="고객 알림 설정"
-                  onPress={() => navigation.navigate('CustomerNotificationSettings')}
                 />
               </View>
             </View>

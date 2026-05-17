@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { PanResponder, ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, PanResponder, ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import Toast from 'react-native-toast-message';
 
@@ -17,6 +17,7 @@ import PlusIcon from '@assets/images/plus_black.svg';
 import MinusIcon from '@assets/images/minus_black.svg';
 
 const SWIPE_THRESHOLD = 60;
+const CENTER_TOAST_TOP_OFFSET = Dimensions.get('window').height * 0.42;
 
 const normalizeRoom = (room = {}) => ({
   ...room,
@@ -240,8 +241,9 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
       });
       Toast.show({
         type: 'success',
-        text1: '변경 내용이 저장되었어요.',
+        text1: nextIsClosed ? '예약 마감 처리 되었습니다' : '예약 가능 처리 되었습니다',
         position: 'top',
+        topOffset: CENTER_TOAST_TOP_OFFSET,
       });
     } catch (error) {
       setErrorModal({ visible: true, message: '저장에 실패했습니다. 다시 시도해 주세요.' });
@@ -261,8 +263,9 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
       });
       Toast.show({
         type: 'success',
-        text1: '변경 내용이 저장되었어요.',
+        text1: nextIsClosed ? '예약 마감 처리 되었습니다' : '예약 가능 처리 되었습니다',
         position: 'top',
+        topOffset: CENTER_TOAST_TOP_OFFSET,
       });
     } catch (error) {
       setErrorModal({ visible: true, message: '저장에 실패했습니다. 다시 시도해 주세요.' });
@@ -417,7 +420,7 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
                         }
                         trackColor={{
                           false: COLORS.grayscale_300,
-                          true: COLORS.primary_orange,
+                          true: COLORS.primary_blue,
                         }}
                         thumbColor={COLORS.grayscale_0}
                       />
@@ -514,7 +517,7 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
                         onValueChange={nextValue => handleToggleNormalRoom(room.roomId, nextValue)}
                         trackColor={{
                           false: COLORS.grayscale_300,
-                          true: COLORS.primary_orange,
+                          true: COLORS.primary_blue,
                         }}
                         thumbColor={COLORS.grayscale_0}
                       />

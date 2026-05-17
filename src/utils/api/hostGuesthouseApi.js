@@ -1,3 +1,4 @@
+import qs from 'qs';
 import api from './axiosInstance';
 
 const hostGuesthouseApi = {
@@ -169,6 +170,13 @@ const hostGuesthouseApi = {
   searchGuesthouseReservations: (formData) =>
     api.get('/order/host/reservation/search', { params: formData }),
 
+  // 게하 예약 월별 상태 그룹 조회
+  getGuesthouseReservationMonthlyGroups: formData =>
+    api.get('/order/host/reservation/monthly-groups', {
+      params: formData,
+      paramsSerializer: params => qs.stringify(params, {arrayFormat: 'repeat'}),
+    }),
+
   // 게하 예약 현황 조회
   getGuesthouseReservations: (guesthouseId) =>
     api.get(`/order/host/reservation/${guesthouseId}`),
@@ -212,10 +220,10 @@ const hostGuesthouseApi = {
   updateRoomStatusByDate: (guesthouseId, roomId, payload) =>
     api.put(`/host/guesthouses/${guesthouseId}/rooms/${roomId}/status`, payload),
 
-  // 객실 날짜별 운영 상태 변경 (여러개 동시) -> 웹용
+  // 객실 날짜별 운영 상태 변경 (여러개/전체 동시)
   // body: [{ date: 'YYYY-MM-DD', isClosed: boolean }, ...]
-  // updateRoomStatusesByDates: (guesthouseId, roomId, payload) =>
-  //   api.put(`/host/guesthouses/${guesthouseId}/rooms/${roomId}/statuses`, payload),
+  updateAllRoomsStatusByDate: (guesthouseId, payload) =>
+    api.put(`/host/guesthouses/${guesthouseId}/rooms/statuses`, payload),
 
   // 객실 체크인 안내문 조회
   getRoomCheckinNotice: (guesthouseId, roomId) =>

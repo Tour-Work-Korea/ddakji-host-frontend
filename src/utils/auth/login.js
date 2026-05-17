@@ -7,10 +7,32 @@ import hostMyApi from '@utils/api/hostMyApi';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
 import {normalizeHostProfile} from '@utils/hostProfile';
 import {log, mask} from '@utils/logger';
-import {navigate} from '@utils/navigationService';
+import {reset} from '@utils/navigationService';
 import {syncDeviceToken, unmapDeviceToken} from '@utils/notifications';
 
 const REFRESH_KEY = 'refresh-token';
+let sessionExpiredHandlingPromise = null;
+
+const clearStoredAuth = async () => {
+  await EncryptedStorage.removeItem(REFRESH_KEY);
+  useUserStore.getState().clearUser();
+};
+
+export const forceLogoutForExpiredSession = async ({silent = false} = {}) => {
+  if (!sessionExpiredHandlingPromise) {
+    sessionExpiredHandlingPromise = (async () => {
+      await clearStoredAuth();
+
+      if (!silent) {
+        reset([{name: 'Login', params: {reason: 'refresh_failed'}}]);
+      }
+    })().finally(() => {
+      sessionExpiredHandlingPromise = null;
+    });
+  }
+
+  return sessionExpiredHandlingPromise;
+};
 
 export const tryAutoLogin = async () => {
   log.info('🚪 tryAutoLogin: start');
@@ -109,12 +131,19 @@ export const tryRefresh = async ({silent = false} = {}) => {
     const storedRefresh = await EncryptedStorage.getItem(REFRESH_KEY);
     if (!storedRefresh) {
       log.warn('🔄 tryRefresh: no refresh token');
+      await forceLogoutForExpiredSession({silent});
       return false;
     }
     const res = await authApi.refreshToken(storedRefresh);
 
     const accessToken = res.data.accessToken;
     const refreshTokenUpdated = res.data.refreshToken;
+
+    if (!accessToken) {
+      log.warn('🔄 tryRefresh: accessToken missing in refresh response');
+      await forceLogoutForExpiredSession({silent});
+      return false;
+    }
 
     useUserStore.getState().setTokens({accessToken});
     log.info('🔄 tryRefresh: new accessToken=', mask(accessToken));
@@ -126,12 +155,7 @@ export const tryRefresh = async ({silent = false} = {}) => {
     return true;
   } catch (error) {
     log.warn('❌ tryRefresh failed:', error?.response?.status, error?.message);
-    await EncryptedStorage.removeItem(REFRESH_KEY);
-    useUserStore.getState().clearUser();
-
-    if (!silent) {
-      navigate('Login', {reason: 'refresh_failed'});
-    }
+    await forceLogoutForExpiredSession({silent});
     return false;
   }
 };

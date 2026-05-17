@@ -60,6 +60,7 @@ const ReservationManagement = ({guesthouseId, onMoveRoomManagement}) => {
   const [isSearchFilterOpen, setIsSearchFilterOpen] = useState(false);
   const [isReservationStatusOpen, setIsReservationStatusOpen] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [isTodayUseActive, setIsTodayUseActive] = useState(false);
   const [selectedSearchFilter, setSelectedSearchFilter] = useState('예약자명');
   const [selectedReservationStatus, setSelectedReservationStatus] = useState('전체');
   const [selectedDate, setSelectedDate] = useState(getTodayLocalDate());
@@ -282,6 +283,10 @@ const ReservationManagement = ({guesthouseId, onMoveRoomManagement}) => {
     });
   }, [guesthouseId, buildReservationSearchParams, requestReservationSearch]);
 
+  const displayedReservations = isTodayUseActive
+    ? reservations.filter(r => r.status !== 'CANCELLED')
+    : reservations;
+
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.body}>
@@ -395,9 +400,15 @@ const ReservationManagement = ({guesthouseId, onMoveRoomManagement}) => {
         </View>
 
         <View style={styles.filterContainer}>
-          <View style={styles.filterBox}>
-            <Text style={[FONTS.fs_14_regular]}>오늘이용 {targetDateCount}</Text>
-          </View>
+          <TouchableOpacity 
+            activeOpacity={0.8}
+            style={[styles.filterBox, isTodayUseActive && { borderColor: COLORS.primary_orange }]}
+            onPress={() => setIsTodayUseActive(prev => !prev)}
+          >
+            <Text style={[FONTS.fs_14_regular, isTodayUseActive && { color: COLORS.primary_orange, fontWeight: '600' }]}>
+              오늘이용 {targetDateCount}
+            </Text>
+          </TouchableOpacity>
           <View style={styles.statusFilterContainer}>
             <TouchableOpacity
               style={styles.filterBox}
@@ -440,8 +451,8 @@ const ReservationManagement = ({guesthouseId, onMoveRoomManagement}) => {
 
         <ReservationList
           guesthouseId={guesthouseId}
-          data={reservations}
-          totalCount={reservationTotalCount}
+          data={displayedReservations}
+          totalCount={isTodayUseActive ? targetDateCount : reservationTotalCount}
           loading={isReservationsLoading}
           loadingMore={isLoadingMore}
           selectedDate={selectedDate}
