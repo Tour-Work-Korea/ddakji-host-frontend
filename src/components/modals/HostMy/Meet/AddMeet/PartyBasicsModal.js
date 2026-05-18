@@ -7,6 +7,8 @@ import {
   StyleSheet,
   Dimensions,
   Pressable,
+  ScrollView,
+  TextInput,
 } from 'react-native';
 
 import {FONTS} from '@constants/fonts';
@@ -56,6 +58,29 @@ const Counter = ({value, onMinus, onPlus}) => (
     <TouchableOpacity style={styles.circleButton} onPress={onPlus}>
       <PlusIcon width={20} height={20} />
     </TouchableOpacity>
+  </View>
+);
+
+const formatWithComma = (num) => {
+  if (!num && num !== 0) return '';
+  if (num === 0) return '';
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+};
+
+const PriceInput = ({value, onChange}) => (
+  <View style={styles.priceInputContainer}>
+    <TextInput
+      style={styles.priceInput}
+      keyboardType="numeric"
+      value={formatWithComma(value)}
+      onChangeText={text => {
+        const cleaned = text.replace(/[^0-9]/g, '');
+        onChange(cleaned === '' ? 0 : Number(cleaned));
+      }}
+      placeholder="0"
+      placeholderTextColor={COLORS.grayscale_300}
+    />
+    <Text style={[FONTS.fs_14_medium, styles.priceUnit]}>원</Text>
   </View>
 );
 
@@ -121,7 +146,7 @@ const PartyBasicsModal = ({
             </TouchableOpacity>
           </View>
 
-          <View style={styles.body}>
+          <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
             <Text style={[FONTS.fs_16_medium, styles.label]}>파티 시간</Text>
             <View style={styles.timeRow}>
               {['partyStartTime', 'partyEndTime'].map(key => (
@@ -180,7 +205,17 @@ const PartyBasicsModal = ({
                 </Text>
               </TouchableOpacity>
             </View>
-          </View>
+
+            <Text style={[FONTS.fs_16_medium, styles.label, {marginTop: 24}]}>참가비</Text>
+            <View style={styles.infoRow}>
+              <Text style={[FONTS.fs_14_medium, styles.infoLabel]}>1인당 금액</Text>
+              <PriceInput
+                value={form.amount}
+                onChange={v => setForm(prev => ({...prev, amount: v}))}
+              />
+            </View>
+            <View style={{height: 20}} />
+          </ScrollView>
 
           <View style={styles.footer}>
             <PillSubmitButton disabled={isDisabled} onPress={handleConfirm} />
@@ -326,5 +361,27 @@ const styles = StyleSheet.create({
   },
   submitButtonText: {
     color: COLORS.grayscale_0,
+  },
+  priceInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.grayscale_200,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    width: 140,
+    height: 40,
+    backgroundColor: COLORS.grayscale_0,
+  },
+  priceInput: {
+    flex: 1,
+    ...FONTS.fs_14_medium,
+    color: COLORS.grayscale_900,
+    padding: 0,
+    textAlign: 'right',
+  },
+  priceUnit: {
+    color: COLORS.grayscale_600,
+    marginLeft: 6,
   },
 });
