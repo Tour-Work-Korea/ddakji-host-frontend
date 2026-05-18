@@ -252,33 +252,33 @@ const ReservationDayCard = ({guesthouseId, targetDate, onNavigate}) => {
                         },
                       });
                     }}>
-                    <View
-                      style={[
-                         styles.statusBadge,
-                         {backgroundColor: statusStyle.badgeBackground},
-                      ]}>
-                      <Text
+                    <View style={styles.reservationHeader}>
+                      <View
                         style={[
-                          FONTS.fs_14_semibold,
-                          styles.statusBadgeText,
-                          {color: statusStyle.badgeText},
+                           styles.statusBadge,
+                           {backgroundColor: statusStyle.badgeBackground},
                         ]}>
-                        {statusStyle.label}
+                        <Text
+                          style={[
+                            FONTS.fs_12_medium,
+                            styles.statusBadgeText,
+                            {color: statusStyle.badgeText},
+                          ]}>
+                          {statusStyle.label}
+                        </Text>
+                      </View>
+                      <Text style={[FONTS.fs_14_semibold, styles.roomName]} numberOfLines={1}>
+                        {reservation.roomName}
                       </Text>
                     </View>
 
-                    <View style={styles.reservationInfo}>
-                      <Text style={[FONTS.fs_14_medium, styles.roomName]}>
-                        {reservation.roomName}
-                      </Text>
-                      <Text style={[FONTS.fs_14_medium, styles.periodText]}>
-                        {`${formatLocalDateToDot(
-                          reservation.checkInDate,
-                        )} ~ ${formatLocalDateToDot(
-                          reservation.checkOutDate,
-                        )} (${nights}박)`}
-                      </Text>
-                    </View>
+                    <Text style={[FONTS.fs_14_regular, styles.periodText]}>
+                      {`${formatLocalDateToDot(
+                        reservation.checkInDate,
+                      )} ~ ${formatLocalDateToDot(
+                        reservation.checkOutDate,
+                      )} (${nights}박)`}
+                    </Text>
                   </TouchableOpacity>
                 );
               }}
