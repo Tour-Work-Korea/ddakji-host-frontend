@@ -580,7 +580,7 @@ const MyMeetAdd = () => {
 
           {renderSectionRow({
             title: '기본 정보',
-            description: '시간 · 참여 인원 · 금액 등',
+            description: '시간 · 참여 인원 등',
             required: true,
             done: isBasicDone,
             onPress: () => setBasicModalVisible(true),

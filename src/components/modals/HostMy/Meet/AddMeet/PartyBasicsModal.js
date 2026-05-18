@@ -61,6 +61,7 @@ const Counter = ({value, onMinus, onPlus}) => (
   </View>
 );
 
+/*
 const formatWithComma = (num) => {
   if (!num && num !== 0) return '';
   if (num === 0) return '';
@@ -83,6 +84,7 @@ const PriceInput = ({value, onChange}) => (
     <Text style={[FONTS.fs_14_medium, styles.priceUnit]}>원</Text>
   </View>
 );
+*/
 
 const PartyBasicsModal = ({
   visible,
@@ -206,6 +208,7 @@ const PartyBasicsModal = ({
               </TouchableOpacity>
             </View>
 
+            {/* 
             <Text style={[FONTS.fs_16_medium, styles.label, {marginTop: 24}]}>참가비</Text>
             <View style={styles.infoRow}>
               <Text style={[FONTS.fs_14_medium, styles.infoLabel]}>1인당 금액</Text>
@@ -214,6 +217,8 @@ const PartyBasicsModal = ({
                 onChange={v => setForm(prev => ({...prev, amount: v}))}
               />
             </View>
+            */}
+
             <View style={{height: 20}} />
           </ScrollView>
 
