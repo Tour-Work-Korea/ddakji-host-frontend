@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Platform } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import useUserStore from '@stores/userStore';
 import settlementApi from '@utils/api/settlementApi';
@@ -295,7 +295,7 @@ const SettlementManagement = () => {
         <View style={styles.sectionHeaderRow}>
           <Text style={styles.sectionTitle}>상세 내역</Text>
           <TouchableOpacity style={styles.downloadButton} onPress={handleExcelDownload} activeOpacity={0.8}>
-            <Text style={styles.downloadText}>엑셀 다운로드 ↓</Text>
+            <Text style={styles.downloadText}>엑셀 다운로드 <Text style={{ fontSize: Platform.OS === 'android' ? 16 : 13 }}>↓</Text></Text>
           </TouchableOpacity>
         </View>
 
