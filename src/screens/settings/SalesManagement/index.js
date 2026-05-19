@@ -324,10 +324,10 @@ const SalesManagement = () => {
                     return (
                       <>
                         {/* 신청 (Applied) */}
-                        <TouchableOpacity
+                        <View
                           style={styles.metricCardBox}
-                          activeOpacity={0.85}
-                          onPress={() => handleReservationMetricPress('application')}
+                          // activeOpacity={0.85}
+                          // onPress={() => handleReservationMetricPress('application')}
                         >
                           <Text style={styles.metricCardTitle}>신청</Text>
                           <View style={styles.metricCardMainRow}>
@@ -344,13 +344,13 @@ const SalesManagement = () => {
                               {mApplied.diffPercent > 0 ? '+' : ''}{mApplied.diffPercent}%
                             </Text>
                           </View>
-                        </TouchableOpacity>
+                        </View>
 
                         {/* 이용완료 (Completed) */}
-                        <TouchableOpacity
+                        <View
                           style={styles.metricCardBox}
-                          activeOpacity={0.85}
-                          onPress={() => handleReservationMetricPress('completed')}
+                          // activeOpacity={0.85}
+                          // onPress={() => handleReservationMetricPress('completed')}
                         >
                           <Text style={styles.metricCardTitle}>이용완료</Text>
                           <View style={styles.metricCardMainRow}>
@@ -367,13 +367,13 @@ const SalesManagement = () => {
                               {mCompleted.diffPercent > 0 ? '+' : ''}{mCompleted.diffPercent}%
                             </Text>
                           </View>
-                        </TouchableOpacity>
+                        </View>
 
                         {/* 취소 (Canceled) */}
-                        <TouchableOpacity
+                        <View
                           style={styles.metricCardBox}
-                          activeOpacity={0.85}
-                          onPress={() => handleReservationMetricPress('cancelled')}
+                          // activeOpacity={0.85}
+                          // onPress={() => handleReservationMetricPress('cancelled')}
                         >
                           <Text style={styles.metricCardTitle}>취소</Text>
                           <View style={styles.metricCardMainRow}>
@@ -390,13 +390,13 @@ const SalesManagement = () => {
                               {mCanceled.diffPercent > 0 ? '+' : ''}{mCanceled.diffPercent}%
                             </Text>
                           </View>
-                        </TouchableOpacity>
+                        </View>
 
                         {/* 확정 (Confirmed) */}
-                        <TouchableOpacity
+                        <View
                           style={styles.metricCardBox}
-                          activeOpacity={0.85}
-                          onPress={() => handleReservationMetricPress('confirmed')}
+                          // activeOpacity={0.85}
+                          // onPress={() => handleReservationMetricPress('confirmed')}
                         >
                           <Text style={styles.metricCardTitle}>확정</Text>
                           <View style={styles.metricCardMainRow}>
@@ -413,7 +413,7 @@ const SalesManagement = () => {
                               {mConfirmed.diffPercent > 0 ? '+' : ''}{mConfirmed.diffPercent}%
                             </Text>
                           </View>
-                        </TouchableOpacity>
+                        </View>
                       </>
                     );
                   })()}
