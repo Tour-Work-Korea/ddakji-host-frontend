@@ -167,27 +167,29 @@ export default StyleSheet.create({
     justifyContent: 'center',
   },
   reservationItem: {
+    flexDirection: 'column',
+    gap: 8,
+    paddingVertical: 4,
+  },
+  reservationHeader: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 24,
+    alignItems: 'center',
+    gap: 10,
   },
   statusBadge: {
-    borderRadius: 4,
+    borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 2,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
   statusBadgeText: {},
-  reservationInfo: {
-    flex: 1,
-    gap: 4,
-  },
   roomName: {
+    flex: 1,
     color: COLORS.grayscale_900,
   },
   periodText: {
-    color: COLORS.grayscale_900,
+    color: COLORS.grayscale_600,
   },
   modalOverlay: {
     flex: 1,

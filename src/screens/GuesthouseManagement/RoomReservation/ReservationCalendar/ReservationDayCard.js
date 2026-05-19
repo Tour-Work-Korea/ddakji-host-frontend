@@ -33,6 +33,11 @@ const RESERVATION_STATUS_STYLE = {
     badgeText: COLORS.primary_orange,
     label: '예약 취소',
   },
+  반려: {
+    badgeBackground: COLORS.secondary_brown,
+    badgeText: COLORS.semantic_brown,
+    label: '예약 반려',
+  },
   완료: {
     badgeBackground: COLORS.grayscale_300,
     badgeText: COLORS.grayscale_0,
@@ -63,10 +68,14 @@ const formatSelectedDateTitle = localDate => {
 };
 
 const normalizeReservation = (reservation = {}) => {
-  const status = STATUS_LABEL_MAP[reservation?.status] || reservation?.status || '완료';
+  let status = STATUS_LABEL_MAP[reservation?.status] || reservation?.status || '완료';
+  if (reservation?.status === 'CANCELLED' && reservation?.approvalStatus === 'REJECTED') {
+    status = '반려';
+  }
   const checkInDate = reservation?.checkInDate?.split?.('T')?.[0] ?? reservation?.checkInDate;
   const checkOutDate =
     reservation?.checkOutDate?.split?.('T')?.[0] ?? reservation?.checkOutDate;
+  const guestName = reservation?.guestName ?? reservation?.userName ?? reservation?.name ?? '게스트';
 
   return {
     ...reservation,
@@ -76,6 +85,7 @@ const normalizeReservation = (reservation = {}) => {
     roomName: reservation?.roomName ?? reservation?.room ?? '-',
     checkInDate,
     checkOutDate,
+    guestName,
   };
 };
 
@@ -207,7 +217,16 @@ const ReservationDayCard = ({guesthouseId, targetDate, onNavigate}) => {
             </View>
           ) : (
             <FlatList
-              data={reservations}
+              data={[...reservations].sort((a, b) => {
+                const getOrder = (r) => {
+                  if (r.status === '대기') return 1;
+                  if (r.status === '확정') return 2;
+                  if (r.status === '반려') return 3;
+                  if (r.status === '취소') return 4;
+                  return 5;
+                };
+                return getOrder(a) - getOrder(b);
+              })}
               style={styles.listScroll}
               contentContainerStyle={styles.listContent}
               showsVerticalScrollIndicator={false}
@@ -252,33 +271,33 @@ const ReservationDayCard = ({guesthouseId, targetDate, onNavigate}) => {
                         },
                       });
                     }}>
-                    <View
-                      style={[
-                         styles.statusBadge,
-                         {backgroundColor: statusStyle.badgeBackground},
-                      ]}>
-                      <Text
+                    <View style={styles.reservationHeader}>
+                      <View
                         style={[
-                          FONTS.fs_14_semibold,
-                          styles.statusBadgeText,
-                          {color: statusStyle.badgeText},
+                           styles.statusBadge,
+                           {backgroundColor: statusStyle.badgeBackground},
                         ]}>
-                        {statusStyle.label}
+                        <Text
+                          style={[
+                            FONTS.fs_12_medium,
+                            styles.statusBadgeText,
+                            {color: statusStyle.badgeText},
+                          ]}>
+                          {statusStyle.label}
+                        </Text>
+                      </View>
+                      <Text style={[FONTS.fs_14_semibold, styles.roomName]} numberOfLines={1}>
+                        {reservation.guestName} · {reservation.roomName}
                       </Text>
                     </View>
 
-                    <View style={styles.reservationInfo}>
-                      <Text style={[FONTS.fs_14_medium, styles.roomName]}>
-                        {reservation.roomName}
-                      </Text>
-                      <Text style={[FONTS.fs_14_medium, styles.periodText]}>
-                        {`${formatLocalDateToDot(
-                          reservation.checkInDate,
-                        )} ~ ${formatLocalDateToDot(
-                          reservation.checkOutDate,
-                        )} (${nights}박)`}
-                      </Text>
-                    </View>
+                    <Text style={[FONTS.fs_14_regular, styles.periodText]}>
+                      {`${formatLocalDateToDot(
+                        reservation.checkInDate,
+                      )} ~ ${formatLocalDateToDot(
+                        reservation.checkOutDate,
+                      )} (${nights}박)`}
+                    </Text>
                   </TouchableOpacity>
                 );
               }}

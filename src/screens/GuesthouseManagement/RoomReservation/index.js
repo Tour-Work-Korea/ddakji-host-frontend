@@ -1,7 +1,7 @@
-import React, {useEffect, useState} from 'react';
-import {ScrollView, Text, TouchableOpacity, View} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
-import {FONTS} from '@constants/fonts';
+import { FONTS } from '@constants/fonts';
 import ReservationCalendar from './ReservationCalendar';
 import ReservationManagement from './ReservationManagement';
 import RoomList from './RoomList';
@@ -13,9 +13,9 @@ import styles from './RoomReservation.styles';
 import MoreVertIcon from '@assets/images/more_v_gray.svg';
 
 const mainChips = ['예약 관리', '예약 캘린더', '방관리', '객실 목록'];
-const moreChips = ['오픈 관리', '알림 설정'];
+const moreChips = ['오픈 관리', '안내문 설정'];
 
-const RoomReservation = ({guesthouseId, initialChip, initialRoomManagementDate}) => {
+const RoomReservation = ({ guesthouseId, initialChip, initialRoomManagementDate }) => {
   const allChips = [...mainChips, ...moreChips];
   const [activeChip, setActiveChip] = useState(
     allChips.includes(initialChip) ? initialChip : mainChips[0],
@@ -111,7 +111,7 @@ const RoomReservation = ({guesthouseId, initialChip, initialRoomManagementDate})
       ) : activeChip === '예약 관리' ? (
         <ReservationManagement
           guesthouseId={guesthouseId}
-          onMoveRoomManagement={({date}) => {
+          onMoveRoomManagement={({ date }) => {
             setRoomManagementInitialDate(date || null);
             setActiveChip('방관리');
           }}

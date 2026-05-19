@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,11 +7,11 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 import styles from './MyMeetAdd.styles';
 import Header from '@components/Header';
-import {FONTS} from '@constants/fonts';
+import { FONTS } from '@constants/fonts';
 import hostMeetApi from '@utils/api/hostMeetApi';
 
 import MeetEventModal from '@components/modals/HostMy/Meet/AddMeet/MeetEventModal';
@@ -107,7 +107,7 @@ const MyMeetAdd = () => {
         seen = true;
         return img;
       }
-      return {...img, isThumbnail: false};
+      return { ...img, isThumbnail: false };
     });
   };
 
@@ -144,7 +144,7 @@ const MyMeetAdd = () => {
     const fetchTemplateDetail = async () => {
       try {
         setLoading(true);
-        const {data} = await hostMeetApi.getPartyTemplateDetail(templateId);
+        const { data } = await hostMeetApi.getPartyTemplateDetail(templateId);
 
         if (!isMounted) return;
 
@@ -168,29 +168,29 @@ const MyMeetAdd = () => {
           femaleNonAmount: data?.femaleNonAmount ?? prev.femaleNonAmount,
           partyAnnouncements: Array.isArray(data?.partyAnnouncements)
             ? data.partyAnnouncements.map(item => ({
-                announcement: item?.announcement ?? '',
-              }))
+              announcement: item?.announcement ?? '',
+            }))
             : [],
           partyEvents: Array.isArray(data?.partyEvents)
             ? data.partyEvents.map(item => ({
-                eventName: item?.eventName ?? '',
-                eventDescription: item?.eventDescription ?? '',
-                partyEventImageUrls: Array.isArray(item?.partyEventImageUrls)
-                  ? item.partyEventImageUrls
-                  : [],
-              }))
+              eventName: item?.eventName ?? '',
+              eventDescription: item?.eventDescription ?? '',
+              partyEventImageUrls: Array.isArray(item?.partyEventImageUrls)
+                ? item.partyEventImageUrls
+                : [],
+            }))
             : Array.isArray(data?.events)
               ? data.events.map(item => ({
-                  eventName: item?.eventName ?? item?.title ?? '',
-                  eventDescription:
-                    item?.eventDescription ?? item?.description ?? '',
-                  partyEventImageUrls: Array.isArray(item?.partyEventImageUrls)
-                    ? item.partyEventImageUrls
-                    : Array.isArray(item?.imageUrls)
-                      ? item.imageUrls
-                      : [],
-                }))
-            : [],
+                eventName: item?.eventName ?? item?.title ?? '',
+                eventDescription:
+                  item?.eventDescription ?? item?.description ?? '',
+                partyEventImageUrls: Array.isArray(item?.partyEventImageUrls)
+                  ? item.partyEventImageUrls
+                  : Array.isArray(item?.imageUrls)
+                    ? item.imageUrls
+                    : [],
+              }))
+              : [],
           detailSchedule: data?.detailSchedule ?? data?.partySchedule ?? '',
           snackTagList: Array.isArray(data?.snackTagList)
             ? data.snackTagList
@@ -201,9 +201,9 @@ const MyMeetAdd = () => {
           extraInfo: data?.extraInfo ?? '',
           rules: Array.isArray(data?.rules)
             ? data.rules.map(rule => ({
-                title: rule?.title ?? '',
-                content: rule?.content ?? '',
-              }))
+              title: rule?.title ?? '',
+              content: rule?.content ?? '',
+            }))
             : [],
           meetingPlace: data?.meetingPlace ?? '',
           trafficInfo: data?.trafficInfo ?? '',
@@ -287,10 +287,10 @@ const MyMeetAdd = () => {
 
     const nextAnnouncements = Array.isArray(payload.partyAnnouncements)
       ? payload.partyAnnouncements
-          .map(item => ({
-            announcement: item?.announcement ?? item ?? '',
-          }))
-          .filter(item => item.announcement.trim() !== '')
+        .map(item => ({
+          announcement: item?.announcement ?? item ?? '',
+        }))
+        .filter(item => item.announcement.trim() !== '')
       : [];
 
     setParty(prev => ({
@@ -345,22 +345,22 @@ const MyMeetAdd = () => {
 
   // 이벤트 소개글 모달에서 "적용"
   // payload: { partyEvents: [{eventName, eventDescription, partyEventImageUrls: string[]}|string] }
-  const onSelectEvent = ({partyEvents}) => {
+  const onSelectEvent = ({ partyEvents }) => {
     const normalized = Array.isArray(partyEvents)
       ? partyEvents
-          .map(e => {
-            if (typeof e === 'string') {
-              return {eventName: e, eventDescription: '', partyEventImageUrls: []};
-            }
-            return {
-              eventName: e?.eventName ?? '',
-              eventDescription: e?.eventDescription ?? '',
-              partyEventImageUrls: Array.isArray(e?.partyEventImageUrls) ? e.partyEventImageUrls : [],
-            };
-          })
-          .filter(e => e.eventName.trim() !== '')
+        .map(e => {
+          if (typeof e === 'string') {
+            return { eventName: e, eventDescription: '', partyEventImageUrls: [] };
+          }
+          return {
+            eventName: e?.eventName ?? '',
+            eventDescription: e?.eventDescription ?? '',
+            partyEventImageUrls: Array.isArray(e?.partyEventImageUrls) ? e.partyEventImageUrls : [],
+          };
+        })
+        .filter(e => e.eventName.trim() !== '')
       : [];
-    setParty(p => ({...p, partyEvents: normalized}));
+    setParty(p => ({ ...p, partyEvents: normalized }));
     setEventModalVisible(false);
   };
 
@@ -436,10 +436,10 @@ const MyMeetAdd = () => {
       // 필수 안내사항
       partyAnnouncements: Array.isArray(party.partyAnnouncements)
         ? party.partyAnnouncements
-            .map(item => ({
-              announcement: (item?.announcement ?? '').trim(),
-            }))
-            .filter(item => item.announcement !== '')
+          .map(item => ({
+            announcement: (item?.announcement ?? '').trim(),
+          }))
+          .filter(item => item.announcement !== '')
         : [],
 
       // 이벤트 소개글(모달)
@@ -459,9 +459,9 @@ const MyMeetAdd = () => {
       // 이용 규칙
       rules: Array.isArray(party.rules) && party.rules.length
         ? party.rules.map(rule => ({
-            title: rule?.title ?? '',
-            content: rule?.content ?? '',
-          }))
+          title: rule?.title ?? '',
+          content: rule?.content ?? '',
+        }))
         : undefined,
 
       // 오시는 길(페이지)
@@ -522,9 +522,9 @@ const MyMeetAdd = () => {
   };
 
   const renderRightIcon = (done) =>
-  done ? <CheckOrange width={24} height={24} /> : <ChevronRight width={24} height={24} />;
+    done ? <CheckOrange width={24} height={24} /> : <ChevronRight width={24} height={24} />;
 
-  const renderSectionRow = ({title, description, required = false, done, onPress}) => (
+  const renderSectionRow = ({ title, description, required = false, done, onPress }) => (
     <TouchableOpacity
       style={styles.section}
       onPress={onPress}
