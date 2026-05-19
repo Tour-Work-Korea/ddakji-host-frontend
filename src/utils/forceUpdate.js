@@ -3,7 +3,7 @@ import DeviceInfo from 'react-native-device-info';
 import {compareVersions, validate} from 'compare-versions';
 import {log} from '@utils/logger';
 
-export const FORCE_UPDATE_REMOTE_CONFIG_KEY = 'min_version';
+export const FORCE_UPDATE_REMOTE_CONFIG_KEY = 'host_min_version';
 
 export const PARTNER_CENTER_STORE_URLS = {
   ios: 'https://apps.apple.com/app/id6761244097',
