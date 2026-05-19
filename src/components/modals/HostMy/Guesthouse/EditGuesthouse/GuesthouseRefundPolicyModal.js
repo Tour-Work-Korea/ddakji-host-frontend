@@ -28,7 +28,7 @@ import DeleteGray from '@assets/images/delete_gray.svg';
 
 const MODAL_HEIGHT = Math.round(Dimensions.get('window').height * 0.9);
 const normalizePolicies = (policies = []) =>
-  [...policies]
+  (Array.isArray(policies) ? [...policies] : [])
     .filter(
       item =>
         Number(item?.daysBeforeCheckin) >= 1 &&

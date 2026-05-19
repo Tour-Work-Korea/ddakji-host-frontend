@@ -39,7 +39,7 @@ const DEFAULT_POLICY_RATE_MAP = {
 };
 
 const normalizePolicies = (policies = []) =>
-  [...policies]
+  (Array.isArray(policies) ? [...policies] : [])
     .filter(
       item =>
         Number(item?.daysBeforeCheckin) >= 1 &&

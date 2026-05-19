@@ -114,6 +114,11 @@ const HostHome = () => {
   }, []);
 
   const fetchUnreadCount = useCallback(async () => {
+    const { accessToken } = useUserStore.getState();
+    if (!accessToken) {
+      setUnreadCount(0);
+      return;
+    }
     try {
       const { data } = await notificationApi.getUnreadCount();
       const count = Number(
@@ -127,6 +132,8 @@ const HostHome = () => {
   }, []);
 
   const syncHostProfile = useCallback(async () => {
+    const { accessToken } = useUserStore.getState();
+    if (!accessToken) return;
     await updateProfile('HOST');
   }, []);
 

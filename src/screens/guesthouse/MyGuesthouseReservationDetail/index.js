@@ -162,7 +162,7 @@ const mapReservationDetailToViewData = (reservation = {}) => {
     isRejected,
     rejectedReason: reservation?.cancelledReason || reservation?.paymentCancelReason || '',
     rejectedAt: reservation?.refundAt || reservation?.createdAt || '',
-    statusText: isRejected ? '신규예약' : (reservation?.statusText ?? `완료 ${completedTotal}, 취소 ${canceledTotal}`),
+    statusText: reservation?.statusText ?? `완료 ${completedTotal}, 취소 ${canceledTotal}`,
     name: reservation?.userName ?? reservation?.name,
     age: reservation?.age ?? (birthYear ? `${birthYear}년생` : ''),
     phone: reservation?.userPhone ?? reservation?.phone,
