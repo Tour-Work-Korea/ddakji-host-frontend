@@ -30,6 +30,10 @@ const STATUS_STYLE = {
     badgeBackground: COLORS.secondary_red,
     badgeText: COLORS.semantic_red,
   },
+  반려: {
+    badgeBackground: COLORS.secondary_brown,
+    badgeText: COLORS.semantic_brown,
+  },
   확정: {
     badgeBackground: COLORS.secondary_blue,
     badgeText: COLORS.semantic_blue,
@@ -135,7 +139,11 @@ const getApprovalDeadlineText = (reservation, now) => {
 };
 
 const normalizeReservation = reservation => {
-  const status = STATUS_LABEL_MAP[reservation?.status] || reservation?.status || '완료';
+  let status = STATUS_LABEL_MAP[reservation?.status] || reservation?.status || '완료';
+  if (reservation?.status === 'CANCELLED' && reservation?.approvalStatus === 'REJECTED') {
+    status = '반려';
+  }
+
   const completedTotal = Number(reservation?.completedTotal || 0);
   const canceledTotal = Number(reservation?.canceledTotal || 0);
   const amount = Number(reservation?.amount || 0);
@@ -220,9 +228,14 @@ const ReservationList = ({
 
   const listData = Array.isArray(data)
     ? data.map(normalizeReservation).sort((a, b) => {
-        const aOrder = STATUS_SORT_ORDER[a.status] ?? Number.MAX_SAFE_INTEGER;
-        const bOrder = STATUS_SORT_ORDER[b.status] ?? Number.MAX_SAFE_INTEGER;
-        return aOrder - bOrder;
+        const getOrder = (r) => {
+          if (r.status === '대기') return 1;
+          if (r.status === '확정') return 2;
+          if (r.status === '반려') return 3;
+          if (r.status === '취소') return 4;
+          return 5;
+        };
+        return getOrder(a) - getOrder(b);
       })
     : [];
 
