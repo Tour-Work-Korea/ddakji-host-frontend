@@ -39,9 +39,11 @@ export default StyleSheet.create({
     paddingTop: 28,
     paddingBottom: 24,
   },
+  cardContainer: {
+    marginBottom: 24,
+  },
   card: {
     flexDirection: 'row',
-    marginBottom: 24,
     alignItems: 'flex-start',
   },
   thumbnail: {
@@ -54,7 +56,6 @@ export default StyleSheet.create({
   cardContent: {
     flex: 1,
     paddingTop: 4,
-    minHeight: 112,
   },
   cardTop: {
     flex: 1,
@@ -72,24 +73,27 @@ export default StyleSheet.create({
     color: COLORS.grayscale_500,
     marginLeft: 6,
   },
-  cardBottom: {
+  actionButtonRow: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
     alignItems: 'center',
     marginTop: 24,
+    justifyContent: 'flex-end',
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: COLORS.grayscale_100,
+    borderRadius: 100,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    borderRadius: 100,
-    marginLeft: 12,
+  },
+  actionButtonSpacer: {
+    width: 12,
   },
   actionButtonText: {
     color: COLORS.grayscale_800,
+    marginRight: 8,
   },
   actionIcon: {
     marginLeft: 8,
