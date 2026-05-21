@@ -137,7 +137,7 @@ const Home = ({ reservationMethod = 'closed', pendingReservationPolicyRequest, g
   const [settlementData, setSettlementData] = useState(null);
   const [salesData, setSalesData] = useState(null);
   const [dashboardData, setDashboardData] = useState(null);
-  const [selectedTab, setSelectedTab] = useState('TODAY_CONFIRMED');
+  const [selectedTab, setSelectedTab] = useState('WAITING_APPROVAL');
   const [decisionModalVisible, setDecisionModalVisible] = useState(false);
   const [selectedReservation, setSelectedReservation] = useState(null);
   const [decisionSubmitting, setDecisionSubmitting] = useState(false);
@@ -212,9 +212,9 @@ const Home = ({ reservationMethod = 'closed', pendingReservationPolicyRequest, g
   );
 
   const summaryItems = [
+    { key: 'WAITING_APPROVAL', label: '확정 대기', value: String(dashboardData?.counts?.waitingApproval || 0) },
     { key: 'TODAY_STAYING', label: '오늘 이용', value: String(dashboardData?.counts?.todayStaying || 0) },
     { key: 'TODAY_CONFIRMED', label: '오늘 확정', value: String(dashboardData?.counts?.todayConfirmed || 0) },
-    { key: 'WAITING_APPROVAL', label: '확정 대기', value: String(dashboardData?.counts?.waitingApproval || 0) },
     { key: 'TODAY_CANCELLED', label: '오늘 취소', value: String(dashboardData?.counts?.todayCancelled || 0) },
   ];
 
