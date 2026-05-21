@@ -565,12 +565,12 @@ const Home = ({ reservationMethod = 'closed', pendingReservationPolicyRequest, g
               <Text style={styles.salesCardAmount}>{Number(salesData?.salesSummary?.currentNetSales || 0).toLocaleString()}</Text>
               <Text style={styles.salesCardCurrency}>원</Text>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            {/* <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Text style={{ fontSize: 14, color: COLORS.grayscale_600, fontWeight: '500', marginRight: 4 }}>이전기간대비</Text>
               <Text style={{ fontSize: 14, color: (salesData?.salesSummary?.deltaNetSales >= 0) ? COLORS.semantic_red : COLORS.semantic_blue, fontWeight: 'bold' }}>
                 {(salesData?.salesSummary?.deltaNetSales > 0) ? '+' : ''}{(salesData?.salesSummary?.deltaNetSales || 0).toLocaleString()}
               </Text>
-            </View>
+            </View> */}
           </View>
 
           <View style={{ gap: 14 }}>
