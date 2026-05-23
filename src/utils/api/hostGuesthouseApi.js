@@ -119,6 +119,10 @@ const hostGuesthouseApi = {
       isVisible,
     }),
 
+  // 객실 노출 순서 변경
+  updateRoomDisplayOrder: (guesthouseId, roomIds) =>
+    api.patch(`/host/guesthouses/${guesthouseId}/rooms/display-order`, { roomIds }),
+
   // 게스트하우스 삭제
   deleteGuesthouse: guesthouseId =>
     api.delete(`/host/guesthouses/${guesthouseId}`),
