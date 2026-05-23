@@ -23,7 +23,16 @@ export default StyleSheet.create({
     right: 0,
     bottom: 0,
     left: 0,
-    zIndex: 5,
+    zIndex: 9,
+  },
+  stickyHeaderContainer: {
+    backgroundColor: COLORS.grayscale_0,
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 4,
+    marginHorizontal: -14,
+    marginTop: -12,
+    zIndex: 10,
   },
   guesthouseSelectContainer: {
     position: 'relative',
@@ -104,7 +113,7 @@ export default StyleSheet.create({
     marginBottom: 4,
   },
   normalSectionTitle: {
-    marginTop: 8,
+    marginTop: 20,
   },
   roomList: {
     gap: 12,
@@ -203,5 +212,43 @@ export default StyleSheet.create({
   },
   addButtonText: {
     color: COLORS.grayscale_0,
+  },
+  bulkChangeTextButton: {
+    alignSelf: 'flex-end',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 4,
+    backgroundColor: COLORS.grayscale_100,
+    borderWidth: 1,
+    borderColor: COLORS.grayscale_200,
+    marginTop: 4,
+  },
+  bulkChangeText: {
+    color: COLORS.grayscale_700,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 12,
+    marginBottom: 6,
+    paddingHorizontal: 4,
+  },
+  sectionHeaderTitle: {
+    color: COLORS.grayscale_900,
+  },
+  sectionBulkButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 4,
+    backgroundColor: COLORS.grayscale_100,
+    borderWidth: 1,
+    borderColor: COLORS.grayscale_200,
+  },
+  sectionBulkButtonText: {
+    color: COLORS.grayscale_700,
+  },
+  disabledOpacity: {
+    opacity: 0.35,
   },
 });
