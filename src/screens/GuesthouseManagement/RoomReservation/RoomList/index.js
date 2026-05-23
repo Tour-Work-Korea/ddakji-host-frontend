@@ -1,7 +1,7 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
-  Dimensions,
   Image,
+  Platform,
   ScrollView,
   Switch,
   Text,
@@ -27,7 +27,7 @@ const ROOM_TYPE_LABEL = {
   DORMITORY: '도미토리',
   PRIVATE: '일반 객실',
 };
-const CENTER_TOAST_TOP_OFFSET = Dimensions.get('window').height * 0.42;
+const CENTER_TOAST_TOP_OFFSET = Platform.OS === 'ios' ? 220 : 190;
 
 const normalizeRoom = room => ({
   id: String(room?.roomId ?? room?.id ?? ''),
@@ -129,7 +129,9 @@ const RoomList = ({guesthouseId}) => {
 
   const handleMoveRoom = (index, direction) => {
     const nextIndex = index + direction;
-    if (nextIndex < 0 || nextIndex >= rooms.length) return;
+    if (nextIndex < 0 || nextIndex >= rooms.length) {
+      return;
+    }
 
     const next = [...rooms];
     const temp = next[index];
@@ -140,7 +142,9 @@ const RoomList = ({guesthouseId}) => {
   };
 
   const handleSaveOrder = async () => {
-    if (!guesthouseId || updatingRoomId != null) return;
+    if (!guesthouseId || updatingRoomId != null) {
+      return;
+    }
     try {
       setUpdatingRoomId('saveOrder');
       const roomIds = rooms.map(room => room.roomId);
@@ -159,6 +163,7 @@ const RoomList = ({guesthouseId}) => {
         type: 'error',
         text1: message,
         position: 'top',
+        topOffset: CENTER_TOAST_TOP_OFFSET,
       });
     } finally {
       setUpdatingRoomId(null);
@@ -204,6 +209,7 @@ const RoomList = ({guesthouseId}) => {
         type: 'error',
         text1: message,
         position: 'top',
+        topOffset: CENTER_TOAST_TOP_OFFSET,
       });
     } finally {
       setUpdatingRoomId(null);
@@ -211,7 +217,9 @@ const RoomList = ({guesthouseId}) => {
   };
 
   const handlePressEditAction = room => {
-    if (isPreparingEditRoom) return;
+    if (isPreparingEditRoom) {
+      return;
+    }
     setActionTargetRoom(room);
     setActionModalVisible(true);
   };

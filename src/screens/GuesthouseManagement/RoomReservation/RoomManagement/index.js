@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Dimensions, PanResponder, ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { PanResponder, Platform, ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import Toast from 'react-native-toast-message';
 
@@ -7,6 +7,7 @@ import AlertModal from '@components/modals/AlertModal';
 import { CALENDAR_COMMON_PROPS, CALENDAR_THEME } from '@constants/calendarConfig';
 import { COLORS } from '@constants/colors';
 import { FONTS } from '@constants/fonts';
+import { useNavigation } from '@react-navigation/native';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
 import { formatLocalDateToDotWithDay } from '@utils/formatDate';
 import styles from './RoomManagement.styles';
@@ -17,7 +18,7 @@ import PlusIcon from '@assets/images/plus_black.svg';
 import MinusIcon from '@assets/images/minus_black.svg';
 
 const SWIPE_THRESHOLD = 60;
-const CENTER_TOAST_TOP_OFFSET = Dimensions.get('window').height * 0.42;
+const CENTER_TOAST_TOP_OFFSET = Platform.OS === 'ios' ? 220 : 190;
 
 const normalizeRoom = (room = {}) => ({
   ...room,
@@ -55,6 +56,8 @@ const normalizeInventory = (inventory = {}, fallbackRoom = {}) => ({
 
 
 const RoomManagement = ({ guesthouseId, initialDate }) => {
+  const navigation = useNavigation();
+
   const getTodayLocalDate = () => {
     const today = new Date();
     const year = today.getFullYear();
@@ -199,6 +202,13 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
     fetchInventoryBySelectedDate();
   }, [fetchInventoryBySelectedDate]);
 
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchInventoryBySelectedDate();
+    });
+    return unsubscribe;
+  }, [navigation, fetchInventoryBySelectedDate]);
+
   const panResponder = useMemo(
     () =>
       PanResponder.create({
@@ -275,7 +285,9 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
 
   const handleChangeDormitoryBeds = async (roomId, diff) => {
     const room = dormitoryRooms.find(r => r.roomId === roomId);
-    if (!room) return;
+    if (!room) {
+      return;
+    }
 
     const maxCapacity = Number(room?.roomMaxCapacity ?? 0);
     const reservedBeds = Number(room?.reservedBeds ?? 0);
@@ -283,7 +295,9 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
       maxCapacity > 0 ? Math.max(0, maxCapacity - reservedBeds) : Number.MAX_SAFE_INTEGER;
     const nextBeds = Math.min(maxSellableBeds, Math.max(0, room.displayBeds + diff));
 
-    if (nextBeds === room.displayBeds) return;
+    if (nextBeds === room.displayBeds) {
+      return;
+    }
 
     setDormitoryRooms(prev =>
       prev.map(r => (r.roomId === roomId ? { ...r, displayBeds: nextBeds } : r)),
@@ -298,6 +312,7 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
         type: 'success',
         text1: '변경 내용이 저장되었어요.',
         position: 'top',
+        topOffset: CENTER_TOAST_TOP_OFFSET,
       });
     } catch (error) {
       setErrorModal({ visible: true, message: '저장에 실패했습니다. 다시 시도해 주세요.' });
@@ -307,64 +322,84 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
 
   return (
     <View style={styles.container}>
+      {isCalendarOpen ? (
+        <TouchableOpacity
+          activeOpacity={1}
+          style={styles.searchFilterBackdrop}
+          onPress={() => {
+            setIsCalendarOpen(false);
+          }}
+        />
+      ) : null}
+
       <ScrollView
         style={styles.body}
         contentContainerStyle={styles.bodyContent}
         showsVerticalScrollIndicator={false}
+        stickyHeaderIndices={[0]}
         {...panResponder.panHandlers}>
-        {isCalendarOpen ? (
-          <TouchableOpacity
-            activeOpacity={1}
-            style={styles.searchFilterBackdrop}
-            onPress={() => {
-              setIsCalendarOpen(false);
-            }}
-          />
-        ) : null}
 
-        <View style={styles.dateSelectContainer}>
-          <View style={styles.dateSelectBox}>
-            <TouchableOpacity
-              onPress={() => {
-                setSelectedDate(prev => shiftDate(prev, -1));
-                setIsCalendarOpen(false);
-              }}>
-              <ChevronLeft width={24} height={24} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => {
-                setIsCalendarOpen(prev => !prev);
-              }}>
-              <Text style={[FONTS.fs_16_medium]}>
-                {formatLocalDateToDotWithDay(selectedDate)}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => {
-                setSelectedDate(prev => shiftDate(prev, 1));
-                setIsCalendarOpen(false);
-              }}>
-              <ChevronRight width={24} height={24} />
-            </TouchableOpacity>
-          </View>
-
-          {isCalendarOpen ? (
-            <View style={styles.calendarContainer}>
-              <Calendar
-                current={selectedDate}
-                {...CALENDAR_COMMON_PROPS}
-                markedDates={markedDates}
-                onDayPress={day => {
-                  setSelectedDate(day.dateString);
+        <View style={styles.stickyHeaderContainer}>
+          <View style={styles.dateSelectContainer}>
+            <View style={styles.dateSelectBox}>
+              <TouchableOpacity
+                onPress={() => {
+                  setSelectedDate(prev => shiftDate(prev, -1));
                   setIsCalendarOpen(false);
-                }}
-                theme={CALENDAR_THEME}
-              />
+                }}>
+                <ChevronLeft width={24} height={24} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setIsCalendarOpen(prev => !prev);
+                }}>
+                <Text style={[FONTS.fs_16_medium]}>
+                  {formatLocalDateToDotWithDay(selectedDate)}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setSelectedDate(prev => shiftDate(prev, 1));
+                  setIsCalendarOpen(false);
+                }}>
+                <ChevronRight width={24} height={24} />
+              </TouchableOpacity>
             </View>
-          ) : null}
+
+            {isCalendarOpen ? (
+              <View style={styles.calendarContainer}>
+                <Calendar
+                  current={selectedDate}
+                  {...CALENDAR_COMMON_PROPS}
+                  markedDates={markedDates}
+                  onDayPress={day => {
+                    setSelectedDate(day.dateString);
+                    setIsCalendarOpen(false);
+                  }}
+                  theme={CALENDAR_THEME}
+                />
+              </View>
+            ) : null}
+          </View>
         </View>
 
-        <Text style={[FONTS.fs_16_semibold, styles.sectionTitle]}>도미토리</Text>
+        <View style={styles.sectionHeaderRow}>
+          <Text style={[FONTS.fs_16_semibold, styles.sectionHeaderTitle]}>도미토리</Text>
+          {dormitoryRooms.length > 0 && (
+            <TouchableOpacity
+              activeOpacity={0.8}
+              style={styles.sectionBulkButton}
+              onPress={() => {
+                navigation.navigate('DormitoryBulkBed', {
+                  guesthouseId: guesthouseId,
+                  rooms: dormitoryRooms,
+                  selectedDate: selectedDate,
+                });
+              }}>
+              <Text style={[FONTS.fs_12_bold, styles.sectionBulkButtonText]}>일괄 변경</Text>
+            </TouchableOpacity>
+          )}
+        </View>
         <View style={styles.roomList}>
           {isInventoryLoading ? (
             <Text style={[FONTS.fs_14_regular, styles.emptyText]}>
@@ -380,7 +415,7 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
             </Text>
           ) : (
             dormitoryRooms.map(room => {
-              const isExposed = !Boolean(room?.isClosed);
+              const isExposed = !room?.isClosed;
               const roomMaxCapacity = Number(room?.roomMaxCapacity ?? 0);
               const reservedBeds = Number(room?.reservedBeds ?? 0);
               const hasCapacityLimit = roomMaxCapacity > 0;
@@ -442,7 +477,7 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
                     </Text>
                     <TouchableOpacity
                       activeOpacity={canIncreaseBeds ? 0.8 : 1}
-                      style={[styles.bedControlButton, !canIncreaseBeds ? { opacity: 0.35 } : null]}
+                      style={[styles.bedControlButton, !canIncreaseBeds && styles.disabledOpacity]}
                       onPress={() => {
                         if (canIncreaseBeds) {
                           handleChangeDormitoryBeds(room.roomId, 1);
@@ -471,9 +506,9 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
           )}
         </View>
 
-        <Text style={[FONTS.fs_16_semibold, styles.sectionTitle, styles.normalSectionTitle]}>
-          일반 객실
-        </Text>
+        <View style={[styles.sectionHeaderRow, styles.normalSectionTitle]}>
+          <Text style={[FONTS.fs_16_semibold, styles.sectionHeaderTitle]}>일반 객실</Text>
+        </View>
         <View style={styles.roomList}>
           {isInventoryLoading ? (
             <Text style={[FONTS.fs_14_regular, styles.emptyText]}>
@@ -487,7 +522,7 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
             <Text style={[FONTS.fs_14_regular, styles.emptyText]}>일반 객실이 없습니다</Text>
           ) : (
             normalRooms.map(room => {
-              const isExposed = !Boolean(room?.isClosed);
+              const isExposed = !room?.isClosed;
 
               return (
                 <View key={String(room.roomId)} style={styles.roomCard}>
@@ -548,6 +583,7 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
           setLimitModal({ visible: false, message: '' });
         }}
       />
+
     </View>
   );
 };
