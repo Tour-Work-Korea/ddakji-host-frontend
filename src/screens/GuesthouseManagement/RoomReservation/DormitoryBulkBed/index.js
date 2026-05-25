@@ -298,23 +298,44 @@ const DormitoryBulkBed = ({ route, navigation }) => {
     // Capping the bulk max to roomCap just in case
     const targetMax = Math.min(roomCap, bulk.max);
 
-    // Calculate corrected capacity per day and Optimistic UI update
-    const correctedStates = {};
-    const bedPayload = dateRange.map(dateStr => {
+    let skippedCount = 0;
+    const updateDates = [];
+
+    dateRange.forEach(dateStr => {
       const state = roomStates[roomId]?.[dateStr];
       const maxCapacity = state?.roomMaxCapacity || room?.roomMaxCapacity || room?.roomCapacity || 4;
       const reservedBeds = state?.reservedBeds || 0;
       const maxSellableBeds = Math.max(0, maxCapacity - reservedBeds);
-      const finalBeds = Math.min(maxSellableBeds, targetMax);
 
+      if (targetMax > maxSellableBeds) {
+        skippedCount++;
+      } else {
+        updateDates.push(dateStr);
+      }
+    });
+
+    if (updateDates.length === 0) {
+      Toast.show({
+        type: 'info',
+        text1: '모든 날짜에 예약이 존재하여 변경되지 않았습니다.',
+        position: 'top',
+        topOffset: MENU_TOAST_TOP_OFFSET,
+      });
+      return;
+    }
+
+    // Calculate corrected capacity per day and Optimistic UI update
+    const correctedStates = {};
+    const bedPayload = updateDates.map(dateStr => {
+      const state = roomStates[roomId]?.[dateStr];
       correctedStates[dateStr] = {
         ...(state || {}),
-        max: finalBeds,
+        max: targetMax,
       };
 
       return {
         date: dateStr,
-        availableBeds: finalBeds,
+        availableBeds: targetMax,
       };
     });
 
@@ -330,12 +351,21 @@ const DormitoryBulkBed = ({ route, navigation }) => {
       setActionLoading(true);
       await hostGuesthouseApi.bulkUpdateAvailableBeds(guesthouseId, roomId, bedPayload);
 
-      Toast.show({
-        type: 'success',
-        text1: `"${roomName}" 객실의 7일간 잔여 수량이 ${targetMax}개로 변경되었습니다.`,
-        position: 'top',
-        topOffset: MENU_TOAST_TOP_OFFSET,
-      });
+      if (skippedCount > 0) {
+        Toast.show({
+          type: 'success',
+          text1: '예약이 존재하는 날짜를 제외하고 일괄 변경되었습니다.',
+          position: 'top',
+          topOffset: MENU_TOAST_TOP_OFFSET,
+        });
+      } else {
+        Toast.show({
+          type: 'success',
+          text1: `"${roomName}" 객실의 7일간 잔여 수량이 ${targetMax}개로 변경되었습니다.`,
+          position: 'top',
+          topOffset: MENU_TOAST_TOP_OFFSET,
+        });
+      }
     } catch (e) {
       console.error('Bulk update failed', e);
       setErrorModal({ visible: true, message: '수량 일괄 대입에 실패했습니다. 다시 시도해 주세요.' });
