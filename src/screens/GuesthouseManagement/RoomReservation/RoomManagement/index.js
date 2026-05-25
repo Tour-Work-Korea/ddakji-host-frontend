@@ -77,6 +77,8 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
 
   const [selectedDate, setSelectedDate] = useState(getTodayLocalDate());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const todayStr = useMemo(() => getTodayLocalDate(), []);
+  const maxDateStr = useMemo(() => shiftDate(todayStr, 90), [todayStr]);
   const [guesthouses, setGuesthouses] = useState([]);
   const [isInventoryLoading, setIsInventoryLoading] = useState(true);
   const [inventoryErrorMessage, setInventoryErrorMessage] = useState('');
@@ -217,14 +219,23 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
           return isHorizontalSwipe && Math.abs(gestureState.dx) > 12;
         },
         onPanResponderRelease: (_, gestureState) => {
+          const today = getTodayLocalDate();
+          const maxDate = shiftDate(today, 90);
+
           if (gestureState.dx <= -SWIPE_THRESHOLD) {
-            setSelectedDate(prev => shiftDate(prev, 1));
+            setSelectedDate(prev => {
+              const next = shiftDate(prev, 1);
+              return next > maxDate ? prev : next;
+            });
             setIsCalendarOpen(false);
             return;
           }
 
           if (gestureState.dx >= SWIPE_THRESHOLD) {
-            setSelectedDate(prev => shiftDate(prev, -1));
+            setSelectedDate(prev => {
+              const prevDate = shiftDate(prev, -1);
+              return prevDate < today ? prev : prevDate;
+            });
             setIsCalendarOpen(false);
           }
         },
@@ -322,16 +333,6 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
 
   return (
     <View style={styles.container}>
-      {isCalendarOpen ? (
-        <TouchableOpacity
-          activeOpacity={1}
-          style={styles.searchFilterBackdrop}
-          onPress={() => {
-            setIsCalendarOpen(false);
-          }}
-        />
-      ) : null}
-
       <ScrollView
         style={styles.body}
         contentContainerStyle={styles.bodyContent}
@@ -340,13 +341,28 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
         {...panResponder.panHandlers}>
 
         <View style={styles.stickyHeaderContainer}>
+          {isCalendarOpen ? (
+            <TouchableOpacity
+              activeOpacity={1}
+              style={styles.searchFilterBackdrop}
+              onPress={() => {
+                setIsCalendarOpen(false);
+              }}
+            />
+          ) : null}
+
           <View style={styles.dateSelectContainer}>
             <View style={styles.dateSelectBox}>
               <TouchableOpacity
                 onPress={() => {
+                  if (selectedDate <= todayStr) {
+                    return;
+                  }
                   setSelectedDate(prev => shiftDate(prev, -1));
                   setIsCalendarOpen(false);
-                }}>
+                }}
+                disabled={selectedDate <= todayStr}
+                style={selectedDate <= todayStr ? styles.disabledOpacity : null}>
                 <ChevronLeft width={24} height={24} />
               </TouchableOpacity>
               <TouchableOpacity
@@ -359,9 +375,14 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => {
+                  if (selectedDate >= maxDateStr) {
+                    return;
+                  }
                   setSelectedDate(prev => shiftDate(prev, 1));
                   setIsCalendarOpen(false);
-                }}>
+                }}
+                disabled={selectedDate >= maxDateStr}
+                style={selectedDate >= maxDateStr ? styles.disabledOpacity : null}>
                 <ChevronRight width={24} height={24} />
               </TouchableOpacity>
             </View>
@@ -370,6 +391,8 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
               <View style={styles.calendarContainer}>
                 <Calendar
                   current={selectedDate}
+                  minDate={todayStr}
+                  maxDate={maxDateStr}
                   {...CALENDAR_COMMON_PROPS}
                   markedDates={markedDates}
                   onDayPress={day => {
