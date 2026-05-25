@@ -151,4 +151,104 @@ export default StyleSheet.create({
   primaryButtonText: {
     color: COLORS.grayscale_0,
   },
+
+  // 객실 순서 정렬용 스타일
+  reorderBanner: {
+    backgroundColor: '#F0F4FF',
+    borderColor: '#D4E2FF',
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  reorderBannerText: {
+    flex: 1,
+    color: COLORS.primary_blue,
+    lineHeight: 18,
+  },
+  reorderBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 100,
+    backgroundColor: COLORS.primary_blue,
+    alignSelf: 'flex-start',
+    marginBottom: 6,
+  },
+  reorderBadgeText: {
+    color: COLORS.grayscale_0,
+  },
+  reorderControlRow: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginLeft: 12,
+  },
+  reorderButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 4,
+    backgroundColor: COLORS.grayscale_100,
+    borderWidth: 1,
+    borderColor: COLORS.grayscale_200,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reorderButtonDisabled: {
+    opacity: 0.35,
+  },
+  reorderButtonText: {
+    color: COLORS.grayscale_700,
+  },
+  reorderCancelButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 100,
+    backgroundColor: COLORS.grayscale_100,
+    borderWidth: 1,
+    borderColor: COLORS.grayscale_200,
+  },
+  reorderCancelButtonText: {
+    color: COLORS.grayscale_700,
+  },
+  reorderSaveButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 100,
+    backgroundColor: COLORS.primary_blue,
+  },
+  reorderSaveButtonText: {
+    color: COLORS.grayscale_0,
+  },
+  reorderStartButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 100,
+    backgroundColor: COLORS.grayscale_100,
+    borderWidth: 1,
+    borderColor: COLORS.grayscale_200,
+  },
+  reorderStartButtonText: {
+    color: COLORS.grayscale_700,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 10,
+    backgroundColor: COLORS.grayscale_0,
+  },
+  headerTitle: {
+    color: COLORS.grayscale_800,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
 });

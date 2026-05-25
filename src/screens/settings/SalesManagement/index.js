@@ -247,12 +247,12 @@ const SalesManagement = () => {
                   <Text style={styles.mainCardAmount}>{(salesData.salesSummary?.currentNetSales || 0).toLocaleString()}</Text>
                   <Text style={styles.mainCardCurrency}>원</Text>
                 </View>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                {/* <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Text style={{ fontSize: 14, color: COLORS.grayscale_600, fontWeight: '500', marginRight: 4 }}>이전기간대비</Text>
                   <Text style={{ fontSize: 14, color: salesData.salesSummary?.deltaNetSales >= 0 ? COLORS.semantic_red : COLORS.semantic_blue, fontWeight: 'bold' }}>
                     {salesData.salesSummary?.deltaNetSales > 0 ? '+' : ''}{(salesData.salesSummary?.deltaNetSales || 0).toLocaleString()}
                   </Text>
-                </View>
+                </View> */}
               </View>
 
               <View style={{ gap: 14 }}>
@@ -517,7 +517,7 @@ const SalesManagement = () => {
                     <Text style={styles.cancelRateNumber}>
                       {salesData.cancellationAnalysis.cancellationRate}<Text style={styles.percentSmall}>%</Text>
                     </Text>
-                    <View style={styles.cancelChangeRow}>
+                    {/* <View style={styles.cancelChangeRow}>
                       <Text style={styles.cancelChangeLabel}>이전기간대비 </Text>
                       <Text style={[
                         styles.cancelChangeValue,
@@ -525,7 +525,7 @@ const SalesManagement = () => {
                       ]}>
                         {salesData.cancellationAnalysis.deltaPercentagePoint > 0 ? '+' : ''}{salesData.cancellationAnalysis.deltaPercentagePoint}%p
                       </Text>
-                    </View>
+                    </View> */}
                   </View>
 
                   {/* Cancel Ranking */}

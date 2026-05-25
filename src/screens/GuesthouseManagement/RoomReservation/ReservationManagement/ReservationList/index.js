@@ -3,6 +3,7 @@ import {useNavigation} from '@react-navigation/native';
 import {
   ActivityIndicator,
   FlatList,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -20,6 +21,8 @@ import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
 import {formatLocalDateToDotWithDay} from '@utils/formatDate';
 import InfoIcon from '@assets/images/info_circle_red.svg';
 import Toast from 'react-native-toast-message';
+
+const CENTER_TOAST_TOP_OFFSET = Platform.OS === 'ios' ? 220 : 190;
 
 const STATUS_STYLE = {
   대기: {
@@ -346,6 +349,7 @@ const ReservationList = ({
       text1: '예약이 반려되었어요.',
       position: 'top',
       visibilityTime: 2000,
+      topOffset: CENTER_TOAST_TOP_OFFSET,
     });
     await onActionComplete?.();
   };
@@ -373,6 +377,7 @@ const ReservationList = ({
         text1: '객실이 마감 처리되었어요.',
         position: 'top',
         visibilityTime: 2000,
+        topOffset: CENTER_TOAST_TOP_OFFSET,
       });
       await onActionComplete?.();
       onMoveRoomManagement?.({
@@ -386,6 +391,7 @@ const ReservationList = ({
         text1: '객실 마감 처리에 실패했어요.',
         position: 'top',
         visibilityTime: 2000,
+        topOffset: CENTER_TOAST_TOP_OFFSET,
       });
     }
   };
@@ -422,6 +428,7 @@ const ReservationList = ({
             text1: '예약이 반려되었어요.',
             position: 'top',
             visibilityTime: 2000,
+            topOffset: CENTER_TOAST_TOP_OFFSET,
           });
           await onActionComplete?.();
         }
@@ -432,6 +439,7 @@ const ReservationList = ({
           text1: '예약 반려를 실패했어요.',
           position: 'top',
           visibilityTime: 2000,
+          topOffset: CENTER_TOAST_TOP_OFFSET,
         });
       }
       return;
@@ -446,6 +454,7 @@ const ReservationList = ({
         text1: '예약이 확정되었어요.',
         position: 'top',
         visibilityTime: 2000,
+        topOffset: CENTER_TOAST_TOP_OFFSET,
       });
       await onActionComplete?.();
     } catch (error) {
@@ -455,6 +464,7 @@ const ReservationList = ({
         text1: '예약 확정을 실패했어요.',
         position: 'top',
         visibilityTime: 2000,
+        topOffset: CENTER_TOAST_TOP_OFFSET,
       });
     }
   };
