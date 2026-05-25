@@ -27,6 +27,7 @@ const normalizeRoom = (room = {}) => ({
   name: room?.roomName ?? room?.name ?? '이름 없음',
   isVisible: room?.isVisible != null ? Boolean(room?.isVisible) : true,
   isClosed: Boolean(room?.isClosed),
+  roomCapacity: Number(room?.roomCapacity ?? 0),
   displayBeds: Number(room?.roomCapacity ?? 0),
   availableBeds: Number(room?.roomCapacity ?? 0),
 });
@@ -46,6 +47,7 @@ const normalizeInventory = (inventory = {}, fallbackRoom = {}) => ({
   isClosed:
     inventory?.isClosed != null ? Boolean(inventory?.isClosed) : Boolean(fallbackRoom?.isClosed),
   reservedBeds: Number(inventory?.reservedBeds ?? 0),
+  roomCapacity: Number(fallbackRoom?.roomCapacity ?? 0),
   availableBeds: Number(inventory?.availableBeds ?? fallbackRoom?.roomCapacity ?? 0),
   sellableCapacity: Number(inventory?.sellableCapacity ?? fallbackRoom?.roomCapacity ?? 0),
   displayBeds: Number(inventory?.availableBeds ?? fallbackRoom?.roomCapacity ?? 0),
@@ -321,7 +323,7 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
       });
       Toast.show({
         type: 'success',
-        text1: '변경 내용이 저장되었어요.',
+        text1: `"${room?.name ?? room?.roomName ?? '객실'}" 잔여 베드 수가 ${nextBeds}개로 변경되었습니다.`,
         position: 'top',
         topOffset: CENTER_TOAST_TOP_OFFSET,
       });
@@ -490,17 +492,19 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
                       현재 예약 가능 베드 수
                     </Text>
                     <TouchableOpacity
-                      activeOpacity={0.8}
-                      style={styles.bedControlButton}
+                      activeOpacity={isExposed ? 0.8 : 1}
+                      style={[styles.bedControlButton, !isExposed && styles.disabledOpacity]}
+                      disabled={!isExposed}
                       onPress={() => handleChangeDormitoryBeds(room.roomId, -1)}>
                       <MinusIcon width={12} height={12} />
                     </TouchableOpacity>
-                    <Text style={[FONTS.fs_12_medium, styles.bedCountText]}>
+                    <Text style={[FONTS.fs_12_medium, styles.bedCountText, !isExposed && styles.disabledOpacity]}>
                       {room.displayBeds}
                     </Text>
                     <TouchableOpacity
-                      activeOpacity={canIncreaseBeds ? 0.8 : 1}
-                      style={[styles.bedControlButton, !canIncreaseBeds && styles.disabledOpacity]}
+                      activeOpacity={isExposed && canIncreaseBeds ? 0.8 : 1}
+                      style={[styles.bedControlButton, (!canIncreaseBeds || !isExposed) && styles.disabledOpacity]}
+                      disabled={!isExposed}
                       onPress={() => {
                         if (canIncreaseBeds) {
                           handleChangeDormitoryBeds(room.roomId, 1);
