@@ -34,7 +34,7 @@ const businessInfo = [
   { label: '주소', value: '제주시 연동 263-13 레지던스아트3' },
   { label: '사업자등록번호', value: '888-25-02003' },
   { label: '통신판매번호', value: '2025-서울양천-0825' },
-  { label: '연락처', value: '010-4123-0075' },
+  { label: '연락처', value: '010-4637-5989' },
 ];
 
 const PROMOTION_FORM_URL =

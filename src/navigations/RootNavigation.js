@@ -70,6 +70,7 @@ import {
   HostEditProfile,
   NoticeList,
   NoticeDetail,
+  DormitoryBulkBed,
 } from '@screens';
 
 const Stack = createNativeStackNavigator();
@@ -192,6 +193,7 @@ const RootNavigation = () => {
         <Stack.Screen name="MyGuesthouseReservationDetail" component={MyGuesthouseReservationDetail} />
         <Stack.Screen name="MyGuesthouseReservationCalendar" component={MyGuesthouseReservationCalendar} />
         <Stack.Screen name="RoomGuideMessageEditor" component={RoomGuideMessageEditor} />
+        <Stack.Screen name="DormitoryBulkBed" component={DormitoryBulkBed} />
         <Stack.Screen
           name="MyRoomManage"
           component={MyRoomManage}

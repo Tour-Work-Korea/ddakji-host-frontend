@@ -137,7 +137,7 @@ const Home = ({ reservationMethod = 'closed', pendingReservationPolicyRequest, g
   const [settlementData, setSettlementData] = useState(null);
   const [salesData, setSalesData] = useState(null);
   const [dashboardData, setDashboardData] = useState(null);
-  const [selectedTab, setSelectedTab] = useState('TODAY_CONFIRMED');
+  const [selectedTab, setSelectedTab] = useState('WAITING_APPROVAL');
   const [decisionModalVisible, setDecisionModalVisible] = useState(false);
   const [selectedReservation, setSelectedReservation] = useState(null);
   const [decisionSubmitting, setDecisionSubmitting] = useState(false);
@@ -212,9 +212,9 @@ const Home = ({ reservationMethod = 'closed', pendingReservationPolicyRequest, g
   );
 
   const summaryItems = [
+    { key: 'WAITING_APPROVAL', label: '확정 대기', value: String(dashboardData?.counts?.waitingApproval || 0) },
     { key: 'TODAY_STAYING', label: '오늘 이용', value: String(dashboardData?.counts?.todayStaying || 0) },
     { key: 'TODAY_CONFIRMED', label: '오늘 확정', value: String(dashboardData?.counts?.todayConfirmed || 0) },
-    { key: 'WAITING_APPROVAL', label: '확정 대기', value: String(dashboardData?.counts?.waitingApproval || 0) },
     { key: 'TODAY_CANCELLED', label: '오늘 취소', value: String(dashboardData?.counts?.todayCancelled || 0) },
   ];
 
@@ -565,12 +565,12 @@ const Home = ({ reservationMethod = 'closed', pendingReservationPolicyRequest, g
               <Text style={styles.salesCardAmount}>{Number(salesData?.salesSummary?.currentNetSales || 0).toLocaleString()}</Text>
               <Text style={styles.salesCardCurrency}>원</Text>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            {/* <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Text style={{ fontSize: 14, color: COLORS.grayscale_600, fontWeight: '500', marginRight: 4 }}>이전기간대비</Text>
               <Text style={{ fontSize: 14, color: (salesData?.salesSummary?.deltaNetSales >= 0) ? COLORS.semantic_red : COLORS.semantic_blue, fontWeight: 'bold' }}>
                 {(salesData?.salesSummary?.deltaNetSales > 0) ? '+' : ''}{(salesData?.salesSummary?.deltaNetSales || 0).toLocaleString()}
               </Text>
-            </View>
+            </View> */}
           </View>
 
           <View style={{ gap: 14 }}>

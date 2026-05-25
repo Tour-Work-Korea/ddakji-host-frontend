@@ -1,6 +1,6 @@
-import React, {useState} from 'react';
-import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 
 import Avatar from '@components/Avatar';
@@ -10,11 +10,11 @@ import useUserStore from '@stores/userStore';
 
 import authApi from '@utils/api/authApi';
 import hostMyApi from '@utils/api/hostMyApi';
-import {tryLogout} from '@utils/auth/login';
-import {uploadSingleImage} from '@utils/imageUploadHandler';
-import {APP_VERSION} from '@constants/appVersion';
-import {COLORS} from '@constants/colors';
-import {FONTS} from '@constants/fonts';
+import { tryLogout } from '@utils/auth/login';
+import { uploadSingleImage } from '@utils/imageUploadHandler';
+import { APP_VERSION } from '@constants/appVersion';
+import { COLORS } from '@constants/colors';
+import { FONTS } from '@constants/fonts';
 import RightArrow from '@assets/images/chevron_right_gray.svg';
 
 const Settings = () => {
@@ -36,7 +36,7 @@ const Settings = () => {
     await tryLogout();
     navigation.reset({
       index: 0,
-      routes: [{name: 'Login'}],
+      routes: [{ name: 'Login' }],
     });
   };
 
@@ -53,7 +53,7 @@ const Settings = () => {
     } finally {
       navigation.reset({
         index: 0,
-        routes: [{name: 'Login'}],
+        routes: [{ name: 'Login' }],
       });
       setIsWithdrawing(false);
     }
@@ -70,7 +70,7 @@ const Settings = () => {
         return;
       }
 
-      await hostMyApi.updatePhoto({photoUrl: uploadedUrl});
+      await hostMyApi.updatePhoto({ photoUrl: uploadedUrl });
       setHostProfile({
         ...hostProfile,
         photoUrl: uploadedUrl,
@@ -176,18 +176,18 @@ const Settings = () => {
           <TouchableOpacity
             style={styles.menuRow}
             onPress={() => setModalVisible(true)}>
-            <Text style={[styles.logoutText, {textDecorationLine:'none'}]}>회원 탈퇴</Text>
+            <Text style={[styles.logoutText, { textDecorationLine: 'none' }]}>회원 탈퇴</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.detailContainer}>
           <Text style={styles.detailText}>상호명 : 워커웨이</Text>
           <Text style={styles.detailText}>사업자등록번호: 888-25-02003</Text>
-          <Text style={styles.detailText}>연락처: 010-4123-0075</Text>
+          <Text style={styles.detailText}>연락처: 010-4637-5989</Text>
           <Text style={styles.detailText}>
             통신판매번호: 2025-서울양천-0825
           </Text>
-          <Text style={styles.detailText}>주소: 서울특별시 중앙로 36길 15</Text>
+          <Text style={styles.detailText}>주소: 제주시 연동 263-13 레지던스이타스3</Text>
           <Text style={styles.detailText}>대표자 : 이하늘, 정재원</Text>
         </View>
       </View>
@@ -204,7 +204,7 @@ const Settings = () => {
 };
 
 const styles = StyleSheet.create({
-  background: {flex: 1, backgroundColor: COLORS.grayscale_100},
+  background: { flex: 1, backgroundColor: COLORS.grayscale_100 },
   container: {
     paddingHorizontal: 20,
     paddingVertical: 8,
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
     ...FONTS.fs_18_semibold,
     marginBottom: 8,
   },
-  menuContainer: {backgroundColor: COLORS.grayscale_0, borderRadius: 8},
+  menuContainer: { backgroundColor: COLORS.grayscale_0, borderRadius: 8 },
   menuRow: {
     padding: 16,
     flexDirection: 'row',

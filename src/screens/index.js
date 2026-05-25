@@ -62,6 +62,7 @@ export { default as MyGuesthouseReservation } from './GuesthouseManagement/RoomR
 export { default as MyGuesthouseReservationDetail } from './guesthouse/MyGuesthouseReservationDetail';
 export { default as MyGuesthouseReservationCalendar } from './GuesthouseManagement/RoomReservation/ReservationCalendar';
 export { default as RoomGuideMessageEditor } from './GuesthouseManagement/RoomReservation/NotificationSettings/RoomGuideMessageEditor';
+export { default as DormitoryBulkBed } from './GuesthouseManagement/RoomReservation/DormitoryBulkBed';
 
 export { default as ApplicantList } from './recruitment/ApplicantList';
 export { default as ApplicantListByRecruit } from './recruitment/ApplicantListByRecruit';

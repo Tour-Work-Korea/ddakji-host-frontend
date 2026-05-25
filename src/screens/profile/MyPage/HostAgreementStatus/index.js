@@ -6,7 +6,10 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Platform,
+  Alert,
 } from 'react-native';
+import ReactNativeBlobUtil from 'react-native-blob-util';
 import { useFocusEffect } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 import { Buffer } from 'buffer';
@@ -146,7 +149,7 @@ const HostAgreementStatus = () => {
         response?.headers?.['content-type'] || 'application/octet-stream';
       const disposition = response?.headers?.['content-disposition'] || '';
       const matchedFilename = disposition.match(/filename="?([^"]+)"?/i);
-      const filename = matchedFilename?.[1] || `${documentTitle}`;
+      const filename = matchedFilename?.[1] || `${documentTitle}.pdf`;
       const binaryData = response?.data;
 
       if (!binaryData) {
@@ -154,12 +157,49 @@ const HostAgreementStatus = () => {
       }
 
       const base64Data = Buffer.from(binaryData).toString('base64');
-      const dataUrl = `data:${contentType};base64,${base64Data}`;
+      const { dirs } = ReactNativeBlobUtil.fs;
+      const tempFilePath = `${dirs.CacheDir}/${filename}`;
 
-      await Share.share({
-        title: filename,
-        url: dataUrl,
-      });
+      // 임시 폴더에 파일 생성
+      await ReactNativeBlobUtil.fs.writeFile(tempFilePath, base64Data, 'base64');
+
+      if (Platform.OS === 'ios') {
+        // iOS: 내장 문서 뷰어(QLPreviewController) 호출
+        ReactNativeBlobUtil.ios.previewDocument(tempFilePath);
+      } else {
+        // Android: MediaStore를 사용하여 공용 Download 폴더로 복사 및 바로 열기 제공
+        try {
+          await ReactNativeBlobUtil.MediaCollection.copyToMediaStore(
+            {
+              name: filename,
+              parentFolder: '',
+              mimeType: contentType,
+            },
+            'Download',
+            tempFilePath
+          );
+          Alert.alert(
+            '다운로드 완료',
+            '다운로드 폴더에 파일이 저장되었습니다.\n파일을 바로 여시겠습니까?',
+            [
+              { text: '닫기', style: 'cancel' },
+              {
+                text: '열기',
+                onPress: () => {
+                  ReactNativeBlobUtil.android.actionViewIntent(tempFilePath, contentType).catch(() => {
+                    Alert.alert('알림', '문서 파일을 열 수 있는 앱이 설치되어 있지 않습니다.');
+                  });
+                }
+              }
+            ]
+          );
+        } catch (e) {
+          console.warn('MediaStore copy error:', e);
+          ReactNativeBlobUtil.android.actionViewIntent(tempFilePath, contentType).catch(() => {
+            Alert.alert('다운로드 완료', '파일이 저장되었으나, 문서 뷰어 앱이 필요할 수 있습니다.');
+          });
+        }
+      }
     } catch (error) {
       console.warn('문서 다운로드 실패:', error);
       Toast.show({

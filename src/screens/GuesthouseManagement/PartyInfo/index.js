@@ -101,46 +101,52 @@ const PartyInfo = ({ guesthouseId }) => {
   }
 
   const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      <Image
-        source={{ uri: item.partyImageUrl }}
-        style={styles.thumbnail}
-        resizeMode="cover"
-      />
-      <View style={styles.cardContent}>
-        <View style={styles.cardTop}>
-          <Text
-            style={[FONTS.fs_16_semibold, styles.partyTitle]}
-            numberOfLines={2}>
-            {item.partyTitle}
-          </Text>
-          <View style={styles.attendanceRow}>
-            <PeopleIcon width={14} height={14} />
-            <Text style={[FONTS.fs_12_medium, styles.attendanceText]}>
-              최대인원 {item.maxAttendance}명
+    <View style={styles.cardContainer}>
+      <View style={styles.card}>
+        <Image
+          source={{ uri: item.partyImageUrl }}
+          style={styles.thumbnail}
+          resizeMode="cover"
+        />
+        <View style={styles.cardContent}>
+          <View style={styles.cardTop}>
+            <Text
+              style={[FONTS.fs_16_semibold, styles.partyTitle]}
+              numberOfLines={2}>
+              {item.partyTitle}
             </Text>
+            <View style={styles.attendanceRow}>
+              <PeopleIcon width={14} height={14} />
+              <Text style={[FONTS.fs_12_medium, styles.attendanceText]}>
+                최대인원 {item.maxAttendance}명
+              </Text>
+            </View>
           </View>
         </View>
-        <View style={styles.cardBottom}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            activeOpacity={0.8}
-            onPress={() => handleEdit(item.templateId)}>
-            <Text style={[FONTS.fs_14_medium, styles.actionButtonText]}>
-              수정하기
-            </Text>
-            <PencilIcon width={20} height={20} style={styles.actionIcon} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.actionButton}
-            activeOpacity={0.8}
-            onPress={() => handleDelete(item.templateId)}>
-            <Text style={[FONTS.fs_14_medium, styles.actionButtonText]}>
-              삭제하기
-            </Text>
-            <TrashIcon width={20} height={20} style={styles.actionIcon} />
-          </TouchableOpacity>
-        </View>
+      </View>
+
+      <View style={styles.actionButtonRow}>
+        <TouchableOpacity
+          style={styles.actionButton}
+          activeOpacity={0.8}
+          onPress={() => handleEdit(item.templateId)}>
+          <Text style={[FONTS.fs_14_medium, styles.actionButtonText]}>
+            수정하기
+          </Text>
+          <PencilIcon width={20} height={20} />
+        </TouchableOpacity>
+
+        <View style={styles.actionButtonSpacer} />
+
+        <TouchableOpacity
+          style={styles.actionButton}
+          activeOpacity={0.8}
+          onPress={() => handleDelete(item.templateId)}>
+          <Text style={[FONTS.fs_14_medium, styles.actionButtonText]}>
+            삭제하기
+          </Text>
+          <TrashIcon width={20} height={20} />
+        </TouchableOpacity>
       </View>
     </View>
   );
