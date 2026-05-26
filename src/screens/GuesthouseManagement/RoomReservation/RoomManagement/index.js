@@ -27,6 +27,7 @@ const normalizeRoom = (room = {}) => ({
   name: room?.roomName ?? room?.name ?? '이름 없음',
   isVisible: room?.isVisible != null ? Boolean(room?.isVisible) : true,
   isClosed: Boolean(room?.isClosed),
+  roomCapacity: Number(room?.roomCapacity ?? 0),
   displayBeds: Number(room?.roomCapacity ?? 0),
   availableBeds: Number(room?.roomCapacity ?? 0),
 });
@@ -46,6 +47,7 @@ const normalizeInventory = (inventory = {}, fallbackRoom = {}) => ({
   isClosed:
     inventory?.isClosed != null ? Boolean(inventory?.isClosed) : Boolean(fallbackRoom?.isClosed),
   reservedBeds: Number(inventory?.reservedBeds ?? 0),
+  roomCapacity: Number(fallbackRoom?.roomCapacity ?? 0),
   availableBeds: Number(inventory?.availableBeds ?? fallbackRoom?.roomCapacity ?? 0),
   sellableCapacity: Number(inventory?.sellableCapacity ?? fallbackRoom?.roomCapacity ?? 0),
   displayBeds: Number(inventory?.availableBeds ?? fallbackRoom?.roomCapacity ?? 0),
@@ -77,6 +79,8 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
 
   const [selectedDate, setSelectedDate] = useState(getTodayLocalDate());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const todayStr = useMemo(() => getTodayLocalDate(), []);
+  const maxDateStr = useMemo(() => shiftDate(todayStr, 90), [todayStr]);
   const [guesthouses, setGuesthouses] = useState([]);
   const [isInventoryLoading, setIsInventoryLoading] = useState(true);
   const [inventoryErrorMessage, setInventoryErrorMessage] = useState('');
@@ -217,14 +221,23 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
           return isHorizontalSwipe && Math.abs(gestureState.dx) > 12;
         },
         onPanResponderRelease: (_, gestureState) => {
+          const today = getTodayLocalDate();
+          const maxDate = shiftDate(today, 90);
+
           if (gestureState.dx <= -SWIPE_THRESHOLD) {
-            setSelectedDate(prev => shiftDate(prev, 1));
+            setSelectedDate(prev => {
+              const next = shiftDate(prev, 1);
+              return next > maxDate ? prev : next;
+            });
             setIsCalendarOpen(false);
             return;
           }
 
           if (gestureState.dx >= SWIPE_THRESHOLD) {
-            setSelectedDate(prev => shiftDate(prev, -1));
+            setSelectedDate(prev => {
+              const prevDate = shiftDate(prev, -1);
+              return prevDate < today ? prev : prevDate;
+            });
             setIsCalendarOpen(false);
           }
         },
@@ -310,7 +323,7 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
       });
       Toast.show({
         type: 'success',
-        text1: '변경 내용이 저장되었어요.',
+        text1: `"${room?.name ?? room?.roomName ?? '객실'}" 잔여 베드 수가 ${nextBeds}개로 변경되었습니다.`,
         position: 'top',
         topOffset: CENTER_TOAST_TOP_OFFSET,
       });
@@ -322,16 +335,6 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
 
   return (
     <View style={styles.container}>
-      {isCalendarOpen ? (
-        <TouchableOpacity
-          activeOpacity={1}
-          style={styles.searchFilterBackdrop}
-          onPress={() => {
-            setIsCalendarOpen(false);
-          }}
-        />
-      ) : null}
-
       <ScrollView
         style={styles.body}
         contentContainerStyle={styles.bodyContent}
@@ -340,13 +343,28 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
         {...panResponder.panHandlers}>
 
         <View style={styles.stickyHeaderContainer}>
+          {isCalendarOpen ? (
+            <TouchableOpacity
+              activeOpacity={1}
+              style={styles.searchFilterBackdrop}
+              onPress={() => {
+                setIsCalendarOpen(false);
+              }}
+            />
+          ) : null}
+
           <View style={styles.dateSelectContainer}>
             <View style={styles.dateSelectBox}>
               <TouchableOpacity
                 onPress={() => {
+                  if (selectedDate <= todayStr) {
+                    return;
+                  }
                   setSelectedDate(prev => shiftDate(prev, -1));
                   setIsCalendarOpen(false);
-                }}>
+                }}
+                disabled={selectedDate <= todayStr}
+                style={selectedDate <= todayStr ? styles.disabledOpacity : null}>
                 <ChevronLeft width={24} height={24} />
               </TouchableOpacity>
               <TouchableOpacity
@@ -359,9 +377,14 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => {
+                  if (selectedDate >= maxDateStr) {
+                    return;
+                  }
                   setSelectedDate(prev => shiftDate(prev, 1));
                   setIsCalendarOpen(false);
-                }}>
+                }}
+                disabled={selectedDate >= maxDateStr}
+                style={selectedDate >= maxDateStr ? styles.disabledOpacity : null}>
                 <ChevronRight width={24} height={24} />
               </TouchableOpacity>
             </View>
@@ -370,6 +393,8 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
               <View style={styles.calendarContainer}>
                 <Calendar
                   current={selectedDate}
+                  minDate={todayStr}
+                  maxDate={maxDateStr}
                   {...CALENDAR_COMMON_PROPS}
                   markedDates={markedDates}
                   onDayPress={day => {
@@ -467,17 +492,19 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
                       현재 예약 가능 베드 수
                     </Text>
                     <TouchableOpacity
-                      activeOpacity={0.8}
-                      style={styles.bedControlButton}
+                      activeOpacity={isExposed ? 0.8 : 1}
+                      style={[styles.bedControlButton, !isExposed && styles.disabledOpacity]}
+                      disabled={!isExposed}
                       onPress={() => handleChangeDormitoryBeds(room.roomId, -1)}>
                       <MinusIcon width={12} height={12} />
                     </TouchableOpacity>
-                    <Text style={[FONTS.fs_12_medium, styles.bedCountText]}>
+                    <Text style={[FONTS.fs_12_medium, styles.bedCountText, !isExposed && styles.disabledOpacity]}>
                       {room.displayBeds}
                     </Text>
                     <TouchableOpacity
-                      activeOpacity={canIncreaseBeds ? 0.8 : 1}
-                      style={[styles.bedControlButton, !canIncreaseBeds && styles.disabledOpacity]}
+                      activeOpacity={isExposed && canIncreaseBeds ? 0.8 : 1}
+                      style={[styles.bedControlButton, (!canIncreaseBeds || !isExposed) && styles.disabledOpacity]}
+                      disabled={!isExposed}
                       onPress={() => {
                         if (canIncreaseBeds) {
                           handleChangeDormitoryBeds(room.roomId, 1);
