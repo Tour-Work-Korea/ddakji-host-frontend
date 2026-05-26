@@ -36,7 +36,7 @@ const normalizePolicies = (policies = []) =>
         item?.refundRate !== null &&
         item?.refundRate !== undefined &&
         Number(item?.refundRate) >= 0 &&
-        Number(item?.refundRate) < 100,
+        Number(item?.refundRate) <= 100,
     )
     .map(item => ({
       daysBeforeCheckin: Number(item.daysBeforeCheckin),

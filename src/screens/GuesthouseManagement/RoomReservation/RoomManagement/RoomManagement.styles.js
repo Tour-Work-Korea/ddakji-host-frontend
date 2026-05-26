@@ -19,10 +19,10 @@ export default StyleSheet.create({
   },
   searchFilterBackdrop: {
     position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
+    top: -200,
+    right: -100,
+    bottom: -1500,
+    left: -100,
     zIndex: 9,
   },
   stickyHeaderContainer: {

@@ -335,14 +335,16 @@ const SalesManagement = () => {
                             <Text style={styles.metricCardSub}>{unitText}</Text>
                           </View>
                           <View style={styles.metricDiffRow}>
-                            <Text style={styles.metricDiffCount}>
+                            <Text style={
+                              mApplied.diffCount >= 0 ? styles.metricDiffPercentP : styles.metricDiffPercentM
+                            }>
                               {mApplied.diffCount > 0 ? '+' : ''}{mApplied.diffCount}
                             </Text>
-                            <Text style={
+                            {/* <Text style={
                               mApplied.diffPercent >= 0 ? styles.metricDiffPercentP : styles.metricDiffPercentM
                             }>
                               {mApplied.diffPercent > 0 ? '+' : ''}{mApplied.diffPercent}%
-                            </Text>
+                            </Text> */}
                           </View>
                         </View>
 
@@ -358,14 +360,16 @@ const SalesManagement = () => {
                             <Text style={styles.metricCardSub}>{unitText}</Text>
                           </View>
                           <View style={styles.metricDiffRow}>
-                            <Text style={styles.metricDiffCount}>
+                            <Text style={
+                              mCompleted.diffCount >= 0 ? styles.metricDiffPercentP : styles.metricDiffPercentM
+                            }>
                               {mCompleted.diffCount > 0 ? '+' : ''}{mCompleted.diffCount}
                             </Text>
-                            <Text style={
+                            {/* <Text style={
                               mCompleted.diffPercent >= 0 ? styles.metricDiffPercentP : styles.metricDiffPercentM
                             }>
                               {mCompleted.diffPercent > 0 ? '+' : ''}{mCompleted.diffPercent}%
-                            </Text>
+                            </Text> */}
                           </View>
                         </View>
 
@@ -381,14 +385,16 @@ const SalesManagement = () => {
                             <Text style={styles.metricCardSub}>{unitText}</Text>
                           </View>
                           <View style={styles.metricDiffRow}>
-                            <Text style={styles.metricDiffCount}>
+                            <Text style={
+                              mCanceled.diffCount >= 0 ? styles.metricDiffPercentP : styles.metricDiffPercentM
+                            }>
                               {mCanceled.diffCount > 0 ? '+' : ''}{mCanceled.diffCount}
                             </Text>
-                            <Text style={
+                            {/* <Text style={
                               mCanceled.diffPercent >= 0 ? styles.metricDiffPercentP : styles.metricDiffPercentM
                             }>
                               {mCanceled.diffPercent > 0 ? '+' : ''}{mCanceled.diffPercent}%
-                            </Text>
+                            </Text> */}
                           </View>
                         </View>
 
@@ -404,14 +410,16 @@ const SalesManagement = () => {
                             <Text style={styles.metricCardSub}>{unitText}</Text>
                           </View>
                           <View style={styles.metricDiffRow}>
-                            <Text style={styles.metricDiffCount}>
+                            <Text style={
+                              mConfirmed.diffCount >= 0 ? styles.metricDiffPercentP : styles.metricDiffPercentM
+                            }>
                               {mConfirmed.diffCount > 0 ? '+' : ''}{mConfirmed.diffCount}
                             </Text>
-                            <Text style={
+                            {/* <Text style={
                               mConfirmed.diffPercent >= 0 ? styles.metricDiffPercentP : styles.metricDiffPercentM
                             }>
                               {mConfirmed.diffPercent > 0 ? '+' : ''}{mConfirmed.diffPercent}%
-                            </Text>
+                            </Text> */}
                           </View>
                         </View>
                       </>
