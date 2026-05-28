@@ -36,6 +36,7 @@ export const computeValidSections = data => {
     workDuration,
     workPart, // ['예약 관리', ...]
     welfare, // ['식사 제공', ...]
+    location,
     recruitImage, // [{recruitImageUrl, isThumbnail}]
     recruitDetail,
     guesthouseId,
@@ -92,7 +93,7 @@ export const computeValidSections = data => {
     hasItems(welfare);
 
   // "근무지 정보" (썸네일 필수면 some(img => img?.isThumbnail) 추가)
-  const workInfoValid = hasItems(recruitImage); //isNonEmpty(location) &&
+  const workInfoValid = isNonEmpty(location) && hasItems(recruitImage);
 
   // "상세 정보"
   const detailInfo = isNonEmpty(recruitDetail);

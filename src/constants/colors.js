@@ -1,14 +1,15 @@
 export const COLORS = {
     primary_orange: '#FE4401',
-    primary_blue: '#4351EC',
+    primary_blue: '#5361DB',
 
+    secondary_orange: '#FCF3F2',
     secondary_blue: '#E3EBFF',
     Secondary_khaki: '#87986C',
     secondary_red: '#FEE9E8',
     secondary_yellow: '#FDF6E7',
     secondary_green: '#DBFFED',
     secondary_pink: '#FAE5EE',
-    secondary_brown: '#F6F0EA',
+    secondary_brown: '#F6EFE9',
 
     neutral_black: '#121212',
     neutral_gray: '#FAFAFC',
@@ -19,7 +20,7 @@ export const COLORS = {
     semantic_yellow: '#FFAB00',
     semantic_red: '#FF3030',
     semantic_purple: '#6554C0',
-    semantic_pink: '#FB1F7E',
+    semantic_pink: '#FF7EB6',
     semantic_brown: '#8B572A',
 
     grayscale_900: '#000000',
@@ -34,6 +35,6 @@ export const COLORS = {
     grayscale_0: '#FFFFFF',
 
     // 모달창 뒷 배경
-    modal_background: 'rgba(0,0,0,0.1)',
+    modal_background: 'rgba(0,0,0,0.4)',
 
 };

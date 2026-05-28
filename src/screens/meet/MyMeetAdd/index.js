@@ -3,11 +3,11 @@ import {
   View,
   Text,
   TouchableOpacity,
-  ScrollView,
   ActivityIndicator,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import dayjs from 'dayjs';
 
 import styles from './MyMeetAdd.styles';
 import Header from '@components/Header';
@@ -487,6 +487,41 @@ const MyMeetAdd = () => {
     return pruned;
   };
 
+  const buildPreviewData = () => ({
+    guesthouseName: '게스트하우스',
+    partyTitle: party.partyTitle,
+    partyTags: party.tags,
+    description: party.description ?? '',
+    partyImages: (party.partyImages || []).map(img => ({
+      imageUrl: img.imageUrl,
+      isThumbnail: !!img.isThumbnail,
+    })),
+    events: (party.partyEvents || []).map(event => ({
+      eventName: event?.eventName ?? '',
+      eventDescription: event?.eventDescription ?? '',
+      partyEventImageUrls: Array.isArray(event?.partyEventImageUrls)
+        ? event.partyEventImageUrls
+        : [],
+    })),
+    partySchedule: party.detailSchedule,
+    snackTags: party.snackTagList,
+    snackInfo: party.snacks || party.extraInfo,
+    rules: party.rules,
+    partyStartDateTime: dayjs().format('YYYY-MM-DD'),
+    partyStartTime: party.partyStartTime,
+    partyEndTime: party.partyEndTime,
+    meetingPlace: party.meetingPlace,
+    trafficInfo: party.trafficInfo,
+    parkingTag: party.parkingTag,
+    parkingPlace: party.parkingInfo,
+  });
+
+  const handlePreview = () => {
+    navigation.navigate('MyMeetPreview', {
+      previewData: buildPreviewData(),
+    });
+  };
+
   const handleSubmit = async () => {
     if (!isSubmitReady) {
       Toast.show({
@@ -634,6 +669,14 @@ const MyMeetAdd = () => {
         {/* <TouchableOpacity style={styles.saveButton}>
           <Text style={[FONTS.fs_14_medium, styles.saveText]}>임시저장</Text>
         </TouchableOpacity> */}
+        <TouchableOpacity
+          style={styles.previewButton}
+          activeOpacity={0.8}
+          onPress={handlePreview}>
+          <Text style={[FONTS.fs_14_medium, styles.previewButtonText]}>
+            미리보기
+          </Text>
+        </TouchableOpacity>
         <TouchableOpacity
           style={[styles.submitButton, !isSubmitReady && styles.submitButtonDisabled]}
           disabled={!isSubmitReady}

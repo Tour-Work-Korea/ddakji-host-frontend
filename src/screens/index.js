@@ -73,6 +73,7 @@ export { default as ResumeDetail } from './recruitment/ResumeDetail';
 
 export { default as MyMeetList } from './meet/MyMeetList';
 export { default as MyMeetDetail } from './meet/MyMeetDetail';
+export { default as MyMeetPreview } from './meet/MyMeetPreview';
 export { default as MyMeetAdd } from './meet/MyMeetAdd';
 export { default as ReservationCancelList } from './meet/ReservationCancelList';
 export { default as PastReservationList } from './meet/PastReservationList';
