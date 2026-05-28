@@ -6,7 +6,9 @@ import {View, Text, TouchableOpacity, Image, StyleSheet} from 'react-native';
 const ApplicantItem = ({
   item,
   onPress,
+  handleEditPosting = null,
   handleDeletePosting = null,
+  isEditable = false,
   isRemovable = false,
 }) => {
   return (
@@ -37,13 +39,28 @@ const ApplicantItem = ({
 
         <View style={[styles.titleRow, styles.fullWidth, {marginTop: 10}]}>
           <Text style={styles.detailText}>마감일: {item.deadline}</Text>
-          {isRemovable ? (
+          {isEditable || isRemovable ? (
             <View style={styles.iconsContainer}>
-              <TouchableOpacity
-                onPress={() => handleDeletePosting(item.recruitId)}
-                hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
-                <Text style={styles.deleteButton}>마감요청</Text>
-              </TouchableOpacity>
+              {isEditable ? (
+                <TouchableOpacity
+                  onPress={event => {
+                    event.stopPropagation();
+                    handleEditPosting?.(item.recruitId);
+                  }}
+                  hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+                  <Text style={styles.editButton}>수정</Text>
+                </TouchableOpacity>
+              ) : null}
+              {isRemovable ? (
+                <TouchableOpacity
+                  onPress={event => {
+                    event.stopPropagation();
+                    handleDeletePosting?.(item.recruitId);
+                  }}
+                  hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+                  <Text style={styles.deleteButton}>마감요청</Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
           ) : (
             <View style={{width: 1}} />
@@ -106,6 +123,14 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     ...FONTS.fs_14_medium,
     color: COLORS.grayscale_800,
+  },
+  editButton: {
+    backgroundColor: COLORS.primary_blue,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 100,
+    ...FONTS.fs_14_medium,
+    color: COLORS.grayscale_0,
   },
   addButton: {
     alignItems: 'center',

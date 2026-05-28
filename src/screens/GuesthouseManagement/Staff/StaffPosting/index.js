@@ -61,6 +61,15 @@ const StaffPosting = ({guesthouseId}) => {
     });
   };
 
+  const handleEditPosting = id => {
+    navigation.navigate('RecruitmentForm', {
+      recruitId: id,
+      guesthouseId,
+      returnToStaffTab: true,
+      mode: 'edit',
+    });
+  };
+
   const fetchDeleteRecruit = async id => {
     try {
       await hostEmployApi.requestDeleteRecruit(id, '마감요청');
@@ -149,7 +158,9 @@ const StaffPosting = ({guesthouseId}) => {
             <ApplicantItem
               item={item}
               onPress={handleViewDetail}
+              isEditable={true}
               isRemovable={true}
+              handleEditPosting={handleEditPosting}
               handleDeletePosting={() => handleDeletePosting(item.recruitId)}
             />
           )}

@@ -163,7 +163,10 @@ const StoreRegisterList = () => {
           iconSize={18}
           style={styles.avatar}
         />
-        <Text style={[FONTS.fs_18_medium, styles.businessName]} numberOfLines={1}>
+        <Text
+          style={[FONTS.fs_18_medium, styles.businessName]}
+          numberOfLines={1}
+          ellipsizeMode="tail">
           {item.guesthouseName || '게스트하우스'}
         </Text>
       </View>

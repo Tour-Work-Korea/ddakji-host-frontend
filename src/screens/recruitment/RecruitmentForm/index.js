@@ -41,8 +41,11 @@ const sections = [
 
 const RecruitmentForm = ({route}) => {
   const fixedGuesthouseId = Number(route.params?.guesthouseId);
-  const hasFixedGuesthouse = Number.isInteger(fixedGuesthouseId) && fixedGuesthouseId > 0;
+  const hasFixedGuesthouse =
+    Number.isInteger(fixedGuesthouseId) && fixedGuesthouseId > 0;
   const returnToStaffTab = route.params?.returnToStaffTab === true;
+  const recruitId = route.params?.recruitId ?? null;
+  const isEditMode = route.params?.mode === 'edit';
   const [formData, setFormData] = useState({
     recruitTitle: '',
     recruitShortDescription: '',
@@ -60,12 +63,12 @@ const RecruitmentForm = ({route}) => {
     workDuration: '',
     workPart: [],
     welfare: [],
+    location: '',
     recruitDetail: '',
     recruitImage: [],
     hashtags: [],
     guesthouseId: hasFixedGuesthouse ? fixedGuesthouseId : 0,
   });
-  const recruitId = route.params?.recruitId ?? null;
   const navigation = useNavigation();
   const visibleSections = useMemo(
     () =>
@@ -160,9 +163,12 @@ const RecruitmentForm = ({route}) => {
         workType: r.workType ?? '',
         workDuration: r.workDuration ?? '',
 
-        recruitImage: r.recruitImages ?? [],
+        location: r.location ?? r.address ?? '',
+        recruitImage: r.recruitImages ?? r.recruitImage ?? [],
         recruitDetail: r.recruitDetail ?? '',
-        hashtags: (r.hashtags ?? []).map(t => t.id),
+        hashtags: (r.hashtags ?? [])
+          .map(t => t.id ?? t.hashtagId)
+          .filter(Boolean),
         guesthouseId: hasFixedGuesthouse
           ? fixedGuesthouseId
           : r.guesthouseId ?? 0,
@@ -180,17 +186,47 @@ const RecruitmentForm = ({route}) => {
       [field]: value,
     }));
   };
-  const handleSubmit = () => {
+  const buildPayload = includeGuesthouseId => {
     const payload = {
-      ...formData,
+      recruitTitle: formData.recruitTitle,
+      recruitShortDescription: formData.recruitShortDescription,
       recruitStart: formData.recruitStart.toISOString(),
       recruitEnd: formData.recruitEnd.toISOString(),
+      recruitNumberNoGender: Number(formData.recruitNumberNoGender),
+      recruitNumberMale: Number(formData.recruitNumberMale),
+      recruitNumberFemale: Number(formData.recruitNumberFemale),
+      location: formData.location,
       entryStartDate: formData.entryStartDate.toISOString(),
       entryEndDate: formData.entryEndDate.toISOString(),
       recruitCondition: formData.recruitCondition.map(c => c.title).join(', '),
+      recruitMinAge: Number(formData.recruitMinAge),
+      recruitMaxAge: Number(formData.recruitMaxAge),
+      workType: formData.workType,
+      workDuration: formData.workDuration,
       workPart: formData.workPart.join(', '),
       welfare: formData.welfare.join(', '),
+      recruitDetail: formData.recruitDetail,
+      recruitImage: formData.recruitImage.map(image => ({
+        recruitImageUrl: image.recruitImageUrl,
+        isThumbnail: Boolean(image.isThumbnail),
+      })),
+      hashtags: formData.hashtags,
     };
+
+    if (includeGuesthouseId) {
+      payload.guesthouseId = formData.guesthouseId;
+    }
+
+    return payload;
+  };
+
+  const handleSubmit = () => {
+    const payload = buildPayload(!isEditMode);
+
+    if (isEditMode) {
+      fetchUpdateRecruit(payload);
+      return;
+    }
 
     fetchNewRecruit(payload);
   };
@@ -239,6 +275,43 @@ const RecruitmentForm = ({route}) => {
     }
   };
 
+  const fetchUpdateRecruit = async payload => {
+    try {
+      await hostEmployApi.updateRecruit(recruitId, payload);
+      setErrorModal({
+        visible: true,
+        title: '공고 수정이 완료되었습니다',
+        buttonText: '확인',
+      });
+
+      if (returnToStaffTab) {
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [
+              {
+                name: 'GuesthouseManagement',
+                params: {
+                  guesthouseId: fixedGuesthouseId,
+                  initialTab: '스탭',
+                },
+              },
+            ],
+          }),
+        );
+        return;
+      }
+
+      navigation.goBack();
+    } catch (error) {
+      const serverMessage =
+        error.response?.data?.message ||
+        error.message ||
+        '알 수 없는 오류가 발생했습니다.';
+      setErrorModal({visible: true, title: serverMessage, buttonText: '확인'});
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.keyboardAvoidingView}
@@ -247,7 +320,7 @@ const RecruitmentForm = ({route}) => {
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.outContainer}>
-          <Header title="알바공고 등록" />
+          <Header title={isEditMode ? '알바공고 수정' : '알바공고 등록'} />
           <ScrollView contentContainerStyle={styles.scrollContainer}>
             <TouchableOpacity
               style={styles.sectionBox}
@@ -299,14 +372,11 @@ const RecruitmentForm = ({route}) => {
               </TouchableOpacity>
             ))}
             <Text style={styles.bottomText}>
-              모든 항목을 입력하셔야 등록이 완료됩니다
+              모든 항목을 입력하셔야 {isEditMode ? '수정' : '등록'}이 완료됩니다
             </Text>
             <View style={[styles.buttonLocation, styles.buttonContainer]}>
               <TouchableOpacity
-                style={[
-                  styles.addButton,
-                  isAllValid && styles.addButtonActive,
-                ]}
+                style={[styles.addButton, isAllValid && styles.addButtonActive]}
                 disabled={!isAllValid}
                 onPress={handleSubmit}
                 accessibilityState={{disabled: !isAllValid}}>
@@ -315,7 +385,7 @@ const RecruitmentForm = ({route}) => {
                     styles.addButtonText,
                     isAllValid && styles.addButtonTextActive,
                   ]}>
-                  등록하기
+                  {isEditMode ? '수정하기' : '등록하기'}
                 </Text>
                 {!isAllValid ? (
                   <CheckBlack width={24} />

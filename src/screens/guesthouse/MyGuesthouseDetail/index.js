@@ -11,18 +11,15 @@ import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ko';
 dayjs.locale('ko');
-import Toast from 'react-native-toast-message';
 import Carousel from 'react-native-reanimated-carousel';
 
 import styles from './MyGuesthouseDetail.styles';
 import { FONTS } from '@constants/fonts';
 import { COLORS } from '@constants/colors';
-import ServiceInfoModal from '@components/modals/Guesthouse/ServiceInfoModal';
 import ImageModal from '@components/modals/ImageModal';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
 import Loading from '@components/Loading';
-import useGuesthouseMetaStore from '@stores/guesthouseMetaStore';
-import {findAmenityMeta, getAmenitySectionLabel} from '@utils/guesthouseMeta';
+import ServiceInfoContent from './ServiceInfoContent';
 
 import EmptyHeart from '@assets/images/heart_empty.svg';
 import LeftArrow from '@assets/images/chevron_left_white.svg';
@@ -32,51 +29,16 @@ import CalendarIcon from '@assets/images/calendar_white.svg';
 import PersonIcon from '@assets/images/person20_white.svg';
 import ReviewIcon from '@assets/images/wa_orange_noreview.svg';
 
-import WifiIcon from '@assets/images/wifi_black.svg';
-import UnWifiIcon from '@assets/images/wifi_gray.svg';
-import PetFriendlyIcon from '@assets/images/pet_friendly_black.svg';
-import UnPetFriendlyIcon from '@assets/images/pet_friendly_gray.svg';
-import LuggageIcon from '@assets/images/luggage_storage_black.svg';
-import UnLuggageIcon from '@assets/images/luggage_storage_gray.svg';
-import LoungeIcon from '@assets/images/shared_lounge_black.svg';
-import UnLoungeIcon from '@assets/images/shared_lounge_gray.svg';
 import RightChevron from '@assets/images/chevron_right_gray.svg';
 
-const serviceIcons = [
-  { id: 10, icon: WifiIcon, label: '무선인터넷', width: 26, height: 26, iconName: 'WIFI' },
-  { id: 22, icon: PetFriendlyIcon, label: '반려견동반', width: 24, height: 24, iconName: 'PET_FRIENDLY' },
-  { id: 23, icon: LuggageIcon, label: '짐보관', width: 24, height: 24, iconName: 'BAGGAGE_STORAGE' },
-  { id: 7, icon: LoungeIcon, label: '공용라운지', width: 28, height: 28, iconName: 'LOUNGE' },
-];
-
-// 한글 라벨 → 아이콘 토큰으로 정규화
-const normalizeAmenityToken = (v) => {
-  const s = String(v || '').trim();
-  const koToToken = {
-    '무선인터넷': 'WIFI',
-    '무선 인터넷': 'WIFI',
-    '와이파이': 'WIFI',
-    '반려동물 동반': 'PET_FRIENDLY',
-    '반려견동반': 'PET_FRIENDLY',
-    '짐보관': 'BAGGAGE_STORAGE',
-    '라운지': 'LOUNGE',
-    '공용라운지': 'LOUNGE',
-  };
-  // 이미 영문(예: WIFI) 오면 대문자로, 한글 라벨이면 매핑
-  return koToToken[s] || s.toUpperCase();
-};
-
-const TAB_OPTIONS = ['객실', '소개', '이용규칙', '리뷰'];
+const TAB_OPTIONS = ['객실', '소개', '시설/서비스', '이용규칙', '리뷰', '취소규정'];
 
 const MyGuesthousePreview = ({ route }) => {
   const navigation = useNavigation();
-  const guesthouseAmenities = useGuesthouseMetaStore(
-    state => state.guesthouseAmenities,
-  );
-  const amenityIdMap = useMemo(
-    () => new Map(guesthouseAmenities.map(amenity => [amenity.id, amenity])),
-    [guesthouseAmenities],
-  );
+  const {id, previewData = null, hideEditButton = false} = route.params || {};
+  const [activeTab, setActiveTab] = useState('객실');
+  const [detail, setDetail] = useState(null);
+
   // 사진
   const { width: SCREEN_W } = Dimensions.get('window');
   const IMAGE_H = 280;
@@ -90,12 +52,6 @@ const MyGuesthousePreview = ({ route }) => {
     setImageIndex(thumbnailIndex);
   }, [thumbnailIndex]);
 
-  const {id, previewData = null, hideEditButton = false} = route.params || {};
-
-  const [activeTab, setActiveTab] = useState('객실');
-  const [detail, setDetail] = useState(null);
-
-  const [modalVisible, setModalVisible] = useState(false);
   // 이미지 모달
   const [imageModalVisible, setImageModalVisible] = useState(false);
 
@@ -136,46 +92,6 @@ const MyGuesthousePreview = ({ route }) => {
     }, [fetchDetail])
   );
 
-  // 객실 서비스
-  const amenityTokenSet = useMemo(() => {
-    const list = detail?.amenities ?? [];
-    return new Set(
-      list
-        .map(a => {
-          if (typeof a === 'string') {
-            return normalizeAmenityToken(a);
-          }
-
-          const meta =
-            amenityIdMap.get(a?.amenityId) ||
-            amenityIdMap.get(a?.id);
-          if (meta?.amenityType) {
-            return normalizeAmenityToken(meta.amenityType);
-          }
-          if (meta?.name) {
-            return normalizeAmenityToken(meta.name);
-          }
-          if (a?.amenityName) {
-            return normalizeAmenityToken(a.amenityName);
-          }
-          if (a?.amenityType) {
-            return normalizeAmenityToken(a.amenityType);
-          }
-          if (a?.name) {
-            return normalizeAmenityToken(a.name);
-          }
-          if (a?.type) {
-            return normalizeAmenityToken(a.type);
-          }
-          if (a?.code) {
-            return normalizeAmenityToken(a.code);
-          }
-          return '';
-        })
-        .filter(Boolean)
-    );
-  }, [amenityIdMap, detail?.amenities]);
-
   // 썸네일을 맨 앞으로 정렬한 이미지 리스트
   const sortedImages = useMemo(() => {
     const imgs = [...(detail?.guesthouseImages ?? [])];
@@ -184,10 +100,16 @@ const MyGuesthousePreview = ({ route }) => {
     );
   }, [detail?.guesthouseImages]);
   const hasImages = sortedImages.length > 0;
-  const thumbnailImage = hasImages ? sortedImages[0].guesthouseImageUrl : null;
   const modalImages = useMemo(() => (
     sortedImages.map(img => ({ id: img.id, imageUrl: img.guesthouseImageUrl }))
   ), [sortedImages]);
+  const refundPolicies = useMemo(
+    () =>
+      [...(detail?.refundPolicies ?? [])].sort(
+        (a, b) => a.daysBeforeCheckin - b.daysBeforeCheckin,
+      ),
+    [detail?.refundPolicies],
+  );
 
   // 수정 화면이동 시 데이터
   const mapDetailToEdit = (d) => ({
@@ -224,34 +146,13 @@ const MyGuesthousePreview = ({ route }) => {
 
     amenities: d.amenities || [],
     refundPolicies: d.refundPolicies || [],
+    refundPolicyAdditionalNotice: d.refundPolicyAdditionalNotice || '',
 
     // 해시태그 (이름만 넘김)
     hashtags: (d.hashtags || []).map(h => h.hashtag),
 
     rules: d.rules || '',
   });
-
-  const selectedAmenitiesForModal = useMemo(() => {
-    const am = detail?.amenities ?? [];
-
-    return am.map((item, idx) => {
-      const name =
-        typeof item === 'string'
-          ? item
-          : item?.name || item?.amenityName || item?.amenityType;
-      const amenity =
-        findAmenityMeta(guesthouseAmenities, item) ||
-        (item && typeof item === 'object' ? item : {id: idx + 1, name});
-
-      return {
-        ...amenity,
-        amenityName: amenity.name || name,
-        amenityType: amenity.amenityType || name,
-        category: getAmenitySectionLabel(amenity),
-        count: 1,
-      };
-    });
-  }, [detail?.amenities, guesthouseAmenities]);
 
   if (!detail) {
     return <Loading title="게스트하우스를 불러오고 있어요" />;
@@ -375,48 +276,6 @@ const MyGuesthousePreview = ({ route }) => {
           </Text>
         </View>
 
-        {/* 객실 서비스 */}
-        <View style={styles.iconServiceContainer}>
-          <View style={styles.iconServiceRowWithMore}>
-            {serviceIcons.map(({ icon: Icon, label, width, height, iconName }, i) => {
-              const isEnabled = amenityTokenSet.has(iconName);
-
-              const GrayscaleIcon = {
-                WIFI: UnWifiIcon,
-                PET_FRIENDLY: UnPetFriendlyIcon,
-                BAGGAGE_STORAGE: UnLuggageIcon,
-                LOUNGE: UnLoungeIcon,
-              }[iconName];
-
-              const DisplayIcon = isEnabled ? Icon : GrayscaleIcon;
-
-              return (
-                <View key={i} style={styles.iconWrapper}>
-                  <View style={styles.iconServiceWrapper}>
-                    <DisplayIcon width={width} height={height} />
-                  </View>
-                  <Text
-                    style={[
-                      FONTS.fs_12_medium,
-                      styles.iconServiceText,
-                      !isEnabled && { color: COLORS.grayscale_400 },
-                    ]}
-                  >
-                    {label}
-                  </Text>
-                </View>
-              );
-            })}
-
-            <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.iconWrapper}>
-              <View style={styles.iconServiceWrapper}>
-                <RightChevron width={24} height={24} />
-              </View>
-              <Text style={[FONTS.fs_12_medium, styles.readMoreText]}>더보기</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
         <View style={styles.devide}/>
 
         <View style={styles.displayDateGuestRow}>
@@ -436,7 +295,11 @@ const MyGuesthousePreview = ({ route }) => {
       </View>
 
       {/* 탭 메뉴 */}
-      <View style={styles.tabMenuWrapper}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.tabMenuWrapper}
+        contentContainerStyle={styles.tabMenuContent}>
         {TAB_OPTIONS.map(tab => (
           <TouchableOpacity key={tab} onPress={() => setActiveTab(tab)}>
             <View style={styles.tabButton}>
@@ -451,7 +314,7 @@ const MyGuesthousePreview = ({ route }) => {
             </View>
           </TouchableOpacity>
         ))}
-      </View>
+      </ScrollView>
 
       {activeTab === '객실' && (
         <View style={styles.roomContentWrapper}>
@@ -482,7 +345,7 @@ const MyGuesthousePreview = ({ route }) => {
 
                 <View style={styles.roomInfo}>
                   <View style={styles.roomNameDescContainer}>
-                    <View style={[styles.roomInfoRow, {gap: 4}]}>
+                    <View style={[styles.roomInfoRow, styles.roomTitleRow]}>
                       <View style={styles.roomNameTextWrapper}>
                         <Text
                           style={[FONTS.fs_16_semibold, styles.roomType]}
@@ -670,6 +533,10 @@ const MyGuesthousePreview = ({ route }) => {
         </View>
       )}
 
+      {activeTab === '시설/서비스' && (
+        <ServiceInfoContent selectedAmenities={detail.amenities} />
+      )}
+
       {activeTab === '이용규칙' && (
         <View style={styles.introductionContainer}>
           <Text style={[FONTS.fs_18_semibold, styles.tabTitle]}>이용 규칙</Text>
@@ -678,7 +545,6 @@ const MyGuesthousePreview = ({ route }) => {
               {detail.rules}
             </Text>
           </View>
-          
         </View>
       )}
 
@@ -704,14 +570,53 @@ const MyGuesthousePreview = ({ route }) => {
           </View>
         </View>
       )}
+
+      {activeTab === '취소규정' && (
+        <View style={styles.introductionContainer}>
+          {!!detail.refundPolicyAdditionalNotice && (
+            <>
+              <Text style={[FONTS.fs_18_semibold, styles.tabTitle]}>
+                추가 안내사항
+              </Text>
+              <View style={styles.longTextContainer}>
+                <Text style={[FONTS.fs_14_regular, styles.introductionText]}>
+                  {detail.refundPolicyAdditionalNotice}
+                </Text>
+              </View>
+            </>
+          )}
+          <Text style={[FONTS.fs_18_semibold, styles.tabTitle]}>취소 수수료</Text>
+          {refundPolicies.length > 0 ? (
+            <View style={styles.refundPolicyContainer}>
+              {refundPolicies.map((policy, index) => (
+                <View
+                  key={`${policy.daysBeforeCheckin}-${index}`}
+                  style={styles.refundPolicyRow}>
+                  <Text style={[FONTS.fs_12_medium, styles.refundPolicyText]}>
+                    방문 {policy.daysBeforeCheckin}일 전
+                  </Text>
+                  <Text style={[FONTS.fs_12_medium, styles.refundPolicyText]}>
+                    총금액의
+                  </Text>
+                  <Text style={[FONTS.fs_14_semibold, styles.refundRateText]}>
+                    {policy.refundRate}
+                  </Text>
+                  <Text style={[FONTS.fs_12_medium, styles.refundPolicyText]}>
+                    % 환불
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <View style={styles.refundEmptyBox}>
+              <Text style={[FONTS.fs_14_regular, styles.refundEmptyText]}>
+                등록된 취소규정이 없어요.
+              </Text>
+            </View>
+          )}
+        </View>
+      )}
     </View>
-    
-    {/* 편의시설/서비스 모달 */}
-    <ServiceInfoModal
-      visible={modalVisible}
-      onClose={() => setModalVisible(false)}
-      selectedAmenities={selectedAmenitiesForModal}
-    />
 
     {/* 이미지 모달 */}
     {hasImages && (

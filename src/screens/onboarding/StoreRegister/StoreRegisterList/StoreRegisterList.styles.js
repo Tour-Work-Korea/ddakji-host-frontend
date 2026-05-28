@@ -48,6 +48,9 @@ export default StyleSheet.create({
   listItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+    minWidth: 0,
+    paddingRight: 12,
   },
   avatar: {
     backgroundColor: COLORS.grayscale_200,
@@ -55,10 +58,12 @@ export default StyleSheet.create({
   businessName: {
     marginLeft: 16,
     flexShrink: 1,
+    minWidth: 0,
   },
   listItemRight: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexShrink: 0,
   },
   roleBadge: {
     borderRadius: 100,
@@ -100,6 +105,7 @@ export default StyleSheet.create({
   },
   pendingText: {
     color: COLORS.primary_orange,
+    flexShrink: 0,
   },
   emptyContainer: {
     flex: 1,
