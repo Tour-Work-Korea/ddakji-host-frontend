@@ -61,6 +61,13 @@ const hostMeetApi = {
   cancelParty: (partyId) =>
     api.patch(`/host/parties/daily/${partyId}/cancel`),
 
+  // 모임 템플릿 신청 오픈 상태 토글 API
+  updatePartyApplicationOpen: (templateId, isApplyOpen) =>
+    api.patch(`/host/parties/templates/${templateId}/application-open`, null, {
+      params: {
+        isApplyOpen,
+      },
+    }),
 };
 
 export default hostMeetApi;
