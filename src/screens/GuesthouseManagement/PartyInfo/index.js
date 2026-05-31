@@ -30,7 +30,10 @@ const PartyInfo = ({ guesthouseId }) => {
     try {
       setLoading(true);
       const response = await hostMeetApi.getMyParties();
-      const allParties = response?.data || [];
+      const rawParties = response?.data;
+      const allParties = Array.isArray(rawParties)
+        ? rawParties
+        : rawParties?.content ?? [];
       const filtered = allParties.filter(
         party => String(party.guesthouseId) === String(guesthouseId),
       );

@@ -168,7 +168,10 @@ const GuesthouseManagement = () => {
 
     try {
       const response = await hostMeetApi.getMyParties();
-      const templates = Array.isArray(response?.data) ? response.data : [];
+      const rawTemplates = response?.data;
+      const templates = Array.isArray(rawTemplates)
+        ? rawTemplates
+        : rawTemplates?.content ?? [];
       const matchedTemplate = templates.some(
         item => String(item?.guesthouseId) === String(effectiveGuesthouseId),
       );

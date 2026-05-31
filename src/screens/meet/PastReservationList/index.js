@@ -110,7 +110,7 @@ const PastReservationList = () => {
   const route = useRoute();
   const today = useMemo(() => getTodayLocalDate(), []);
   const guesthouseId = route?.params?.guesthouseId ?? null;
-  const [selectedDate, setSelectedDate] = useState(today);
+  const [selectedDate, setSelectedDate] = useState(route?.params?.selectedDate ?? today);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
