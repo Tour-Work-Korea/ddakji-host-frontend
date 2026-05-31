@@ -1,6 +1,6 @@
-import {StyleSheet} from 'react-native';
+import { StyleSheet } from 'react-native';
 
-import {COLORS} from '@constants/colors';
+import { COLORS } from '@constants/colors';
 
 export default StyleSheet.create({
   container: {
@@ -140,5 +140,37 @@ export default StyleSheet.create({
   },
   applyButtonText: {
     color: COLORS.grayscale_0,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: COLORS.grayscale_200,
+    marginVertical: 16,
+  },
+  applyOpenRow: {
+    gap: 4,
+  },
+  applyOpenTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 8,
+  },
+  applyOpenTitle: {
+    color: COLORS.grayscale_700,
+    flex: 1,
+    minWidth: 0,
+  },
+  applyOpenRightGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    flexShrink: 0,
+    marginLeft: 8,
+  },
+  applyOpenDescription: {
+    color: COLORS.primary_blue,
+  },
+  applyOpenDescriptionDisabled: {
+    color: COLORS.grayscale_400,
   },
 });

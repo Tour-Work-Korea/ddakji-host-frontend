@@ -192,4 +192,39 @@ export default StyleSheet.create({
   historyButtonText: {
     color: COLORS.grayscale_600,
   },
+  groupTitle: {
+    color: COLORS.grayscale_700,
+    marginTop: 16,
+    marginBottom: 10,
+  },
+  actionGroup: {
+    flexDirection: 'column',
+    gap: 6,
+    marginLeft: 12,
+    alignItems: 'stretch',
+    justifyContent: 'center',
+    minWidth: 84,
+  },
+  approveButton: {
+    backgroundColor: COLORS.primary_orange,
+    borderRadius: 12,
+    paddingVertical: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  approveButtonText: {
+    color: COLORS.grayscale_0,
+  },
+  rejectButton: {
+    backgroundColor: COLORS.grayscale_0,
+    borderWidth: 1,
+    borderColor: COLORS.grayscale_300,
+    borderRadius: 12,
+    paddingVertical: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  rejectButtonText: {
+    color: COLORS.grayscale_600,
+  },
 });

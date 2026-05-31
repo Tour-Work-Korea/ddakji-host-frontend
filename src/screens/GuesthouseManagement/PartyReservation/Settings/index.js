@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Dimensions, Switch, Text, TouchableOpacity, View} from 'react-native';
+import {Dimensions, Platform, Switch, Text, TouchableOpacity, View} from 'react-native';
 import Toast from 'react-native-toast-message';
 
 import AlertModal from '@components/modals/AlertModal';
@@ -12,18 +12,22 @@ import CancelReservationIcon from '@assets/images/unbooked_orange.svg';
 import MinusIcon from '@assets/images/minus_black.svg';
 import PlusIcon from '@assets/images/plus_black.svg';
 
-const CENTER_TOAST_TOP_OFFSET = Dimensions.get('window').height * 0.42;
+const MENU_TOAST_TOP_OFFSET = Platform.OS === 'ios' ? 220 : 190;
 
 const Settings = ({guesthouseId}) => {
   const [dailyParty, setDailyParty] = useState(null);
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const [isExposed, setIsExposed] = useState(true);
   const [maxCapacity, setMaxCapacity] = useState(20);
+  const [isApplyOpen, setIsApplyOpen] = useState(false);
+  const [templateId, setTemplateId] = useState(null);
 
   useEffect(() => {
-    const fetchDailyParty = async () => {
+    const fetchData = async () => {
       if (!guesthouseId) {
         setDailyParty(null);
+        setTemplateId(null);
+        setIsApplyOpen(false);
         return;
       }
 
@@ -41,12 +45,46 @@ const Settings = ({guesthouseId}) => {
           setIsExposed(Boolean(matchedParty.isVisible));
           setMaxCapacity(Number(matchedParty.maxAttendance) || 20);
         }
+
+        // Fetch templates to get templateId and isApplyOpen status
+        const templateResponse = await hostMeetApi.getMyParties();
+        const templates = Array.isArray(templateResponse?.data) ? templateResponse.data : [];
+        const matchedTemplate = templates.find(
+          item => String(item?.guesthouseId) === String(guesthouseId),
+        );
+
+        if (matchedTemplate) {
+          setTemplateId(matchedTemplate.templateId);
+          setIsApplyOpen(
+            matchedTemplate.isApplyOpen !== undefined
+              ? Boolean(matchedTemplate.isApplyOpen)
+              : Boolean(matchedTemplate.isApply),
+          );
+        } else if (matchedParty) {
+          const tId = matchedParty.templateId || matchedParty.partyTemplateId;
+          if (tId) {
+            setTemplateId(tId);
+            try {
+              const {data} = await hostMeetApi.getPartyTemplateDetail(tId);
+              if (data) {
+                setIsApplyOpen(
+                  data.isApplyOpen !== undefined
+                    ? Boolean(data.isApplyOpen)
+                    : Boolean(data.isApply),
+                );
+              }
+            } catch (err) {
+              console.error('Error fetching fallback template details:', err);
+            }
+          }
+        }
       } catch (error) {
+        console.error('Error fetching daily party or templates:', error);
         setDailyParty(null);
       }
     };
 
-    fetchDailyParty();
+    fetchData();
   }, [guesthouseId]);
 
   const currentAttendees = Number(dailyParty?.numOfAttendance) || 0;
@@ -55,6 +93,8 @@ const Settings = ({guesthouseId}) => {
   const exposureDescription = isExposed
     ? '현재 유저에게 노출 중입니다'
     : '현재 유저에게 노출되지 않고 있습니다';
+
+  const applyOpenDescription = isApplyOpen ? '현재 신청 가능' : '현재 신청 불가';
 
   const handleChangeCapacity = diff => {
     setMaxCapacity(prev => Math.max(currentAttendees, prev + diff));
@@ -68,6 +108,7 @@ const Settings = ({guesthouseId}) => {
         type: 'error',
         text1: '노출 상태를 변경할 파티 정보가 없어요.',
         position: 'top',
+        topOffset: MENU_TOAST_TOP_OFFSET,
       });
       return;
     }
@@ -81,13 +122,46 @@ const Settings = ({guesthouseId}) => {
           ? '파티가 노출 처리 되었습니다'
           : '파티가 숨김 처리 되었습니다',
         position: 'top',
-        topOffset: CENTER_TOAST_TOP_OFFSET,
+        topOffset: MENU_TOAST_TOP_OFFSET,
       });
     } catch (error) {
       Toast.show({
         type: 'error',
         text1: '노출 상태 변경 중 오류가 발생했어요.',
         position: 'top',
+        topOffset: MENU_TOAST_TOP_OFFSET,
+      });
+    }
+  };
+
+  const handleToggleApplyOpen = async nextValue => {
+    if (!templateId) {
+      Toast.show({
+        type: 'error',
+        text1: '신청 오픈 상태를 변경할 파티 템플릿 정보가 없어요.',
+        position: 'top',
+        topOffset: MENU_TOAST_TOP_OFFSET,
+      });
+      return;
+    }
+
+    try {
+      await hostMeetApi.updatePartyApplicationOpen(templateId, nextValue);
+      setIsApplyOpen(nextValue);
+      Toast.show({
+        type: 'success',
+        text1: nextValue
+          ? '파티 신청이 오픈되었습니다'
+          : '파티 신청이 미오픈 처리되었습니다',
+        position: 'top',
+        topOffset: MENU_TOAST_TOP_OFFSET,
+      });
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: '신청 오픈 상태 변경 중 오류가 발생했어요.',
+        position: 'top',
+        topOffset: MENU_TOAST_TOP_OFFSET,
       });
     }
   };
@@ -101,6 +175,7 @@ const Settings = ({guesthouseId}) => {
         type: 'error',
         text1: '취소할 파티 정보가 없어요.',
         position: 'top',
+        topOffset: MENU_TOAST_TOP_OFFSET,
       });
       return;
     }
@@ -112,6 +187,7 @@ const Settings = ({guesthouseId}) => {
         type: 'success',
         text1: '오늘 파티가 취소되었어요.',
         position: 'top',
+        topOffset: MENU_TOAST_TOP_OFFSET,
       });
     } catch (error) {
       setCancelModalVisible(false);
@@ -119,6 +195,7 @@ const Settings = ({guesthouseId}) => {
         type: 'error',
         text1: '파티 취소 중 오류가 발생했어요.',
         position: 'top',
+        topOffset: MENU_TOAST_TOP_OFFSET,
       });
     }
   };
@@ -131,6 +208,7 @@ const Settings = ({guesthouseId}) => {
         type: 'error',
         text1: '인원을 변경할 파티 정보가 없어요.',
         position: 'top',
+        topOffset: MENU_TOAST_TOP_OFFSET,
       });
       return;
     }
@@ -141,12 +219,14 @@ const Settings = ({guesthouseId}) => {
         type: 'success',
         text1: '최대 인원이 적용되었어요.',
         position: 'top',
+        topOffset: MENU_TOAST_TOP_OFFSET,
       });
     } catch (error) {
       Toast.show({
         type: 'error',
         text1: '최대 인원 변경 중 오류가 발생했어요.',
         position: 'top',
+        topOffset: MENU_TOAST_TOP_OFFSET,
       });
     }
   };
@@ -179,7 +259,7 @@ const Settings = ({guesthouseId}) => {
 
       <View style={styles.section}>
         <Text style={[FONTS.fs_14_semibold, styles.sectionTitle]}>
-          파티 노출 상태
+          파티 신청 관리
         </Text>
 
         <View style={styles.sectionCard}>
@@ -216,7 +296,7 @@ const Settings = ({guesthouseId}) => {
                   onValueChange={handleToggleVisibility}
                   trackColor={{
                     false: COLORS.grayscale_300,
-                    true: COLORS.primary_blue,
+                    true: COLORS.primary_orange,
                   }}
                   thumbColor={COLORS.grayscale_0}
                 />
@@ -225,6 +305,38 @@ const Settings = ({guesthouseId}) => {
 
             <Text style={[FONTS.fs_12_medium, styles.exposureDescription]}>
               {exposureDescription}
+            </Text>
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.applyOpenRow}>
+            <View style={styles.applyOpenTopRow}>
+              <Text style={[FONTS.fs_16_semibold, styles.applyOpenTitle]}>
+                신청 오픈 설정
+              </Text>
+
+              <View style={styles.applyOpenRightGroup}>
+                <Switch
+                  value={isApplyOpen}
+                  onValueChange={handleToggleApplyOpen}
+                  trackColor={{
+                    false: COLORS.grayscale_300,
+                    true: COLORS.primary_orange,
+                  }}
+                  thumbColor={COLORS.grayscale_0}
+                />
+              </View>
+            </View>
+
+            <Text
+              style={[
+                FONTS.fs_12_medium,
+                isApplyOpen
+                  ? styles.applyOpenDescription
+                  : styles.applyOpenDescriptionDisabled,
+              ]}>
+              {applyOpenDescription}
             </Text>
           </View>
         </View>

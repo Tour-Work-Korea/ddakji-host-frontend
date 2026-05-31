@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Linking,
@@ -8,14 +8,14 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {Calendar} from 'react-native-calendars';
-import {useRoute} from '@react-navigation/native';
+import { Calendar } from 'react-native-calendars';
+import { useRoute } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 
 import Header from '@components/Header';
-import {CALENDAR_COMMON_PROPS, CALENDAR_THEME} from '@constants/calendarConfig';
-import {COLORS} from '@constants/colors';
-import {FONTS} from '@constants/fonts';
+import { CALENDAR_COMMON_PROPS, CALENDAR_THEME } from '@constants/calendarConfig';
+import { COLORS } from '@constants/colors';
+import { FONTS } from '@constants/fonts';
 import hostMeetApi from '@utils/api/hostMeetApi';
 import styles from './PastReservationList.styles';
 
@@ -46,27 +46,55 @@ const shiftDate = (baseDate, diffDays) => {
   return `${year}-${month}-${day}`;
 };
 
-const formatActionTime = value => {
-  if (!value) return '신청';
+const formatActionTime = (value, suffix) => {
+  if (!value) return suffix;
 
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '신청';
+  if (Number.isNaN(date.getTime())) return suffix;
 
   const hours = String(date.getHours()).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${hours}:${minutes} 신청`;
+  return `${hours}:${minutes} ${suffix}`;
 };
 
-const mapGenderLabel = gender => (gender === 'MALE' ? '남' : '여');
+const mapGenderLabel = gender => {
+  if (!gender) return '';
+  const g = String(gender).trim().toUpperCase();
+  if (g === 'MALE' || g === 'M' || g === '남' || g === '남자') return '남';
+  if (g === 'FEMALE' || g === 'F' || g === '여' || g === '여자') return '여';
+  return '여';
+};
 
-const normalizeReservation = item => ({
-  id: item?.reservationId ?? `${item?.phoneNumber}-${item?.actionTime}`,
-  name: item?.reserverName ?? '',
-  gender: mapGenderLabel(item?.gender),
-  birthYear: item?.birthYear ?? '',
-  time: formatActionTime(item?.actionTime),
-  phone: item?.phoneNumber ?? '',
-});
+const formatPhoneNumber = phone => {
+  if (!phone) return '';
+  const cleaned = String(phone).replace(/\D/g, '');
+  if (cleaned.length === 11) {
+    return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 7)}-${cleaned.slice(7)}`;
+  }
+  if (cleaned.length === 10) {
+    return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+  }
+  return phone;
+};
+
+const normalizeReservation = (item, isCanceled = false) => {
+  let suffix = '신청';
+  if (isCanceled) {
+    suffix = item?.approvalStatus === 'REJECTED' ? '신청반려' : '신청취소';
+  } else {
+    suffix = item?.approvalStatus === 'WAITING_HOST' ? '신청' : '신청확정';
+  }
+
+  return {
+    id: item?.reservationId ?? `${item?.phoneNumber}-${item?.actionTime}`,
+    name: item?.reserverName ?? '',
+    gender: mapGenderLabel(item?.gender),
+    birthYear: item?.birthYear ?? '',
+    time: formatActionTime(item?.actionTime, suffix),
+    phone: formatPhoneNumber(item?.phoneNumber),
+    isGuest: item?.isGuest ?? item?.isGuestStatus ?? false,
+  };
+};
 
 const buildRatioText = (maleCount, femaleCount) => {
   const male = Number(maleCount) || 0;
@@ -119,11 +147,14 @@ const PastReservationList = () => {
 
         if (!isMounted) return;
 
-        setReservations(
-          Array.isArray(data?.reservations)
-            ? data.reservations.map(normalizeReservation)
-            : [],
-        );
+        const activeList = Array.isArray(data?.reservations)
+          ? data.reservations.map(item => normalizeReservation(item, false))
+          : [];
+        const canceledList = Array.isArray(data?.canceledReservations)
+          ? data.canceledReservations.map(item => normalizeReservation(item, true))
+          : [];
+
+        setReservations([...activeList, ...canceledList]);
         setMaleCount(Number(data?.maleCount) || 0);
         setFemaleCount(Number(data?.femaleCount) || 0);
       } catch (error) {
@@ -135,7 +166,7 @@ const PastReservationList = () => {
         Toast.show({
           type: 'error',
           text1:
-            error?.response?.data?.message || '지난 예약 내역을 불러오지 못했어요.',
+            error?.response?.data?.message || '지난 신청 내역을 불러오지 못했어요.',
           position: 'top',
         });
       } finally {
@@ -154,9 +185,9 @@ const PastReservationList = () => {
 
   const summaryCards = useMemo(
     () => [
-      {label: '남자', value: `${maleCount}명`},
-      {label: '여자', value: `${femaleCount}명`},
-      {label: '성비', value: buildRatioText(maleCount, femaleCount)},
+      { label: '남자', value: `${maleCount}명` },
+      { label: '여자', value: `${femaleCount}명` },
+      { label: '성비', value: buildRatioText(maleCount, femaleCount) },
     ],
     [femaleCount, maleCount],
   );
@@ -204,7 +235,7 @@ const PastReservationList = () => {
 
   return (
     <View style={styles.container}>
-      <Header title="지난 예약 내역" />
+      <Header title="지난 신청 내역" />
 
       <ScrollView
         style={styles.scrollView}
@@ -303,7 +334,7 @@ const PastReservationList = () => {
         </View>
 
         <View style={styles.listHeader}>
-          <Text style={[FONTS.fs_16_medium, styles.listTitle]}>예약 명단</Text>
+          <Text style={[FONTS.fs_16_medium, styles.listTitle]}>신청 명단</Text>
           <Text style={[FONTS.fs_14_medium, styles.listCount]}>
             {filteredReservations.length}
           </Text>
@@ -346,7 +377,7 @@ const PastReservationList = () => {
                       </Text>
                     </View>
                     <Text style={[FONTS.fs_12_medium, styles.birthText]}>
-                      {item.birthYear}
+                      {item.isGuest ? '숙박객' : '비숙박객'} · {item.birthYear}
                     </Text>
                   </View>
 
