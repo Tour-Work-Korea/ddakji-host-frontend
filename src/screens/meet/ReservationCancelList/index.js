@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Linking,
@@ -7,14 +7,14 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {Calendar} from 'react-native-calendars';
-import {useRoute} from '@react-navigation/native';
+import { Calendar } from 'react-native-calendars';
+import { useRoute } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 
 import Header from '@components/Header';
-import {CALENDAR_COMMON_PROPS, CALENDAR_THEME} from '@constants/calendarConfig';
-import {COLORS} from '@constants/colors';
-import {FONTS} from '@constants/fonts';
+import { CALENDAR_COMMON_PROPS, CALENDAR_THEME } from '@constants/calendarConfig';
+import { COLORS } from '@constants/colors';
+import { FONTS } from '@constants/fonts';
 import hostMeetApi from '@utils/api/hostMeetApi';
 import styles from './ReservationCancelList.styles';
 
@@ -44,15 +44,22 @@ const shiftDate = (baseDate, diffDays) => {
   return `${year}-${month}-${day}`;
 };
 
-const formatActionTime = value => {
-  if (!value) return '신청취소';
+const formatActionTime = (value, approvalStatus) => {
+  let suffix = '신청취소';
+  if (approvalStatus === 'REJECTED') {
+    suffix = '신청반려';
+  } else if (approvalStatus === 'WITHDRAWN') {
+    suffix = '신청취소';
+  }
+
+  if (!value) return suffix;
 
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '신청취소';
+  if (Number.isNaN(date.getTime())) return suffix;
 
   const hours = String(date.getHours()).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${hours}:${minutes} 신청취소`;
+  return `${hours}:${minutes} ${suffix}`;
 };
 
 const mapGenderLabel = gender => {
@@ -80,8 +87,9 @@ const normalizeCanceledReservation = item => ({
   name: item?.reserverName ?? '',
   gender: mapGenderLabel(item?.gender),
   birthYear: item?.birthYear ?? '',
-  time: formatActionTime(item?.actionTime),
+  time: formatActionTime(item?.actionTime, item?.approvalStatus),
   phone: formatPhoneNumber(item?.phoneNumber),
+  isGuest: item?.isGuest ?? item?.isGuestStatus ?? false,
 });
 
 const ReservationCancelList = () => {
@@ -130,7 +138,7 @@ const ReservationCancelList = () => {
         Toast.show({
           type: 'error',
           text1:
-            error?.response?.data?.message || '예약 취소 명단을 불러오지 못했어요.',
+            error?.response?.data?.message || '신청 취소 명단을 불러오지 못했어요.',
           position: 'top',
         });
       } finally {
@@ -183,7 +191,7 @@ const ReservationCancelList = () => {
 
   return (
     <View style={styles.container}>
-      <Header title="예약 취소 명단" />
+      <Header title="신청 취소 명단" />
 
       <ScrollView
         style={styles.scrollView}
@@ -230,7 +238,7 @@ const ReservationCancelList = () => {
 
         <View style={styles.listHeader}>
           <Text style={[FONTS.fs_16_medium, styles.listTitle]}>
-            예약 취소 명단
+            신청 취소 명단
           </Text>
           <Text style={[FONTS.fs_14_medium, styles.listCount]}>
             {reservations.length}
@@ -274,7 +282,7 @@ const ReservationCancelList = () => {
                       </Text>
                     </View>
                     <Text style={[FONTS.fs_12_medium, styles.birthText]}>
-                      {item.birthYear}
+                      {item.isGuest ? '숙박객' : '비숙박객'} · {item.birthYear}
                     </Text>
                   </View>
 

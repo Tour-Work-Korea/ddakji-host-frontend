@@ -68,6 +68,15 @@ const hostMeetApi = {
         isApplyOpen,
       },
     }),
+
+  // 모임 예약 승인/거절 API
+  approvePartyReservation: (partyId, reservationId, isApproved, cancleReason = '') =>
+    api.post(`/host/parties/daily/${partyId}/reservations/${reservationId}/approve`, null, {
+      params: {
+        isApproved,
+        cancleReason,
+      },
+    }),
 };
 
 export default hostMeetApi;
