@@ -33,7 +33,10 @@ const Settings = ({guesthouseId}) => {
 
       try {
         const response = await hostMeetApi.getTodayParties();
-        const parties = Array.isArray(response?.data) ? response.data : [];
+        const rawParties = response?.data;
+        const parties = Array.isArray(rawParties)
+          ? rawParties
+          : rawParties?.content ?? [];
         const matchedParty =
           parties.find(
             item => String(item?.guesthouseId) === String(guesthouseId),
@@ -48,18 +51,36 @@ const Settings = ({guesthouseId}) => {
 
         // Fetch templates to get templateId and isApplyOpen status
         const templateResponse = await hostMeetApi.getMyParties();
-        const templates = Array.isArray(templateResponse?.data) ? templateResponse.data : [];
+        const rawTemplates = templateResponse?.data;
+        const templates = Array.isArray(rawTemplates)
+          ? rawTemplates
+          : rawTemplates?.content ?? [];
         const matchedTemplate = templates.find(
           item => String(item?.guesthouseId) === String(guesthouseId),
         );
 
         if (matchedTemplate) {
-          setTemplateId(matchedTemplate.templateId);
-          setIsApplyOpen(
-            matchedTemplate.isApplyOpen !== undefined
-              ? Boolean(matchedTemplate.isApplyOpen)
-              : Boolean(matchedTemplate.isApply),
-          );
+          const tId = matchedTemplate.templateId;
+          setTemplateId(tId);
+          
+          if (matchedTemplate.isApplyOpen !== undefined) {
+            setIsApplyOpen(Boolean(matchedTemplate.isApplyOpen));
+          } else if (matchedTemplate.isApply !== undefined) {
+            setIsApplyOpen(Boolean(matchedTemplate.isApply));
+          } else if (tId) {
+            try {
+              const {data} = await hostMeetApi.getPartyTemplateDetail(tId);
+              if (data) {
+                setIsApplyOpen(
+                  data.isApplyOpen !== undefined
+                    ? Boolean(data.isApplyOpen)
+                    : Boolean(data.isApply),
+                );
+              }
+            } catch (err) {
+              console.error('Error fetching template details inside matchedTemplate:', err);
+            }
+          }
         } else if (matchedParty) {
           const tId = matchedParty.templateId || matchedParty.partyTemplateId;
           if (tId) {
