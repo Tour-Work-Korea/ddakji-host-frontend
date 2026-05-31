@@ -27,7 +27,7 @@ const HOME_TAB = '홈';
 const INFO_TAB = '게하 정보';
 const ROOM_RESERVATION_TAB = '객실 예약';
 const PARTY_INFO_TAB = '파티 정보';
-const PARTY_RESERVATION_TAB = '파티 예약';
+const PARTY_RESERVATION_TAB = '파티 관리';
 const STAFF_TAB = '스탭';
 
 const tabs = [
@@ -168,7 +168,10 @@ const GuesthouseManagement = () => {
 
     try {
       const response = await hostMeetApi.getMyParties();
-      const templates = Array.isArray(response?.data) ? response.data : [];
+      const rawTemplates = response?.data;
+      const templates = Array.isArray(rawTemplates)
+        ? rawTemplates
+        : rawTemplates?.content ?? [];
       const matchedTemplate = templates.some(
         item => String(item?.guesthouseId) === String(effectiveGuesthouseId),
       );

@@ -167,6 +167,35 @@ export const markNotificationAsRead = async notification => {
   }
 };
 
+const getTodayLocalDate = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getNotificationLocalDate = data => {
+  const dateCandidate =
+    data?.partyDate ||
+    data?.date ||
+    data?.partyStartDateTime ||
+    data?.createdAt ||
+    data?.actionTime;
+
+  if (dateCandidate) {
+    const d = new Date(dateCandidate);
+    if (!Number.isNaN(d.getTime())) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+  }
+
+  return getTodayLocalDate();
+};
+
 export const resolveNotificationTarget = notification => {
   const data = normalizeNotificationPayload(notification);
   const type = normalizeNotificationType(data);
@@ -176,6 +205,8 @@ export const resolveNotificationTarget = notification => {
     type.startsWith('PARTY_') ||
     type.includes('PARTY') ||
     type.includes('MEET');
+  const isPartyCancelNotification =
+    isPartyNotification && (type.includes('CANCEL') || type.includes('REFUND'));
   const isRoomReservationNotification =
     type.includes('GUESTHOUSE_RESERVATION') ||
     type.includes('ROOM_RESERVATION') ||
@@ -197,6 +228,9 @@ export const resolveNotificationTarget = notification => {
     normalizeNumber(data.reviewId) ?? normalizeNumber(data.targetReviewId);
   const batchId =
     normalizeNumber(data.batchId) ?? normalizeNumber(data.settlementId);
+
+  const notificationLocalDate = getNotificationLocalDate(data);
+  const todayLocalDate = getTodayLocalDate();
 
   if (deepLink) {
     return {kind: 'link', value: deepLink};
@@ -235,13 +269,37 @@ export const resolveNotificationTarget = notification => {
     };
   }
 
+  if (isPartyCancelNotification) {
+    return {
+      kind: 'screen',
+      value: 'ReservationCancelList',
+      params: {
+        guesthouseId: fallbackGuesthouseId,
+        selectedDate: notificationLocalDate,
+      },
+    };
+  }
+
   if (isPartyNotification) {
+    const isPastDate = notificationLocalDate < todayLocalDate;
+
+    if (isPastDate) {
+      return {
+        kind: 'screen',
+        value: 'PastReservationList',
+        params: {
+          guesthouseId: fallbackGuesthouseId,
+          selectedDate: notificationLocalDate,
+        },
+      };
+    }
+
     return {
       kind: 'screen',
       value: 'GuesthouseManagement',
       params: {
         guesthouseId: fallbackGuesthouseId,
-        initialTab: '파티 예약',
+        initialTab: '파티 관리',
         reservationId,
         partyId,
       },

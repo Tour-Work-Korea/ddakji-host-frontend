@@ -1,7 +1,8 @@
-import React, {useEffect, useState, useMemo} from 'react';
-import {View, Text, Alert, TouchableOpacity, TextInput} from 'react-native';
+import React, {useState} from 'react';
+import {View, Text, TouchableOpacity, TextInput} from 'react-native';
 import Toast from 'react-native-toast-message';
 import {useNavigation} from '@react-navigation/native';
+import dayjs from 'dayjs';
 
 import styles from './MyMeetAdd.styles';
 import Header from '@components/Header';
@@ -107,7 +108,6 @@ const MyMeetEdit = () => {
   const countThumbnails = (arr = []) =>
     arr.filter(x => x?.isThumbnail === true).length;
   const exactlyOneThumbnail = (arr = []) => countThumbnails(arr) === 1;
-  const hasThumbnail = (arr = []) => countThumbnails(arr) >= 1;
   const enforceSingleThumbnail = (arr = []) => {
     // 첫 번째 썸네일만 유지하고 나머지는 false로 강제
     let seenThumb = false;
@@ -404,6 +404,32 @@ const MyMeetEdit = () => {
     );
   };
 
+  const handlePreview = () => {
+    navigation.navigate('MyMeetPreview', {
+      previewData: {
+        guesthouseName: '게스트하우스',
+        partyTitle: party.partyTitle,
+        description: party.description,
+        partyImages: (party.partyImages || []).map(img => ({
+          imageUrl: img.imageUrl,
+          isThumbnail: !!img.isThumbnail,
+        })),
+        events: (party.partyEvents || []).map(event => ({
+          eventName: event?.eventName ?? '',
+          eventDescription: event?.eventDescription ?? '',
+          partyEventImageUrls: Array.isArray(event?.partyEventImageUrls)
+            ? event.partyEventImageUrls
+            : [],
+        })),
+        partySchedule: party.partyInfo,
+        partyStartDateTime:
+          party.recruitStartDate || dayjs().format('YYYY-MM-DD'),
+        partyStartTime: party.partyStartTime,
+        partyEndTime: party.partyEndTime,
+      },
+    });
+  };
+
   return (
     <View style={styles.container}>
       <Header title="이벤트 수정" />
@@ -514,6 +540,14 @@ const MyMeetEdit = () => {
         {/* <TouchableOpacity style={styles.saveButton}>
           <Text style={[FONTS.fs_14_medium, styles.saveText]}>임시저장</Text>
         </TouchableOpacity> */}
+        <TouchableOpacity
+          style={styles.previewButton}
+          activeOpacity={0.8}
+          onPress={handlePreview}>
+          <Text style={[FONTS.fs_14_medium, styles.previewButtonText]}>
+            미리보기
+          </Text>
+        </TouchableOpacity>
         <TouchableOpacity
           style={[
             styles.submitButton,

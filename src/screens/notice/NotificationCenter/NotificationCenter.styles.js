@@ -134,7 +134,7 @@ export default StyleSheet.create({
     lineHeight: 20,
   },
   pendingActionLine: {
-    color: COLORS.semantic_red,
+    color: COLORS.grayscale_700,
   },
   notificationDate: {
     color: COLORS.grayscale_500,

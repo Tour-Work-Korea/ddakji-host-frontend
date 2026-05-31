@@ -3,7 +3,7 @@ import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 import notificationApi from '@utils/api/notificationApi';
-import {openNotificationTarget} from '@utils/notifications';
+import { openNotificationTarget } from '@utils/notifications';
 import { FONTS } from '@constants/fonts';
 import { COLORS } from '@constants/colors';
 import useUserStore from '@stores/userStore';
@@ -19,7 +19,7 @@ import styles from './NotificationCenter.styles';
 const FILTER_CHIPS = [
   { key: 'all', label: '전체' },
   { key: 'roomReservation', label: '객실 예약' },
-  { key: 'partyReservation', label: '파티 예약' },
+  { key: 'partyReservation', label: '파티 신청' },
   { key: 'settlement', label: '정산' },
   { key: 'notice', label: '공지사항' },
 ];
@@ -282,7 +282,7 @@ const NotificationCenter = () => {
     setNotifications(prev =>
       prev.map(notification =>
         notification.notificationId === item.notificationId
-          ? {...notification, isRead: true}
+          ? { ...notification, isRead: true }
           : notification,
       ),
     );

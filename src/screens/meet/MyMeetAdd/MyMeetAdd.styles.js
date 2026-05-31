@@ -96,6 +96,18 @@ const styles = StyleSheet.create({
   saveText: {
     color: COLORS.grayscale_800,
   },
+  previewButton: {
+    flexDirection: 'row',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 100,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.grayscale_100,
+  },
+  previewButtonText: {
+    color: COLORS.grayscale_800,
+  },
   submitButton: {
     flexDirection: 'row',
     paddingVertical: 8,

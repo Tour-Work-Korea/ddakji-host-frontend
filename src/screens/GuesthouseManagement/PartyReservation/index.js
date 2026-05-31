@@ -1,14 +1,14 @@
-import React, {useState} from 'react';
-import {Text, TouchableOpacity, View} from 'react-native';
+import React, { useState } from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
 
-import {FONTS} from '@constants/fonts';
+import { FONTS } from '@constants/fonts';
 import ReservationCheck from './ReservationCheck';
 import Settings from './Settings';
 import styles from './PartyReservation.styles';
 
-const chips = ['예약 확인', '설정'];
+const chips = ['신청 관리', '설정'];
 
-const PartyReservation = ({guesthouseId}) => {
+const PartyReservation = ({ guesthouseId }) => {
   const [activeChip, setActiveChip] = useState(chips[0]);
 
   return (

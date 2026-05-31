@@ -1,6 +1,7 @@
 import {
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   Image,
   Modal,
@@ -72,6 +73,17 @@ export default function WorkInfoSection({
             </TouchableOpacity>
           </View>
           <View>
+            <View style={recruitStyle.field}>
+              <Text style={styles.subsectionTitle}>근무지 주소</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="근무지 주소를 입력해주세요."
+                placeholderTextColor={COLORS.grayscale_400}
+                value={formData.location}
+                onChangeText={text => handleInputChange('location', text)}
+              />
+            </View>
+
             <View style={styles.dateRow}>
               <Text style={styles.subsectionTitle}>
                 근무지 사진을 추가해주세요
@@ -124,6 +136,10 @@ export default function WorkInfoSection({
 
 const recruitStyle = StyleSheet.create({
   headerText: [FONTS.fs_20_semibold],
+  field: {
+    gap: 8,
+    marginBottom: 20,
+  },
 
   lengthTextAll: {
     ...FONTS.fs_12_medium,
