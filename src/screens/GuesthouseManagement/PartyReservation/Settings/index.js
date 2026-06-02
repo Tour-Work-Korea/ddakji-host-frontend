@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Dimensions, Platform, Switch, Text, TouchableOpacity, View} from 'react-native';
+import {ActivityIndicator, Dimensions, Platform, Switch, Text, TouchableOpacity, View} from 'react-native';
 import Toast from 'react-native-toast-message';
 
 import AlertModal from '@components/modals/AlertModal';
@@ -21,6 +21,7 @@ const Settings = ({guesthouseId}) => {
   const [maxCapacity, setMaxCapacity] = useState(20);
   const [isApplyOpen, setIsApplyOpen] = useState(false);
   const [templateId, setTemplateId] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -28,85 +29,53 @@ const Settings = ({guesthouseId}) => {
         setDailyParty(null);
         setTemplateId(null);
         setIsApplyOpen(false);
+        setLoading(false);
         return;
       }
 
       try {
-        const response = await hostMeetApi.getTodayParties();
-        const rawParties = response?.data;
-        const parties = Array.isArray(rawParties)
-          ? rawParties
-          : rawParties?.content ?? [];
-        const matchedParty =
-          parties.find(
-            item => String(item?.guesthouseId) === String(guesthouseId),
-          ) || null;
+        setLoading(true);
+        const response = await hostMeetApi.getPartySettings(guesthouseId);
+        const data = response?.data;
+        if (data) {
+          setTemplateId(data.templateId || null);
+          setIsApplyOpen(Boolean(data.isApplyOpen));
+          setIsExposed(Boolean(data.isVisible));
+          setMaxCapacity(Number(data.maxAttendance) || 20);
 
-        setDailyParty(matchedParty);
-
-        if (matchedParty) {
-          setIsExposed(Boolean(matchedParty.isVisible));
-          setMaxCapacity(Number(matchedParty.maxAttendance) || 20);
-        }
-
-        // Fetch templates to get templateId and isApplyOpen status
-        const templateResponse = await hostMeetApi.getMyParties();
-        const rawTemplates = templateResponse?.data;
-        const templates = Array.isArray(rawTemplates)
-          ? rawTemplates
-          : rawTemplates?.content ?? [];
-        const matchedTemplate = templates.find(
-          item => String(item?.guesthouseId) === String(guesthouseId),
-        );
-
-        if (matchedTemplate) {
-          const tId = matchedTemplate.templateId;
-          setTemplateId(tId);
-          
-          if (matchedTemplate.isApplyOpen !== undefined) {
-            setIsApplyOpen(Boolean(matchedTemplate.isApplyOpen));
-          } else if (matchedTemplate.isApply !== undefined) {
-            setIsApplyOpen(Boolean(matchedTemplate.isApply));
-          } else if (tId) {
-            try {
-              const {data} = await hostMeetApi.getPartyTemplateDetail(tId);
-              if (data) {
-                setIsApplyOpen(
-                  data.isApplyOpen !== undefined
-                    ? Boolean(data.isApplyOpen)
-                    : Boolean(data.isApply),
-                );
-              }
-            } catch (err) {
-              console.error('Error fetching template details inside matchedTemplate:', err);
-            }
-          }
-        } else if (matchedParty) {
-          const tId = matchedParty.templateId || matchedParty.partyTemplateId;
-          if (tId) {
-            setTemplateId(tId);
-            try {
-              const {data} = await hostMeetApi.getPartyTemplateDetail(tId);
-              if (data) {
-                setIsApplyOpen(
-                  data.isApplyOpen !== undefined
-                    ? Boolean(data.isApplyOpen)
-                    : Boolean(data.isApply),
-                );
-              }
-            } catch (err) {
-              console.error('Error fetching fallback template details:', err);
-            }
-          }
+          setDailyParty({
+            partyId: data.partyId,
+            templateId: data.templateId,
+            partyTitle: data.partyTitle || '파티 이름 없음',
+            isVisible: data.isVisible,
+            maxAttendance: data.maxAttendance,
+            numOfAttendance: data.numOfAttendance,
+          });
+        } else {
+          setDailyParty(null);
+          setTemplateId(null);
+          setIsApplyOpen(false);
         }
       } catch (error) {
-        console.error('Error fetching daily party or templates:', error);
+        console.error('Error fetching party settings:', error);
         setDailyParty(null);
+        setTemplateId(null);
+        setIsApplyOpen(false);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchData();
   }, [guesthouseId]);
+
+  if (loading) {
+    return (
+      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+        <ActivityIndicator size="small" color={COLORS.primary_orange} />
+      </View>
+    );
+  }
 
   const currentAttendees = Number(dailyParty?.numOfAttendance) || 0;
   const partyTitle = dailyParty?.partyTitle || '파티 이름 없음';
