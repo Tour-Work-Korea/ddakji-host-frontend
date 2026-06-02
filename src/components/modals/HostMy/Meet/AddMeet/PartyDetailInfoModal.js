@@ -26,11 +26,10 @@ const EXTRA_MAX = 500;
 
 const SNACK_TAGS = [
   {key: 'PARTY_FOOD', label: '음식 제공'},
-  {key: 'PARTY_SNACK', label: '간식 제공'},
-  {key: 'PARTY_DRINK', label: '음료 제공'},
   {key: 'PARTY_ALCOHOL', label: '주류 제공'},
   {key: 'PARTY_INDIVIDUAL', label: '각자 준비'},
-  {key: 'PARTY_TOGETHER', label: '다함께 주문'},
+  {key: 'PARTY_TOGETHER', label: '같이 준비'},
+  {key: 'PARTY_FREE', label: '자유'},
 ];
 
 const normalize = initialValues => ({

@@ -25,6 +25,8 @@ import ImageAddIcon from '@assets/images/add_image_gray.svg';
 import PreviewIcon from '@assets/images/show_password.svg';
 import BackIcon from '@assets/images/chevron_left_gray.svg';
 import CheckWhite from '@assets/images/check_white.svg';
+import ChevronUpIcon from '@assets/images/chevron_up_gray.svg';
+import ChevronDownIcon from '@assets/images/chevron_down_gray.svg';
 
 const MODAL_HEIGHT = Math.round(Dimensions.get('window').height * 0.9);
 const MAX_SECTIONS = 10;
@@ -42,7 +44,8 @@ const PillSubmitButton = ({disabled, onPress}) => (
 );
 
 const normalizeInitialEvents = (arr = []) =>
-  (Array.isArray(arr) ? arr : []).map((e) => ({
+  (Array.isArray(arr) ? arr : []).map((e, index) => ({
+    id: e?.id || `${Date.now()}-${index}-${Math.random()}`,
     eventName: (typeof e?.eventName === 'string' ? e.eventName : (typeof e === 'string' ? e : '')) || '',
     eventDescription: typeof e?.eventDescription === 'string' ? e.eventDescription : '',
     // 단락당 1장만 쓰지만 API는 배열 요구 → 첫 번째만 사용
@@ -110,11 +113,33 @@ const MeetEventModal = ({
   // 섹션 조작
   const addSection = () => {
     if (sections.length >= MAX_SECTIONS) return;
-    setSections((prev) => [...prev, {eventName: '', eventDescription: '', imageUrl: ''}]);
+    setSections((prev) => [...prev, {id: `${Date.now()}-${Math.random()}`, eventName: '', eventDescription: '', imageUrl: ''}]);
   };
 
   const removeSection = (idx) => {
     setSections((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const moveSectionUp = (idx) => {
+    if (idx === 0) return;
+    setSections((prev) => {
+      const next = [...prev];
+      const temp = next[idx];
+      next[idx] = next[idx - 1];
+      next[idx - 1] = temp;
+      return next;
+    });
+  };
+
+  const moveSectionDown = (idx) => {
+    if (idx === sections.length - 1) return;
+    setSections((prev) => {
+      const next = [...prev];
+      const temp = next[idx];
+      next[idx] = next[idx + 1];
+      next[idx + 1] = temp;
+      return next;
+    });
   };
 
   const setField = (idx, key, value) => {
@@ -214,15 +239,27 @@ const MeetEventModal = ({
                         const titleLen = s.eventName.length;
                         const descLen = s.eventDescription.length;
                         return (
-                          <View key={`sec-${idx}`} style={styles.sectionCard}>
+                          <View key={s.id} style={styles.sectionCard}>
                             {/* 섹션 헤더 */}
                             <View style={styles.sectionHeader}>
                               <Text style={[FONTS.fs_16_semibold, {color: COLORS.grayscale_900}]}>
                                 단락 {order}
                               </Text>
-                              <TouchableOpacity onPress={() => removeSection(idx)} style={styles.circleBtnSmall}>
-                                <MinusIcon width={18} height={18} />
-                              </TouchableOpacity>
+                              <View style={styles.sectionHeaderActions}>
+                                {idx > 0 && (
+                                  <TouchableOpacity onPress={() => moveSectionUp(idx)} style={styles.circleBtnSmall}>
+                                    <ChevronUpIcon width={18} height={18} />
+                                  </TouchableOpacity>
+                                )}
+                                {idx < sections.length - 1 && (
+                                  <TouchableOpacity onPress={() => moveSectionDown(idx)} style={styles.circleBtnSmall}>
+                                    <ChevronDownIcon width={18} height={18} />
+                                  </TouchableOpacity>
+                                )}
+                                <TouchableOpacity onPress={() => removeSection(idx)} style={styles.circleBtnSmall}>
+                                  <MinusIcon width={18} height={18} />
+                                </TouchableOpacity>
+                              </View>
                             </View>
 
                             {/* 이미지 (1장 필수) */}
@@ -385,6 +422,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
+  },
+  sectionHeaderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
 
   imageInputBox: {

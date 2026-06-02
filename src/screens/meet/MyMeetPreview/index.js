@@ -35,12 +35,10 @@ const TABS = [
 
 const SNACK_TAG_LABEL = {
   PARTY_FOOD: '음식 제공',
-  PARTY_DRINK: '음료 제공',
-  PARTY_SNACK: '간식 제공',
   PARTY_ALCOHOL: '주류 제공',
   PARTY_INDIVIDUAL: '각자 준비',
-  PARTY_TOGETHER: '다함께 준비',
-  PARTY_NO_SMOKE: '금연',
+  PARTY_TOGETHER: '같이 준비',
+  PARTY_FREE: '자유',
 };
 
 const PARKING_TAG_LABEL = {
