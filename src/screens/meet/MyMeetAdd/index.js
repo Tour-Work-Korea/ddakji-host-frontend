@@ -64,7 +64,7 @@ const MyMeetAdd = () => {
 
     // 상세 안내(페이지)
     detailSchedule: '',
-    snackTagList: [], // ["PARTY_SNACK", ...]
+    snackTagList: [], // ["PARTY_FOOD", ...]
     snacks: '',
     extraInfo: '',
 
