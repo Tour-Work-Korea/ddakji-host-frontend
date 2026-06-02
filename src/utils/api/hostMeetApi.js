@@ -69,6 +69,10 @@ const hostMeetApi = {
       },
     }),
 
+  // 호스트 파티 설정 화면 통합 조회 API
+  getPartySettings: (guesthouseId) =>
+    api.get(`/host/guesthouses/${guesthouseId}/party-settings`),
+
   // 모임 예약 승인/거절 API
   approvePartyReservation: (partyId, reservationId, isApproved, cancleReason = '') =>
     api.post(`/host/parties/daily/${partyId}/reservations/${reservationId}/approve`, null, {
@@ -80,3 +84,4 @@ const hostMeetApi = {
 };
 
 export default hostMeetApi;
+
