@@ -128,6 +128,10 @@ const buildRoomBasicDiff = (base, cur) => {
   const curPrice = toNum(cur?.roomPrice);
   if (basePrice !== curPrice && curPrice != null) payload.roomPrice = curPrice;
 
+  const baseExtraPrice = toNum(base?.extraPersonPrice ?? base?.extraPersonFee);
+  const curExtraPrice = toNum(cur?.extraPersonPrice ?? cur?.extraPersonFee);
+  if (baseExtraPrice !== curExtraPrice && curExtraPrice != null) payload.extraPersonPrice = curExtraPrice;
+
   return payload;
 };
 
@@ -145,6 +149,7 @@ const buildRoomBasicFull = (cur) => {
     ),
     roomDescription: cur?.roomDesc ?? cur?.roomDescription ?? '',
     roomPrice: toNum(cur?.roomPrice),
+    extraPersonPrice: toNum(cur?.extraPersonPrice ?? cur?.extraPersonFee) || 0,
   };
 
   if (roomType === 'DORMITORY') {
@@ -170,6 +175,7 @@ const EMPTY_ROOM = {
   dormitoryGenderType: null,
   femaleOnly: false,
   roomPrice: '',
+  extraPersonPrice: '',
 };
 
 const normalizeRooms = (list = []) =>
@@ -196,6 +202,7 @@ const normalizeRooms = (list = []) =>
       dormitoryGenderType: normalizedDormitoryGenderType,
       femaleOnly: r.femaleOnly ?? false,
       roomPrice: r.roomPrice != null ? String(r.roomPrice) : '',
+      extraPersonPrice: r.extraPersonPrice != null ? String(r.extraPersonPrice) : r.extraPersonFee != null ? String(r.extraPersonFee) : '',
     };
   });
 

@@ -62,6 +62,7 @@ const mapRoomDetailToEditableRoom = room => ({
   roomMaxCapacity: room?.roomMaxCapacity ?? room?.roomCapacity ?? null,
   roomDesc: room?.roomDesc ?? room?.roomDescription ?? '',
   roomPrice: room?.roomPrice != null ? String(room.roomPrice) : '',
+  extraPersonPrice: room?.extraPersonPrice != null ? String(room.extraPersonPrice) : room?.extraPersonFee != null ? String(room.extraPersonFee) : '',
   roomExtraFees: room?.roomExtraFees ?? [],
   roomImages: (room?.roomImages ?? []).map(image => ({
     id: image?.id ?? undefined,

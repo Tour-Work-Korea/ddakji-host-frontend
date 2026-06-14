@@ -94,6 +94,12 @@ const RoomTypePrivate = ({ data, setData, onBack, onApply }) => {
     !Number.isNaN(maxEtcNum) &&
     maxEtcNum < minCapacity;
 
+  const maxCapacity = (() => {
+    if (maxCapacityMode === 'preset') return Number(data.roomMaxCapacity);
+    if (maxCapacityMode === 'etc') return Number(maxEtcInput);
+    return null;
+  })();
+
   const handleSelectRoomSize = (val) => {
     setCapacityMode('preset');
     setEtcInput('');
@@ -111,6 +117,14 @@ const RoomTypePrivate = ({ data, setData, onBack, onApply }) => {
     setData({
       ...data,
       roomPrice: onlyNums,
+    });
+  };
+
+  const handleExtraPriceChange = (text) => {
+    const onlyNums = text.replace(/[^0-9]/g, '');
+    setData({
+      ...data,
+      extraPersonPrice: onlyNums,
     });
   };
 
@@ -148,7 +162,8 @@ const RoomTypePrivate = ({ data, setData, onBack, onApply }) => {
     isMaxBelowMin ||
     !data.roomPrice ||
     isNaN(Number(data.roomPrice)) ||
-    isPriceTooLow;
+    isPriceTooLow ||
+    (minCapacity != null && maxCapacity != null && maxCapacity > minCapacity && (!data.extraPersonPrice || isNaN(Number(data.extraPersonPrice))));
 
   const handleApply = () => {
     if (capacityMode === 'none' || maxCapacityMode === 'none') return;
@@ -172,6 +187,7 @@ const RoomTypePrivate = ({ data, setData, onBack, onApply }) => {
       roomCapacity: finalCapacity,
       roomMaxCapacity: finalMaxCapacity,
       dormitoryGenderType: 'MIXED',
+      extraPersonPrice: finalMaxCapacity > finalCapacity ? (Number(data.extraPersonPrice) || 0) : 0,
     };
     setData(finalData);
     onApply && onApply(finalData);
@@ -338,6 +354,29 @@ const RoomTypePrivate = ({ data, setData, onBack, onApply }) => {
           />
           <Text style={[FONTS.fs_14_regular, { marginLeft: 8 }]}>원</Text>
         </View>
+
+        {/* 인원 추가 요금 */}
+        {minCapacity != null && maxCapacity != null && maxCapacity > minCapacity && (
+          <>
+            <Text style={[styles.title, FONTS.fs_16_medium, { marginTop: 20 }]}>
+              인원 추가 요금 (1인당)
+            </Text>
+            <View style={styles.priceRow}>
+              <TextInput
+                style={styles.priceInput}
+                value={data.extraPersonPrice?.toString()}
+                keyboardType="numeric"
+                onChangeText={handleExtraPriceChange}
+                placeholderTextColor={COLORS.grayscale_400}
+                placeholder="예: 10000"
+              />
+              <Text style={[FONTS.fs_14_regular, { marginLeft: 8 }]}>원</Text>
+            </View>
+            <Text style={[FONTS.fs_12_regular, { color: COLORS.grayscale_400, marginTop: 6 }]}>
+              기준 인원 초과 시 1인당 부과되는 추가 요금입니다.
+            </Text>
+          </>
+        )}
       </ScrollView>
 
       {/* 하단 버튼 */}
