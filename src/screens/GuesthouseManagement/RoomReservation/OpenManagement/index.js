@@ -151,26 +151,48 @@ const OpenManagement = ({ guesthouseId }) => {
 
   const fetchCalendarData = useCallback(async (yearMonth) => {
     if (!guesthouseId || rooms.length === 0 || !yearMonth) return;
-    const representativeRoomId = rooms[0].roomId;
 
     try {
       const [year, month] = yearMonth.split('-');
       const from = `${year}-${month}-01`;
       const toInclusive = `${year}-${month}-${getDaysInMonth(year, month)}`;
 
-      const res = await hostGuesthouseApi.getRoomInventoryCalendar(guesthouseId, representativeRoomId, from, toInclusive);
-      let payload = res.data?.data ?? res.data;
-      let data = Array.isArray(payload) ? payload : payload?.days || payload?.inventories || [];
+      const promises = rooms.map(room =>
+        hostGuesthouseApi.getRoomInventoryCalendar(guesthouseId, room.roomId, from, toInclusive)
+          .catch(e => {
+            console.error(`객실 ${room.roomId} 일정 조회 실패:`, e);
+            return null;
+          })
+      );
+
+      const responses = await Promise.all(promises);
 
       const dataMap = {};
-      data.forEach(item => {
-        if (item.date) {
-          dataMap[item.date] = item;
-        }
+
+      responses.forEach(res => {
+        if (!res) return;
+        let payload = res.data?.data ?? res.data;
+        let data = Array.isArray(payload) ? payload : payload?.days || payload?.inventories || [];
+
+        data.forEach(item => {
+          if (item.date) {
+            const isItemClosed = item.isClosed === true || item.status === 'CLOSED';
+            if (!dataMap[item.date]) {
+              dataMap[item.date] = {
+                date: item.date,
+                isClosed: isItemClosed
+              };
+            } else {
+              // 하나라도 오픈된 방이 있다면 전체 상태는 오픈(isClosed = false)
+              dataMap[item.date].isClosed = dataMap[item.date].isClosed && isItemClosed;
+            }
+          }
+        });
       });
+
       setCalendarData(prev => ({ ...prev, ...dataMap }));
     } catch (e) {
-      console.error('예약 일정 조회 실패:', e);
+      console.error('예약 일정 전체 조회 실패:', e);
     }
   }, [guesthouseId, rooms]);
 
