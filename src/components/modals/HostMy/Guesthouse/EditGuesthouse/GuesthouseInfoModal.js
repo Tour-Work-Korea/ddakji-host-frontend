@@ -11,7 +11,6 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Keyboard,
-  Platform,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 
@@ -28,6 +27,36 @@ import XBtn from '@assets/images/x_gray.svg';
 import ClockIcon from '@assets/images/clock_gray.svg';
 
 const MODAL_HEIGHT = Math.round(Dimensions.get('window').height * 0.9);
+const CONTENT_CATEGORY_OPTIONS = [
+  { value: 'POTLUCK', label: '포틀럭' },
+  { value: 'BOOK', label: '독서' },
+  { value: 'DINNER_PARTY', label: '디너파티' },
+  { value: 'PROGRAM', label: '프로그램' },
+  { value: 'REST', label: '쉼' },
+];
+
+const getContentCategoryValue = (category) => {
+  if (typeof category === 'string') {
+    return category;
+  }
+  return (
+    category?.contentCategory ||
+    category?.contentCategoryType ||
+    category?.category ||
+    category?.value ||
+    ''
+  );
+};
+
+const normalizeContentCategories = (categories) => {
+  const allowed = new Set(CONTENT_CATEGORY_OPTIONS.map(option => option.value));
+  return Array.isArray(categories)
+    ? categories
+        .map(getContentCategoryValue)
+        .filter(category => allowed.has(category))
+        .slice(0, 2)
+    : [];
+};
 
 const GuesthouseInfoModal = ({
   visible,
@@ -44,6 +73,7 @@ const GuesthouseInfoModal = ({
   defaultCheckIn = '15:00:00',
   defaultCheckOut = '11:00:00',
   defaultHashtags = [],
+  defaultContentCategories = [],
 }) => {
   const guesthouseHashtags = useGuesthouseMetaStore(
     state => state.guesthouseHashtags,
@@ -51,6 +81,7 @@ const GuesthouseInfoModal = ({
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [baseline, setBaseline] = useState(null);
   const [baselineTags, setBaselineTags] = useState([]);
+  const [baselineContentCategories, setBaselineContentCategories] = useState([]);
 
   useEffect(() => {
     const showSub = Keyboard.addListener('keyboardDidShow', () => setIsKeyboardVisible(true));
@@ -69,6 +100,7 @@ const GuesthouseInfoModal = ({
   const [selectedTags, setSelectedTags] = useState([]); // [{id, hashtag}]
   const [checkIn, setCheckIn] = useState('15:00:00');
   const [checkOut, setCheckOut] = useState('11:00:00');
+  const [selectedContentCategories, setSelectedContentCategories] = useState([]);
   const [timePickerVisible, setTimePickerVisible] = useState({ type: null, visible: false });
 
   // 마지막 적용된 값 저장
@@ -90,6 +122,7 @@ const GuesthouseInfoModal = ({
       setSelectedTags(appliedData.selectedTags);
       setCheckIn(appliedData.checkIn);
       setCheckOut(appliedData.checkOut);
+      setSelectedContentCategories(appliedData.contentCategories || []);
       setBaseline({
         name: appliedData.name,
         address: appliedData.address,
@@ -99,6 +132,7 @@ const GuesthouseInfoModal = ({
         checkOut: appliedData.checkOut,
       });
       setBaselineTags((appliedData.selectedTags || []).map(t => t.id));
+      setBaselineContentCategories(appliedData.contentCategories || []);
     } else {
       // 부모 기본값으로 초기화
       setName(defaultName || '');
@@ -107,6 +141,9 @@ const GuesthouseInfoModal = ({
       setPhone(defaultPhone || '');
       setCheckIn(defaultCheckIn || '15:00:00');
       setCheckOut(defaultCheckOut || '11:00:00');
+      const presetContentCategories = normalizeContentCategories(defaultContentCategories);
+      setSelectedContentCategories(presetContentCategories);
+      setBaselineContentCategories(presetContentCategories);
 
       // 태그 프리셋 (최대 3개)
       const preset = guesthouseHashtags.filter(t =>
@@ -137,6 +174,7 @@ const GuesthouseInfoModal = ({
     defaultCheckIn,
     defaultCheckOut,
     defaultHashtags,
+    defaultContentCategories,
     guesthouseHashtags,
   ]);
 
@@ -145,6 +183,7 @@ const GuesthouseInfoModal = ({
     !name?.trim() ||
     !address?.trim() ||
     !phone?.trim() ||
+    selectedContentCategories.length === 0 ||
     selectedTags.length === 0;
   
   // 단순 닫기
@@ -163,6 +202,20 @@ const GuesthouseInfoModal = ({
     }
   };
 
+  const toggleContentCategory = (value) => {
+    const exists = selectedContentCategories.includes(value);
+    if (exists) {
+      setSelectedContentCategories(
+        selectedContentCategories.filter(category => category !== value),
+      );
+      return;
+    }
+    if (selectedContentCategories.length >= 2) {
+      return;
+    }
+    setSelectedContentCategories([...selectedContentCategories, value]);
+  };
+
   // 변경된 값만 추린 서버 보낼 데이터
   const pickChangedBasics = (prev, next) => {
     const trim = (v) => (typeof v === 'string' ? v.trim() : v);
@@ -176,7 +229,7 @@ const GuesthouseInfoModal = ({
     ];
     const payload = {};
     for (const [prevKey, nextKey] of fields) {
-      const prevVal = trim(prev?.[prevKey] ?? '');
+      const prevVal = trim(prev?.[prevKey] ?? prev?.[nextKey] ?? '');
       const nextVal = trim(next?.[nextKey] ?? '');
       if (nextVal !== '' && prevVal !== nextVal) {
         // 서버 스키마에 맞춰 key를 prevKey로 보냄
@@ -190,6 +243,20 @@ const GuesthouseInfoModal = ({
   const idsChanged = (prevIds = [], nextIds = []) => {
     const a = Array.from(new Set(prevIds)).sort((x, y) => x - y);
     const b = Array.from(new Set(nextIds)).sort((x, y) => x - y);
+    if (a.length !== b.length) {
+      return true;
+    }
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] !== b[i]) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  const contentCategoriesChanged = (prevCategories = [], nextCategories = []) => {
+    const a = Array.from(new Set(prevCategories)).sort();
+    const b = Array.from(new Set(nextCategories)).sort();
     if (a.length !== b.length) return true;
     for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return true;
     return false;
@@ -205,14 +272,22 @@ const GuesthouseInfoModal = ({
       selectedTags,
       checkIn,
       checkOut,
+      contentCategories: selectedContentCategories,
     };
     setAppliedData(snapshot);
 
     const payload = pickChangedBasics(baseline || {}, snapshot);
     const nextTagIds = selectedTags.map(t => t.id);
     const tagWasChanged = idsChanged(baselineTags, nextTagIds);
+    const contentWasChanged = contentCategoriesChanged(
+      baselineContentCategories,
+      selectedContentCategories,
+    );
+    if (contentWasChanged) {
+      payload.contentCategories = selectedContentCategories.slice(0, 2);
+    }
     // 아무 것도 안 바뀌었으면 API 호출 생략
-    if (Object.keys(payload).length === 0 && !tagWasChanged) {
+    if (Object.keys(payload).length === 0 && !tagWasChanged && !contentWasChanged) {
       Toast.show({ type: 'success', text1: '수정이 등록되었습니다!', position: 'top' });
       onClose();
       return;
@@ -238,6 +313,7 @@ const GuesthouseInfoModal = ({
       // 다음 비교를 위한 기준값 갱신
       setBaseline({ name, address, addressDetail, phone, checkIn, checkOut });
       setBaselineTags(nextTagIds.slice(0, 3));
+      setBaselineContentCategories(selectedContentCategories.slice(0, 2));
 
       // 부모에 최신 값 전달 (미리보기 용)
       onSelect({
@@ -248,6 +324,7 @@ const GuesthouseInfoModal = ({
         tagIds: nextTagIds,
         checkIn,
         checkOut,
+        contentCategories: selectedContentCategories,
       });
       onClose();
     } catch (e) {
@@ -388,6 +465,35 @@ const GuesthouseInfoModal = ({
                 setTimePickerVisible({ type: null, visible: false });
               }}
             />
+
+            {/* 콘텐츠 */}
+            <Text style={[FONTS.fs_16_medium, { marginTop: 20 }]}>콘텐츠</Text>
+            <Text style={[FONTS.fs_12_medium, styles.subText]}>최대 2개 선택가능</Text>
+            <View style={styles.contentCategoryContainer}>
+              {CONTENT_CATEGORY_OPTIONS.map(category => {
+                const isSelected = selectedContentCategories.includes(category.value);
+                return (
+                  <TouchableOpacity
+                    key={category.value}
+                    onPress={() => toggleContentCategory(category.value)}
+                    style={[
+                      styles.contentCategoryBtn,
+                      isSelected && styles.contentCategoryBtnSelected,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        FONTS.fs_14_medium,
+                        styles.contentCategoryText,
+                        isSelected && styles.contentCategoryTextSelected,
+                      ]}
+                    >
+                      {category.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
 
             {/* 태그 */}
             <Text style={[FONTS.fs_16_medium, { marginTop: 20 }]}>
@@ -536,6 +642,29 @@ const styles = StyleSheet.create({
   },
   tagSelected: {
     color: COLORS.primary_orange,
+  },
+
+  // 콘텐츠
+  contentCategoryContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 12,
+  },
+  contentCategoryBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 100,
+    backgroundColor: COLORS.grayscale_100,
+  },
+  contentCategoryBtnSelected: {
+    backgroundColor: COLORS.primary_orange,
+  },
+  contentCategoryText: {
+    color: COLORS.grayscale_900,
+  },
+  contentCategoryTextSelected: {
+    color: COLORS.grayscale_0,
   },
 
   // 체크인 체크아웃

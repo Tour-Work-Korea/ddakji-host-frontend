@@ -42,7 +42,8 @@ const hostGuesthouseApi = {
    * body {
    *  guesthouseName, guesthouseAddress, guesthousePhone,
    *  guesthouseDetailAddress, guesthouseShortIntro,
-   *  guesthouseLongDescription, checkIn, checkOut, rules
+   *  guesthouseLongDescription, checkIn, checkOut,
+   *  contentCategories, rules
    * }
    * 부분 수정 가능: 필요한 필드만 포함해서 보내면 됨
    */
