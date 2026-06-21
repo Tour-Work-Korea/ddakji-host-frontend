@@ -52,6 +52,7 @@ const MyGuesthouseEdit = () => {
     guesthouseLongDesc: '',
     checkIn: '15:00:00',
     checkOut: '11:00:00',
+    contentCategories: [],
     guesthouseImages: [],
     roomInfos: [],
     refundPolicies: [],
@@ -131,7 +132,8 @@ const MyGuesthouseEdit = () => {
       hashtagIds: data.tagIds,   // 서버 전송/프리셋(id)
       hashtags: namesFromIds,    // 미리보기/렌더용(이름)
       checkIn: data.checkIn,
-      checkOut: data.checkOut
+      checkOut: data.checkOut,
+      contentCategories: data.contentCategories || [],
     }));
     setInfoModalReset(false); // 닫아도 초기화 안 함
     setInfoModalVisible(false);
@@ -321,6 +323,7 @@ const MyGuesthouseEdit = () => {
         defaultPhone={guesthouse?.guesthousePhone || ''}
         defaultCheckIn={guesthouse?.checkIn || '15:00:00'}
         defaultCheckOut={guesthouse?.checkOut || '11:00:00'}
+        defaultContentCategories={guesthouse?.contentCategories || []}
         defaultHashtags={
           (guesthouse?.hashtags || [])
             .map(name => findHashtagMeta(guesthouseHashtags, name))

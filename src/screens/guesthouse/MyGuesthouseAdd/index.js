@@ -46,6 +46,7 @@ const MyGuesthouseAdd = () => {
     guesthouseLongDesc: '',
     checkIn: '15:00:00',
     checkOut: '11:00:00',
+    contentCategories: [],
     guesthouseImages: [],
     roomInfos: [],
     refundPolicies: [],
@@ -87,7 +88,8 @@ const MyGuesthouseAdd = () => {
       guesthousePhone: data.phone,
       hashtagIds: data.tagIds,
       checkIn: data.checkIn,
-      checkOut: data.checkOut
+      checkOut: data.checkOut,
+      contentCategories: data.contentCategories || [],
     }));
     setInfoModalReset(false); // 닫아도 초기화 안 함
     setInfoModalVisible(false);
@@ -177,6 +179,8 @@ const MyGuesthouseAdd = () => {
     isNonEmpty(guesthouse.guesthouseShortIntro) &&
     isNonEmpty(guesthouse.guesthouseLongDesc) &&
     isNonEmpty(guesthouse.rules) && 
+    Array.isArray(guesthouse.contentCategories) &&
+    guesthouse.contentCategories.length > 0 &&
     // 체크인/체크아웃은 기본값 존재하므로 생략 가능 (원하면 isNonEmpty로 체크)
     // 이미지(숙소)
     Array.isArray(guesthouse.guesthouseImages) &&
@@ -242,6 +246,7 @@ const MyGuesthouseAdd = () => {
         guesthousePhone: guesthouse.guesthousePhone,
         checkIn: toLocalTime(guesthouse.checkIn),
         checkOut: toLocalTime(guesthouse.checkOut),
+        contentCategories: guesthouse.contentCategories,
         hashtagIds: guesthouse.hashtagIds,
         guesthouseShortIntro: guesthouse.guesthouseShortIntro,
         guesthouseImages: guesthouse.guesthouseImages,
@@ -279,6 +284,8 @@ const MyGuesthouseAdd = () => {
     isNonEmpty(guesthouse.guesthousePhone) &&
     isNonEmpty(guesthouse.checkIn) &&
     isNonEmpty(guesthouse.checkOut) &&
+    Array.isArray(guesthouse.contentCategories) &&
+    guesthouse.contentCategories.length > 0 &&
     Array.isArray(guesthouse.hashtagIds) &&
     guesthouse.hashtagIds.length > 0;
 
@@ -325,6 +332,7 @@ const MyGuesthouseAdd = () => {
         guesthouseLongDesc: guesthouse.guesthouseLongDesc,
         checkIn: guesthouse.checkIn,
         checkOut: guesthouse.checkOut,
+        contentCategories: guesthouse.contentCategories,
         guesthouseImages: guesthouse.guesthouseImages,
         roomInfos: guesthouse.roomInfos,
         refundPolicies: guesthouse.refundPolicies,

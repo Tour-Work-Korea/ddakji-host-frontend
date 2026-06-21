@@ -121,6 +121,7 @@ const MyGuesthousePreview = ({ route }) => {
     guesthouseLongDesc: d.guesthouseLongDesc || '',
     checkIn: d.checkIn || '15:00:00',
     checkOut: d.checkOut || '11:00:00',
+    contentCategories: d.contentCategories || [],
 
     guesthouseImages: (d.guesthouseImages || []).map(img => ({
       id: img.id,
