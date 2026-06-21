@@ -9,8 +9,7 @@ import {
   TextInput,
   ScrollView,
   KeyboardAvoidingView,
-  Platform,
-  Pressable
+  Pressable,
 } from 'react-native';
 
 import { FONTS } from '@constants/fonts';
@@ -25,6 +24,13 @@ import XBtn from '@assets/images/x_gray.svg';
 import ClockIcon from '@assets/images/clock_gray.svg';
 
 const MODAL_HEIGHT = Math.round(Dimensions.get('window').height * 0.9);
+const CONTENT_CATEGORY_OPTIONS = [
+  { value: 'POTLUCK', label: '포틀럭' },
+  { value: 'BOOK', label: '독서' },
+  { value: 'DINNER_PARTY', label: '디너파티' },
+  { value: 'PROGRAM', label: '프로그램' },
+  { value: 'REST', label: '쉼' },
+];
 
 const GuesthouseInfoModal = ({ visible, onClose, onSelect, shouldResetOnClose }) => {
   const guesthouseHashtags = useGuesthouseMetaStore(
@@ -38,6 +44,7 @@ const GuesthouseInfoModal = ({ visible, onClose, onSelect, shouldResetOnClose })
 
   const [checkIn, setCheckIn] = useState('15:00:00');
   const [checkOut, setCheckOut] = useState('11:00:00');
+  const [selectedContentCategories, setSelectedContentCategories] = useState([]);
   const [timePickerVisible, setTimePickerVisible] = useState({ type: null, visible: false });
 
   // 마지막 적용된 값 저장
@@ -55,13 +62,15 @@ const GuesthouseInfoModal = ({ visible, onClose, onSelect, shouldResetOnClose })
       setSelectedTags(appliedData.selectedTags);
       setCheckIn(appliedData.checkIn);
       setCheckOut(appliedData.checkOut);
+      setSelectedContentCategories(appliedData.contentCategories || []);
     }
-  }, [visible]);
+  }, [visible, appliedData]);
 
   // 버튼 활성화 조건
   const isDisabled =
     !customAddress ||
     !customPhone ||
+    selectedContentCategories.length === 0 ||
     selectedTags.length === 0;
   
   // 단순 닫기일 때만 초기화
@@ -75,6 +84,7 @@ const GuesthouseInfoModal = ({ visible, onClose, onSelect, shouldResetOnClose })
         setSelectedTags(appliedData.selectedTags);
         setCheckIn(appliedData.checkIn);
         setCheckOut(appliedData.checkOut);
+        setSelectedContentCategories(appliedData.contentCategories || []);
       } else {
         // 처음 상태로 초기화
         setCustomAddress('');
@@ -83,6 +93,7 @@ const GuesthouseInfoModal = ({ visible, onClose, onSelect, shouldResetOnClose })
         setSelectedTags([]);
         setCheckIn('15:00:00');
         setCheckOut('11:00:00');
+        setSelectedContentCategories([]);
       }
     }
     onClose();
@@ -99,6 +110,20 @@ const GuesthouseInfoModal = ({ visible, onClose, onSelect, shouldResetOnClose })
     }
   };
 
+  const toggleContentCategory = (value) => {
+    const exists = selectedContentCategories.includes(value);
+    if (exists) {
+      setSelectedContentCategories(
+        selectedContentCategories.filter(category => category !== value),
+      );
+      return;
+    }
+    if (selectedContentCategories.length >= 2) {
+      return;
+    }
+    setSelectedContentCategories([...selectedContentCategories, value]);
+  };
+
   // 적용 버튼 눌렀을 때
   const handleConfirm = () => {
     const tagIds = selectedTags.map((tag) => tag.id);
@@ -110,7 +135,8 @@ const GuesthouseInfoModal = ({ visible, onClose, onSelect, shouldResetOnClose })
       customPhone,
       selectedTags,
       checkIn,
-      checkOut
+      checkOut,
+      contentCategories: selectedContentCategories,
     });
 
     onSelect({
@@ -119,7 +145,8 @@ const GuesthouseInfoModal = ({ visible, onClose, onSelect, shouldResetOnClose })
       phone: customPhone,
       tagIds,
       checkIn,
-      checkOut
+      checkOut,
+      contentCategories: selectedContentCategories,
     });    
     
     onClose();
@@ -244,6 +271,35 @@ const GuesthouseInfoModal = ({ visible, onClose, onSelect, shouldResetOnClose })
                 setTimePickerVisible({ type: null, visible: false });
               }}
             />
+
+            {/* 콘텐츠 */}
+            <Text style={[FONTS.fs_16_medium, { marginTop: 20 }]}>콘텐츠</Text>
+            <Text style={[FONTS.fs_12_medium, styles.subText]}>최대 2개 선택가능</Text>
+            <View style={styles.contentCategoryContainer}>
+              {CONTENT_CATEGORY_OPTIONS.map(category => {
+                const isSelected = selectedContentCategories.includes(category.value);
+                return (
+                  <TouchableOpacity
+                    key={category.value}
+                    onPress={() => toggleContentCategory(category.value)}
+                    style={[
+                      styles.contentCategoryBtn,
+                      isSelected && styles.contentCategoryBtnSelected,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        FONTS.fs_14_medium,
+                        styles.contentCategoryText,
+                        isSelected && styles.contentCategoryTextSelected,
+                      ]}
+                    >
+                      {category.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
 
             {/* 태그 */}
             <Text style={[FONTS.fs_16_medium, { marginTop: 20 }]}>
@@ -388,6 +444,29 @@ const styles = StyleSheet.create({
   },
   tagSelected: {
     color: COLORS.primary_orange,
+  },
+
+  // 콘텐츠
+  contentCategoryContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 12,
+  },
+  contentCategoryBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 100,
+    backgroundColor: COLORS.grayscale_100,
+  },
+  contentCategoryBtnSelected: {
+    backgroundColor: COLORS.primary_orange,
+  },
+  contentCategoryText: {
+    color: COLORS.grayscale_900,
+  },
+  contentCategoryTextSelected: {
+    color: COLORS.grayscale_0,
   },
 
   // 체크인 체크아웃
