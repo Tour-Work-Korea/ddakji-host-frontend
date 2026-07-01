@@ -1,7 +1,6 @@
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   Image,
   Modal,
@@ -10,6 +9,7 @@ import {
 
 import {uploadMultiImage} from '@utils/imageUploadHandler';
 import AlertModal from '@components/modals/AlertModal';
+import ButtonScarlet from '@components/ButtonScarlet';
 
 import {FONTS} from '@constants/fonts';
 import {COLORS} from '@constants/colors';
@@ -72,54 +72,48 @@ export default function WorkInfoSection({
               <XBtn width={24} height={24} />
             </TouchableOpacity>
           </View>
-          <View>
-            <View style={recruitStyle.field}>
-              <Text style={styles.subsectionTitle}>근무지 주소</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="근무지 주소를 입력해주세요."
-                placeholderTextColor={COLORS.grayscale_400}
-                value={formData.location}
-                onChangeText={text => handleInputChange('location', text)}
-              />
-            </View>
-
-            <View style={styles.dateRow}>
-              <Text style={styles.subsectionTitle}>
-                근무지 사진을 추가해주세요
-              </Text>
-              <Text style={recruitStyle.lengthTextAll}>
-                <Text style={recruitStyle.lengthText}>
-                  {formData.recruitImage.length}
+          <View style={recruitStyle.body}>
+            <View>
+              <View style={styles.dateRow}>
+                <Text style={styles.subsectionTitle}>
+                  근무지 사진을 추가해주세요
                 </Text>
-                /{limitImage}
-              </Text>
-            </View>
+                <Text style={recruitStyle.lengthTextAll}>
+                  <Text style={recruitStyle.lengthText}>
+                    {formData.recruitImage.length}
+                  </Text>
+                  /{limitImage}
+                </Text>
+              </View>
 
-            <TouchableOpacity
-              style={styles.addPhotoButton}
-              onPress={pickImage}
-              disabled={formData?.recruitImage?.length === limitImage}>
-              <Gray_ImageAdd width={30} height={30} />
-            </TouchableOpacity>
-            <View style={styles.photoGrid}>
-              {formData.recruitImage.map((imageObj, index) => (
-                <View key={index}>
-                  <Image
-                    source={{uri: imageObj.recruitImageUrl}}
-                    style={[
-                      styles.photoItem,
-                      imageObj.isThumbnail ? styles.thumbnail : '',
-                    ]}
-                    resizeMode="cover"
-                  />
-                  <TouchableOpacity
-                    style={styles.removePhotoButton}
-                    onPress={() => removePhoto(index)}>
-                    <XBtn width={14} height={14} />
-                  </TouchableOpacity>
-                </View>
-              ))}
+              <TouchableOpacity
+                style={styles.addPhotoButton}
+                onPress={pickImage}
+                disabled={formData?.recruitImage?.length === limitImage}>
+                <Gray_ImageAdd width={30} height={30} />
+              </TouchableOpacity>
+              <View style={styles.photoGrid}>
+                {formData.recruitImage.map((imageObj, index) => (
+                  <View key={index}>
+                    <Image
+                      source={{uri: imageObj.recruitImageUrl}}
+                      style={[
+                        styles.photoItem,
+                        imageObj.isThumbnail ? styles.thumbnail : '',
+                      ]}
+                      resizeMode="cover"
+                    />
+                    <TouchableOpacity
+                      style={styles.removePhotoButton}
+                      onPress={() => removePhoto(index)}>
+                      <XBtn width={14} height={14} />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            </View>
+            <View style={recruitStyle.bottomContainer}>
+              <ButtonScarlet title="적용하기" onPress={onClose} />
             </View>
           </View>
         </View>
@@ -136,11 +130,11 @@ export default function WorkInfoSection({
 
 const recruitStyle = StyleSheet.create({
   headerText: [FONTS.fs_20_semibold],
-  field: {
-    gap: 8,
-    marginBottom: 20,
+  body: {
+    flex: 1,
+    justifyContent: 'space-between',
   },
-
+  bottomContainer: {marginVertical: 20},
   lengthTextAll: {
     ...FONTS.fs_12_medium,
     color: COLORS.grayscale_400,

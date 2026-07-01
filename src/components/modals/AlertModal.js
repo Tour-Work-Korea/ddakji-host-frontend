@@ -51,6 +51,7 @@ const AlertModal = ({
   onChangeCustomInput,
   customContent = null,
   onRequestClose,
+  titleStyle,
 }) => {
   // 강조 텍스트 여부
   const renderMessage = () => {
@@ -110,7 +111,9 @@ const AlertModal = ({
                 ) : null}
                 {/* 제목 */}
                 {title ? (
-                  <Text style={[FONTS.fs_18_semibold, styles.title]}>{title}</Text>
+                  <Text style={[FONTS.fs_18_semibold, styles.title, titleStyle]}>
+                    {title}
+                  </Text>
                 ) : null}
                 {/* 내용 */}
                 {message ? <View style={styles.messageWrap}>{renderMessage()}</View> : null}

@@ -30,6 +30,9 @@ import CheckWhite from '@assets/images/check_white.svg';
 import ChevronBlack from '@assets/images/chevron_right_black.svg';
 import {COLORS} from '@constants/colors';
 
+const DEFAULT_MIN_AGE = 20;
+const DEFAULT_MAX_AGE = 35;
+
 const sections = [
   {id: 'guesthouse', title: '게스트하우스'},
   {id: 'shortDescription', title: '공고 요약'},
@@ -57,13 +60,12 @@ const RecruitmentForm = ({route}) => {
     recruitNumberFemale: 0,
     recruitNumberNoGender: 0,
     recruitCondition: [],
-    recruitMinAge: 0,
-    recruitMaxAge: 0,
+    recruitMinAge: DEFAULT_MIN_AGE,
+    recruitMaxAge: DEFAULT_MAX_AGE,
     workType: '',
     workDuration: '',
     workPart: [],
     welfare: [],
-    location: '',
     recruitDetail: '',
     recruitImage: [],
     hashtags: [],
@@ -153,8 +155,8 @@ const RecruitmentForm = ({route}) => {
         recruitNumberFemale: r.recruitNumberFemale ?? 0,
         recruitNumberMale: r.recruitNumberMale ?? 0,
         recruitNumberNoGender: r.recruitNumberNoGender ?? 0,
-        recruitMinAge: r.recruitMinAge ?? 0,
-        recruitMaxAge: r.recruitMaxAge ?? 0,
+        recruitMinAge: r.recruitMinAge ?? DEFAULT_MIN_AGE,
+        recruitMaxAge: r.recruitMaxAge ?? DEFAULT_MAX_AGE,
 
         recruitCondition: toCondObjs(r.recruitCondition),
         workPart: splitTitles(r.workPart),
@@ -163,7 +165,6 @@ const RecruitmentForm = ({route}) => {
         workType: r.workType ?? '',
         workDuration: r.workDuration ?? '',
 
-        location: r.location ?? r.address ?? '',
         recruitImage: r.recruitImages ?? r.recruitImage ?? [],
         recruitDetail: r.recruitDetail ?? '',
         hashtags: (r.hashtags ?? [])
@@ -195,7 +196,6 @@ const RecruitmentForm = ({route}) => {
       recruitNumberNoGender: Number(formData.recruitNumberNoGender),
       recruitNumberMale: Number(formData.recruitNumberMale),
       recruitNumberFemale: Number(formData.recruitNumberFemale),
-      location: formData.location,
       entryStartDate: formData.entryStartDate.toISOString(),
       entryEndDate: formData.entryEndDate.toISOString(),
       recruitCondition: formData.recruitCondition.map(c => c.title).join(', '),

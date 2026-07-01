@@ -416,15 +416,21 @@ export const handleNotificationOpen = async remoteMessage => {
 };
 
 export const initializeNotifications = async () => {
-  await syncDeviceToken();
-
   const unsubscribeForeground = messaging().onMessage(handleForegroundMessage);
   const unsubscribeOpened = messaging().onNotificationOpenedApp(
     handleNotificationOpen,
   );
   const unsubscribeTokenRefresh = messaging().onTokenRefresh(async () => {
-    await syncDeviceToken(getCurrentAccessToken());
+    const accessToken = getCurrentAccessToken();
+    if (accessToken) {
+      await syncDeviceToken(accessToken);
+    }
   });
+
+  const accessToken = getCurrentAccessToken();
+  if (accessToken) {
+    await syncDeviceToken(accessToken);
+  }
 
   const initialNotification = await messaging().getInitialNotification();
   if (initialNotification) {
