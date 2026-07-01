@@ -108,6 +108,7 @@ const StaffPosting = ({guesthouseId}) => {
       visible: true,
       title:
         '이전에 작성한 공고를 불러와 등록하시겠어요,\n아니면 새로 작성하시겠어요?',
+      titleStyle: [FONTS.fs_16_semibold, {lineHeight: 24}],
       onPress: () => {
         setPrevRecruitModalVisible(true);
         setErrorModal(prev => ({...prev, visible: false}));
@@ -190,6 +191,7 @@ const StaffPosting = ({guesthouseId}) => {
         onPress={errorModal.onPress}
         onPress2={errorModal.onPress2}
         visible={errorModal.visible}
+        titleStyle={errorModal.titleStyle}
       />
       <PrevRecruitModal
         visible={prevRecruitModalVisible}

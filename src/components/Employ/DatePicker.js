@@ -140,6 +140,14 @@ export default function DatePicker({
     onChange?.(date);
   };
 
+  const rows = useMemo(() => {
+    const result = [];
+    for (let i = 0; i < cells.length; i += 7) {
+      result.push(cells.slice(i, i + 7));
+    }
+    return result;
+  }, [cells]);
+
   return (
     <View style={[styles.card]}>
       {/* 상단 라벨/선택일 */}
@@ -182,21 +190,25 @@ export default function DatePicker({
 
       {/* 날짜 그리드 */}
       <View style={styles.grid}>
-        {cells.map(c => (
-          <TouchableOpacity
-            key={c.key}
-            onPress={() => handleSelect(c.date, c.disabled)}
-            disabled={c.disabled}
-            style={[styles.cell]}>
-            <Text
-              style={[
-                styles.dayText,
-                !c.inMonth && styles.dayTextOut,
-                c.isSelected && styles.dayTextSelected,
-              ]}>
-              {c.label}
-            </Text>
-          </TouchableOpacity>
+        {rows.map((row, rowIndex) => (
+          <View key={`week-${rowIndex}`} style={styles.weekRow}>
+            {row.map(c => (
+              <TouchableOpacity
+                key={c.key}
+                onPress={() => handleSelect(c.date, c.disabled)}
+                disabled={c.disabled}
+                style={styles.cell}>
+                <Text
+                  style={[
+                    styles.dayText,
+                    !c.inMonth && styles.dayTextOut,
+                    c.isSelected && styles.dayTextSelected,
+                  ]}>
+                  {c.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         ))}
       </View>
     </View>
@@ -230,24 +242,26 @@ const styles = StyleSheet.create({
 
   dowRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     paddingHorizontal: 12,
   },
   dowText: {
+    flex: 1,
     textAlign: 'center',
     color: COLORS.grayscale_400,
     ...FONTS.fs_14_medium,
   },
 
   grid: {
+    gap: 20,
+    paddingHorizontal: 12,
+  },
+  weekRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
   },
   cell: {
-    width: `${100 / 7}%`,
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 10,
   },
   dayText: {
     ...FONTS.fs_14_medium,
@@ -262,8 +276,11 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     width: 24,
     height: 24,
+    lineHeight: 24,
     justifyContent: 'center',
     alignItems: 'center',
     textAlign: 'center',
+    textAlignVertical: 'center',
+    includeFontPadding: false,
   },
 });

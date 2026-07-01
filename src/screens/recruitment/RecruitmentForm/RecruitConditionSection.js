@@ -53,7 +53,7 @@ export default function RecruitConditionSection({
     <Modal visible={visible} animationType="slide" transparent>
       <KeyboardAvoidingView style={recruitStyle.flex} enabled>
         <View style={styles.overlay}>
-          <View style={styles.container}>
+          <View style={[styles.container, recruitStyle.fullHeightContainer]}>
             {/* 헤더 */}
             <View style={styles.header}>
               <View />
@@ -474,6 +474,9 @@ export default function RecruitConditionSection({
 
 const recruitStyle = StyleSheet.create({
   flex: {flex: 1},
+  fullHeightContainer: {
+    maxHeight: '100%',
+  },
   input: {width: 48, height: 44, textAlign: 'center'},
   bottomContainer: {marginVertical: 20},
   otherInput: {flex: 1, marginTop: 12},
