@@ -205,6 +205,8 @@ export const resolveNotificationTarget = notification => {
     type.startsWith('PARTY_') ||
     type.includes('PARTY') ||
     type.includes('MEET');
+  const isStaffNotification =
+    type.includes('RECRUIT') || type.includes('STAFF');
   const isPartyCancelNotification =
     isPartyNotification && (type.includes('CANCEL') || type.includes('REFUND'));
   const isRoomReservationNotification =
@@ -228,6 +230,11 @@ export const resolveNotificationTarget = notification => {
     normalizeNumber(data.reviewId) ?? normalizeNumber(data.targetReviewId);
   const batchId =
     normalizeNumber(data.batchId) ?? normalizeNumber(data.settlementId);
+  const applicationId =
+    normalizeNumber(data.applicationId) ??
+    normalizeNumber(data.recruitApplicationId);
+  const recruitId =
+    normalizeNumber(data.recruitId) ?? normalizeNumber(data.targetRecruitId);
 
   const notificationLocalDate = getNotificationLocalDate(data);
   const todayLocalDate = getTodayLocalDate();
@@ -266,6 +273,30 @@ export const resolveNotificationTarget = notification => {
     return {
       kind: 'screen',
       value: 'NoticeList',
+    };
+  }
+
+  if (isStaffNotification) {
+    if (applicationId) {
+      return {
+        kind: 'screen',
+        value: 'ResumeDetail',
+        params: {
+          id: applicationId,
+          role: 'HOST',
+          headerTitle: '지원서',
+        },
+      };
+    }
+
+    return {
+      kind: 'screen',
+      value: 'GuesthouseManagement',
+      params: {
+        guesthouseId: fallbackGuesthouseId,
+        initialTab: '스탭',
+        recruitId,
+      },
     };
   }
 

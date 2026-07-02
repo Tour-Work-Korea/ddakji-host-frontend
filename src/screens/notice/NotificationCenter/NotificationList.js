@@ -9,6 +9,7 @@ import GuesthousePendingIcon from '@assets/images/noti_guesthouse_pending.svg';
 import NoticeIcon from '@assets/images/noti_notice.svg';
 import PartyConfirmedIcon from '@assets/images/noti_party_confirmed.svg';
 import PartyCancelledIcon from '@assets/images/noti_party_cancelled.svg';
+import StaffIcon from '@assets/images/noti_staff.svg';
 
 import styles from './NotificationCenter.styles';
 
@@ -31,6 +32,14 @@ const renderLeadingIcon = item => {
         ) : (
           <PartyConfirmedIcon width={24} height={24} />
         )}
+      </View>
+    );
+  }
+
+  if (item.type === 'staff') {
+    return (
+      <View style={styles.iconWrap}>
+        <StaffIcon width={24} height={24} />
       </View>
     );
   }

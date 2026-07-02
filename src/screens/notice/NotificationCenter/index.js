@@ -20,6 +20,7 @@ const FILTER_CHIPS = [
   { key: 'all', label: '전체' },
   { key: 'roomReservation', label: '객실 예약' },
   { key: 'partyReservation', label: '파티 신청' },
+  { key: 'staff', label: '스탭' },
   { key: 'settlement', label: '정산' },
   { key: 'notice', label: '공지사항' },
 ];
@@ -77,6 +78,10 @@ const normalizeType = type => {
 
   if (rawType.startsWith('PARTY_')) {
     return 'partyReservation';
+  }
+
+  if (rawType.includes('RECRUIT') || rawType.includes('STAFF')) {
+    return 'staff';
   }
 
   return 'roomReservation';
