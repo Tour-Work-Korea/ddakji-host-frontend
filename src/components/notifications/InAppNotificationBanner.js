@@ -11,6 +11,7 @@ import GuesthouseCancelledIcon from '@assets/images/noti_guesthouse_cancelled.sv
 import NoticeIcon from '@assets/images/noti_notice.svg';
 import PartyConfirmedIcon from '@assets/images/noti_party_confirmed.svg';
 import PartyCancelledIcon from '@assets/images/noti_party_cancelled.svg';
+import StaffIcon from '@assets/images/noti_staff.svg';
 
 const AUTO_HIDE_MS = 3200;
 
@@ -23,6 +24,10 @@ const normalizeType = data => {
 
   if (rawType.includes('PARTY') || rawType.includes('MEET')) {
     return 'partyReservation';
+  }
+
+  if (rawType.includes('RECRUIT') || rawType.includes('STAFF')) {
+    return 'staff';
   }
 
   return 'roomReservation';
@@ -75,7 +80,9 @@ const BannerIcon = ({type, status}) => {
 
   return (
     <View style={styles.iconWrap}>
-      {type === 'partyReservation' ? (
+      {type === 'staff' ? (
+        <StaffIcon width={24} height={24} />
+      ) : type === 'partyReservation' ? (
         isCancelled ? (
           <PartyCancelledIcon width={24} height={24} />
         ) : (
