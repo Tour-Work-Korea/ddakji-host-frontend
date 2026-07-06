@@ -19,6 +19,16 @@ const sortRecruitsByRecent = recruits =>
     (left, right) => getRecruitSortTime(right) - getRecruitSortTime(left),
   );
 
+const filterRecruitsByGuesthouse = (recruits, guesthouseId) => {
+  if (!guesthouseId) {
+    return recruits ?? [];
+  }
+
+  return (recruits ?? []).filter(
+    recruit => String(recruit?.guesthouseId) === String(guesthouseId),
+  );
+};
+
 const hasApplicationCount = recruit =>
   recruit?.applicationCount !== undefined ||
   recruit?.applicantCount !== undefined ||
@@ -36,7 +46,7 @@ const getApplicantsCount = data => {
   return Number(data?.totalElements ?? data?.count ?? 0);
 };
 
-const ApplicantCheck = () => {
+const ApplicantCheck = ({guesthouseId}) => {
   const navigation = useNavigation();
   const [myRecruits, setMyRecruits] = useState([]);
   const [errorModal, setErrorModal] = useState({
@@ -49,11 +59,15 @@ const ApplicantCheck = () => {
   });
   const [loading, setLoading] = useState(true);
 
-  const getMyRecruits = async () => {
+  const getMyRecruits = useCallback(async () => {
     setLoading(true);
     try {
       const response = await hostEmployApi.getMyRecruits();
-      const sortedRecruits = sortRecruitsByRecent(response.data);
+      const filteredRecruits = filterRecruitsByGuesthouse(
+        response.data,
+        guesthouseId,
+      );
+      const sortedRecruits = sortRecruitsByRecent(filteredRecruits);
       const recruitsWithCounts = await Promise.all(
         sortedRecruits.map(async recruit => {
           if (hasApplicationCount(recruit)) {
@@ -93,12 +107,12 @@ const ApplicantCheck = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [guesthouseId]);
 
   useFocusEffect(
     useCallback(() => {
       getMyRecruits();
-    }, []),
+    }, [getMyRecruits]),
   );
 
   const handleViewDetail = recruit => {
