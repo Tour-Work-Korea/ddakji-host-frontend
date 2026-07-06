@@ -8,7 +8,45 @@ import hostEmployApi from '@utils/api/hostEmployApi';
 import ApplyLogo from '@assets/images/wa_blue_apply.svg';
 import styles from './ApplicantCheck.styles';
 
-const ApplicantCheck = () => {
+const getRecruitSortTime = recruit => {
+  const time = recruit?.deadline ? new Date(recruit.deadline).getTime() : 0;
+
+  return Number.isNaN(time) ? 0 : time;
+};
+
+const sortRecruitsByRecent = recruits =>
+  [...(recruits ?? [])].sort(
+    (left, right) => getRecruitSortTime(right) - getRecruitSortTime(left),
+  );
+
+const filterRecruitsByGuesthouse = (recruits, guesthouseId) => {
+  if (!guesthouseId) {
+    return recruits ?? [];
+  }
+
+  return (recruits ?? []).filter(
+    recruit => String(recruit?.guesthouseId) === String(guesthouseId),
+  );
+};
+
+const hasApplicationCount = recruit =>
+  recruit?.applicationCount !== undefined ||
+  recruit?.applicantCount !== undefined ||
+  recruit?.applyCount !== undefined;
+
+const getApplicantsCount = data => {
+  if (Array.isArray(data)) {
+    return data.length;
+  }
+
+  if (Array.isArray(data?.content)) {
+    return data.content.length;
+  }
+
+  return Number(data?.totalElements ?? data?.count ?? 0);
+};
+
+const ApplicantCheck = ({guesthouseId}) => {
   const navigation = useNavigation();
   const [myRecruits, setMyRecruits] = useState([]);
   const [errorModal, setErrorModal] = useState({
@@ -21,11 +59,40 @@ const ApplicantCheck = () => {
   });
   const [loading, setLoading] = useState(true);
 
-  const getMyRecruits = async () => {
+  const getMyRecruits = useCallback(async () => {
     setLoading(true);
     try {
       const response = await hostEmployApi.getMyRecruits();
-      setMyRecruits(response.data);
+      const filteredRecruits = filterRecruitsByGuesthouse(
+        response.data,
+        guesthouseId,
+      );
+      const sortedRecruits = sortRecruitsByRecent(filteredRecruits);
+      const recruitsWithCounts = await Promise.all(
+        sortedRecruits.map(async recruit => {
+          if (hasApplicationCount(recruit)) {
+            return recruit;
+          }
+
+          try {
+            const applicantsResponse = await hostEmployApi.getApplicantsByRecruit(
+              recruit.recruitId,
+            );
+
+            return {
+              ...recruit,
+              applicationCount: getApplicantsCount(applicantsResponse.data),
+            };
+          } catch {
+            return {
+              ...recruit,
+              applicationCount: 0,
+            };
+          }
+        }),
+      );
+
+      setMyRecruits(recruitsWithCounts);
     } catch (error) {
       setErrorModal({
         visible: true,
@@ -40,12 +107,12 @@ const ApplicantCheck = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [guesthouseId]);
 
   useFocusEffect(
     useCallback(() => {
       getMyRecruits();
-    }, []),
+    }, [getMyRecruits]),
   );
 
   const handleViewDetail = recruit => {
@@ -70,7 +137,12 @@ const ApplicantCheck = () => {
         <FlatList
           data={myRecruits}
           renderItem={({item}) => (
-            <ApplicantItem item={item} onPress={handleViewDetail} />
+            <ApplicantItem
+              item={item}
+              onPress={handleViewDetail}
+              variant="staffPosting"
+              showApplicationCount={true}
+            />
           )}
           keyExtractor={item => item.recruitId.toString()}
           showsVerticalScrollIndicator={false}

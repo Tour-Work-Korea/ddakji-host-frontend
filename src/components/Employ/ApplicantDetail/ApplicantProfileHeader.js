@@ -1,18 +1,76 @@
 import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import Clipboard from '@react-native-clipboard/clipboard';
+import Toast from 'react-native-toast-message';
+
 import Avatar from '@components/Avatar';
 import {COLORS} from '@constants/colors';
 import {FONTS} from '@constants/fonts';
 import {openWebLink} from '@utils/openWebLink';
 
+const getInstagramId = value => {
+  const instagramId = typeof value === 'string' ? value.trim() : '';
+
+  if (!instagramId || instagramId === 'ID를 추가해주세요') {
+    return '';
+  }
+
+  return instagramId;
+};
+
+const formatPhoneNumber = value => {
+  const digits = String(value ?? '').replace(/\D/g, '');
+
+  if (!digits) {
+    return '';
+  }
+
+  if (digits.startsWith('02')) {
+    if (digits.length === 9) {
+      return digits.replace(/(\d{2})(\d{3})(\d{4})/, '$1-$2-$3');
+    }
+
+    if (digits.length === 10) {
+      return digits.replace(/(\d{2})(\d{4})(\d{4})/, '$1-$2-$3');
+    }
+  }
+
+  if (digits.length === 10) {
+    return digits.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+  }
+
+  if (digits.length === 11) {
+    return digits.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+  }
+
+  return value ?? '';
+};
+
 const ApplicantProfileHeader = ({data}) => {
+  const instagramId = getInstagramId(data?.instagramId);
+  const phoneNumber = formatPhoneNumber(data?.phone);
+  const profileName = data?.name || data?.nickname || '';
+
+  const handleCopyPhone = () => {
+    if (!phoneNumber) {
+      return;
+    }
+
+    Clipboard.setString(phoneNumber);
+    Toast.show({
+      type: 'success',
+      text1: '연락처가 복사되었습니다.',
+      position: 'top',
+    });
+  };
+
   return (
     <View>
       <View style={styles.sectionBox}>
         <View style={styles.basicInfoContainer}>
-          <Text style={styles.profileName}>{data?.nickname}</Text>
+          <Text style={styles.profileName}>{profileName}</Text>
           <Text style={styles.basicInfoText}>
-            {data?.gender === 'F' ? '여자!!!' : '남자'} • {data?.age}세 (
+            {data?.gender === 'F' ? '여자' : '남자'} • {data?.age}세 (
             {data?.birthDate.split('-')[0]}년생)
           </Text>
         </View>
@@ -26,15 +84,23 @@ const ApplicantProfileHeader = ({data}) => {
           />
 
           <View style={styles.infoContainer}>
-            <InfoRow label="연락처" value={data?.phone} />
+            <InfoRow
+              label="연락처"
+              value={phoneNumber}
+              onPress={phoneNumber ? handleCopyPhone : null}
+            />
             <InfoRow label="이메일" value={data?.email} />
             <InfoRow label="MBTI" value={data?.mbti ?? data?.resumeMbti} />
             <InfoRow
               label="insta"
-              value={data?.instagramId}
-              onPress={() => {
-                openWebLink(`https://www.instagram.com/${data?.instagramId}`);
-              }}
+              value={instagramId}
+              onPress={
+                instagramId
+                  ? () => {
+                      openWebLink(`https://www.instagram.com/${instagramId}`);
+                    }
+                  : null
+              }
             />
           </View>
         </View>
@@ -43,9 +109,13 @@ const ApplicantProfileHeader = ({data}) => {
   );
 };
 const InfoRow = ({label, value, onPress = null}) => (
-  <TouchableOpacity style={styles.infoRow} onPress={onPress}>
+  <TouchableOpacity
+    style={styles.infoRow}
+    disabled={!onPress}
+    activeOpacity={onPress ? 0.7 : 1}
+    onPress={onPress}>
     <Text style={styles.infoLabel}>{label}</Text>
-    <Text style={styles.infoValue}>{value}</Text>
+    <Text style={styles.infoValue}>{value ?? ''}</Text>
   </TouchableOpacity>
 );
 

@@ -1,3 +1,4 @@
+export {default as ApplicantAdditionalInfo} from './ApplicantAdditionalInfo';
 export {default as ApplicantExperienceSection} from './ApplicantExperienceSection';
 export {default as ApplicantProfileHeader} from './ApplicantProfileHeader';
 export {default as ApplicantSelfIntroduction} from './ApplicantSelfIntroduction';

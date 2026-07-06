@@ -12,6 +12,7 @@ import MainStack from '@screens/app/MainStack';
 
 import {
   EmployDetail,
+  StaffRecruitDetail,
   ResumeDetail,
   AgreeDetail,
   StoreRegisterList,
@@ -143,6 +144,7 @@ const RootNavigation = () => {
         <Stack.Screen name="StoreRegisterList" component={StoreRegisterList} />
         {/* 공고 하단바 없는 화면 */}
         <Stack.Screen name="EmployDetail" component={EmployDetail} />
+        <Stack.Screen name="StaffRecruitDetail" component={StaffRecruitDetail} />
         <Stack.Screen name="ResumeDetail" component={ResumeDetail} />
         <Stack.Screen name="AgreeDetail" component={AgreeDetail} />
         {/* 로그인, 회원가입 하단바 없는 화면 */}

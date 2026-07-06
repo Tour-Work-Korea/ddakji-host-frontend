@@ -12,6 +12,27 @@ import BlueSmileLogo from '@assets/images/logo_blue_smile.svg';
 import PlusIcon from '@assets/images/plus_white.svg';
 import styles from './StaffPosting.styles';
 
+const getRecruitSortTime = recruit => {
+  const time = recruit?.deadline ? new Date(recruit.deadline).getTime() : 0;
+
+  return Number.isNaN(time) ? 0 : time;
+};
+
+const sortRecruitsByRecent = recruits =>
+  [...(recruits ?? [])].sort(
+    (left, right) => getRecruitSortTime(right) - getRecruitSortTime(left),
+  );
+
+const filterRecruitsByGuesthouse = (recruits, guesthouseId) => {
+  if (!guesthouseId) {
+    return recruits ?? [];
+  }
+
+  return (recruits ?? []).filter(
+    recruit => String(recruit?.guesthouseId) === String(guesthouseId),
+  );
+};
+
 const StaffPosting = ({guesthouseId}) => {
   const navigation = useNavigation();
   const [myRecruits, setMyRecruits] = useState([]);
@@ -27,11 +48,15 @@ const StaffPosting = ({guesthouseId}) => {
   const [prevRecruitModalVisible, setPrevRecruitModalVisible] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const getMyRecruits = async () => {
+  const getMyRecruits = useCallback(async () => {
     setLoading(true);
     try {
       const response = await hostEmployApi.getMyRecruits();
-      setMyRecruits(response.data);
+      const filteredRecruits = filterRecruitsByGuesthouse(
+        response.data,
+        guesthouseId,
+      );
+      setMyRecruits(sortRecruitsByRecent(filteredRecruits));
     } catch (error) {
       setErrorModal({
         visible: true,
@@ -46,16 +71,16 @@ const StaffPosting = ({guesthouseId}) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [guesthouseId]);
 
   useFocusEffect(
     useCallback(() => {
       getMyRecruits();
-    }, []),
+    }, [getMyRecruits]),
   );
 
   const handleViewDetail = recruit => {
-    navigation.navigate('EmployDetail', {
+    navigation.navigate('StaffRecruitDetail', {
       id: recruit?.recruitId,
       fromHost: true,
     });
@@ -161,6 +186,7 @@ const StaffPosting = ({guesthouseId}) => {
               onPress={handleViewDetail}
               isEditable={true}
               isRemovable={true}
+              variant="staffPosting"
               handleEditPosting={handleEditPosting}
               handleDeletePosting={() => handleDeletePosting(item.recruitId)}
             />
