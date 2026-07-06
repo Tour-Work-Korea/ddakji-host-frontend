@@ -8,6 +8,34 @@ import hostEmployApi from '@utils/api/hostEmployApi';
 import ApplyLogo from '@assets/images/wa_blue_apply.svg';
 import styles from './ApplicantCheck.styles';
 
+const getRecruitSortTime = recruit => {
+  const time = recruit?.deadline ? new Date(recruit.deadline).getTime() : 0;
+
+  return Number.isNaN(time) ? 0 : time;
+};
+
+const sortRecruitsByRecent = recruits =>
+  [...(recruits ?? [])].sort(
+    (left, right) => getRecruitSortTime(right) - getRecruitSortTime(left),
+  );
+
+const hasApplicationCount = recruit =>
+  recruit?.applicationCount !== undefined ||
+  recruit?.applicantCount !== undefined ||
+  recruit?.applyCount !== undefined;
+
+const getApplicantsCount = data => {
+  if (Array.isArray(data)) {
+    return data.length;
+  }
+
+  if (Array.isArray(data?.content)) {
+    return data.content.length;
+  }
+
+  return Number(data?.totalElements ?? data?.count ?? 0);
+};
+
 const ApplicantCheck = () => {
   const navigation = useNavigation();
   const [myRecruits, setMyRecruits] = useState([]);
@@ -25,7 +53,32 @@ const ApplicantCheck = () => {
     setLoading(true);
     try {
       const response = await hostEmployApi.getMyRecruits();
-      setMyRecruits(response.data);
+      const sortedRecruits = sortRecruitsByRecent(response.data);
+      const recruitsWithCounts = await Promise.all(
+        sortedRecruits.map(async recruit => {
+          if (hasApplicationCount(recruit)) {
+            return recruit;
+          }
+
+          try {
+            const applicantsResponse = await hostEmployApi.getApplicantsByRecruit(
+              recruit.recruitId,
+            );
+
+            return {
+              ...recruit,
+              applicationCount: getApplicantsCount(applicantsResponse.data),
+            };
+          } catch {
+            return {
+              ...recruit,
+              applicationCount: 0,
+            };
+          }
+        }),
+      );
+
+      setMyRecruits(recruitsWithCounts);
     } catch (error) {
       setErrorModal({
         visible: true,
@@ -70,7 +123,12 @@ const ApplicantCheck = () => {
         <FlatList
           data={myRecruits}
           renderItem={({item}) => (
-            <ApplicantItem item={item} onPress={handleViewDetail} />
+            <ApplicantItem
+              item={item}
+              onPress={handleViewDetail}
+              variant="staffPosting"
+              showApplicationCount={true}
+            />
           )}
           keyExtractor={item => item.recruitId.toString()}
           showsVerticalScrollIndicator={false}

@@ -88,10 +88,10 @@ export default function RecruitTapSection({recruit}) {
             </View>
           </View>
         );
-      case '근무지정보':
+      case '근무정보':
         return (
           <View style={styles.tabContent}>
-            <Text style={styles.sectionTitle}>근무지 사진</Text>
+            <Text style={styles.sectionTitle}>근무 사진</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -152,14 +152,14 @@ export default function RecruitTapSection({recruit}) {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.tab, activeTab === '근무지정보' && styles.activeTab]}
-          onPress={() => handleTabPress('근무지정보')}>
+          style={[styles.tab, activeTab === '근무정보' && styles.activeTab]}
+          onPress={() => handleTabPress('근무정보')}>
           <Text
             style={[
               styles.tabText,
-              activeTab === '근무지정보' && styles.activeTabText,
+              activeTab === '근무정보' && styles.activeTabText,
             ]}>
-            근무지정보
+            근무정보
           </Text>
         </TouchableOpacity>
       </View>
@@ -206,11 +206,11 @@ const styles = StyleSheet.create({
   //탭 상세 내용
   tabContent: {
     backgroundColor: COLORS.grayscale_100,
-    paddingVertical: 8,
+    paddingVertical: 14,
     paddingHorizontal: 12,
     borderRadius: 8,
     flexDirection: 'column',
-    gap: 8,
+    gap: 14,
   },
   infoRow: {
     flexDirection: 'row',

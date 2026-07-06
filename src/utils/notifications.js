@@ -207,6 +207,9 @@ export const resolveNotificationTarget = notification => {
     type.includes('MEET');
   const isStaffNotification =
     type.includes('RECRUIT') || type.includes('STAFF');
+  const isRecruitCommentNotification =
+    type === 'RECRUIT_COMMENT_NEW' ||
+    (type.includes('RECRUIT_COMMENT') && type.includes('NEW'));
   const isPartyCancelNotification =
     isPartyNotification && (type.includes('CANCEL') || type.includes('REFUND'));
   const isRoomReservationNotification =
@@ -273,6 +276,18 @@ export const resolveNotificationTarget = notification => {
     return {
       kind: 'screen',
       value: 'NoticeList',
+    };
+  }
+
+  if (isRecruitCommentNotification && recruitId) {
+    return {
+      kind: 'screen',
+      value: 'StaffRecruitDetail',
+      params: {
+        id: recruitId,
+        fromHost: true,
+        commentId: normalizeNumber(data.commentId),
+      },
     };
   }
 
