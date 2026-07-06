@@ -23,6 +23,16 @@ const sortRecruitsByRecent = recruits =>
     (left, right) => getRecruitSortTime(right) - getRecruitSortTime(left),
   );
 
+const filterRecruitsByGuesthouse = (recruits, guesthouseId) => {
+  if (!guesthouseId) {
+    return recruits ?? [];
+  }
+
+  return (recruits ?? []).filter(
+    recruit => String(recruit?.guesthouseId) === String(guesthouseId),
+  );
+};
+
 const StaffPosting = ({guesthouseId}) => {
   const navigation = useNavigation();
   const [myRecruits, setMyRecruits] = useState([]);
@@ -38,11 +48,15 @@ const StaffPosting = ({guesthouseId}) => {
   const [prevRecruitModalVisible, setPrevRecruitModalVisible] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const getMyRecruits = async () => {
+  const getMyRecruits = useCallback(async () => {
     setLoading(true);
     try {
       const response = await hostEmployApi.getMyRecruits();
-      setMyRecruits(sortRecruitsByRecent(response.data));
+      const filteredRecruits = filterRecruitsByGuesthouse(
+        response.data,
+        guesthouseId,
+      );
+      setMyRecruits(sortRecruitsByRecent(filteredRecruits));
     } catch (error) {
       setErrorModal({
         visible: true,
@@ -57,12 +71,12 @@ const StaffPosting = ({guesthouseId}) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [guesthouseId]);
 
   useFocusEffect(
     useCallback(() => {
       getMyRecruits();
-    }, []),
+    }, [getMyRecruits]),
   );
 
   const handleViewDetail = recruit => {

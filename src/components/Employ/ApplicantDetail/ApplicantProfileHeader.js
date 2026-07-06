@@ -49,6 +49,7 @@ const formatPhoneNumber = value => {
 const ApplicantProfileHeader = ({data}) => {
   const instagramId = getInstagramId(data?.instagramId);
   const phoneNumber = formatPhoneNumber(data?.phone);
+  const profileName = data?.name || data?.nickname || '';
 
   const handleCopyPhone = () => {
     if (!phoneNumber) {
@@ -67,9 +68,9 @@ const ApplicantProfileHeader = ({data}) => {
     <View>
       <View style={styles.sectionBox}>
         <View style={styles.basicInfoContainer}>
-          <Text style={styles.profileName}>{data?.nickname}</Text>
+          <Text style={styles.profileName}>{profileName}</Text>
           <Text style={styles.basicInfoText}>
-            {data?.gender === 'F' ? '여자!!!' : '남자'} • {data?.age}세 (
+            {data?.gender === 'F' ? '여자' : '남자'} • {data?.age}세 (
             {data?.birthDate.split('-')[0]}년생)
           </Text>
         </View>

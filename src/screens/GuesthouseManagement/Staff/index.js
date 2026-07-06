@@ -34,7 +34,7 @@ const Staff = ({guesthouseId}) => {
       {activeChip === chips[0] ? (
         <StaffPosting guesthouseId={guesthouseId} />
       ) : (
-        <ApplicantCheck />
+        <ApplicantCheck guesthouseId={guesthouseId} />
       )}
     </View>
   );
