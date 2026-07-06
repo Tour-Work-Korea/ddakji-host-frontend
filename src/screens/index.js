@@ -67,6 +67,7 @@ export { default as DormitoryBulkBed } from './GuesthouseManagement/RoomReservat
 export { default as ApplicantList } from './recruitment/ApplicantList';
 export { default as ApplicantListByRecruit } from './recruitment/ApplicantListByRecruit';
 export { default as EmployDetail } from './recruitment/EmployDetail';
+export { default as StaffRecruitDetail } from './recruitment/StaffRecruitDetail';
 export { default as MyRecruitmentList } from './recruitment/MyRecruitmentList';
 export { default as RecruitmentForm } from './recruitment/RecruitmentForm';
 export { default as ResumeDetail } from './recruitment/ResumeDetail';

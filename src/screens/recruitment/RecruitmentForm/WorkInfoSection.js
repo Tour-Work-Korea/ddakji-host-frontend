@@ -24,7 +24,7 @@ export default function WorkInfoSection({
   onClose,
   handleInputChange,
 }) {
-  const limitImage = 6;
+  const limitImage = 10;
   const [errorModal, setErrorModal] = useState({visible: false, title: ''});
 
   const pickImage = async () => {

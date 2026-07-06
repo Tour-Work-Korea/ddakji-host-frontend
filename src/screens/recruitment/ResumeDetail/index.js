@@ -2,6 +2,7 @@ import React, {useCallback, useEffect, useState} from 'react';
 import {View, ScrollView} from 'react-native';
 
 import {
+  ApplicantAdditionalInfo,
   ApplicantTitle,
   ApplicantExperienceSection,
   ApplicantProfileHeader,
@@ -97,6 +98,7 @@ const ResumeDetail = ({route}) => {
                 setFormData(prev => ({...prev, selfIntro: data}))
               }
             />
+            <ApplicantAdditionalInfo data={originalInfo} />
             <View style={styles.bottomGap} />
           </>
         ) : (

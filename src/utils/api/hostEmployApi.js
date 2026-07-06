@@ -11,6 +11,10 @@ const hostEmployApi = {
   //채용공고 상세 조회
   getRecruitDetail: recruitId => api.get(`/host/recruits/${recruitId}`),
 
+  //스탭 공고 댓글/대댓글 작성
+  createRecruitComment: (recruitId, data) =>
+    api.post(`/host/recruits/${recruitId}/comments`, data),
+
   //채용공고 수정
   updateRecruit: (recruitId, updateRecruitData) =>
     api.put(`/host/recruits/${recruitId}`, updateRecruitData),

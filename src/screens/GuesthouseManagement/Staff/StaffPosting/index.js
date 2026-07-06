@@ -12,6 +12,17 @@ import BlueSmileLogo from '@assets/images/logo_blue_smile.svg';
 import PlusIcon from '@assets/images/plus_white.svg';
 import styles from './StaffPosting.styles';
 
+const getRecruitSortTime = recruit => {
+  const time = recruit?.deadline ? new Date(recruit.deadline).getTime() : 0;
+
+  return Number.isNaN(time) ? 0 : time;
+};
+
+const sortRecruitsByRecent = recruits =>
+  [...(recruits ?? [])].sort(
+    (left, right) => getRecruitSortTime(right) - getRecruitSortTime(left),
+  );
+
 const StaffPosting = ({guesthouseId}) => {
   const navigation = useNavigation();
   const [myRecruits, setMyRecruits] = useState([]);
@@ -31,7 +42,7 @@ const StaffPosting = ({guesthouseId}) => {
     setLoading(true);
     try {
       const response = await hostEmployApi.getMyRecruits();
-      setMyRecruits(response.data);
+      setMyRecruits(sortRecruitsByRecent(response.data));
     } catch (error) {
       setErrorModal({
         visible: true,
@@ -55,7 +66,7 @@ const StaffPosting = ({guesthouseId}) => {
   );
 
   const handleViewDetail = recruit => {
-    navigation.navigate('EmployDetail', {
+    navigation.navigate('StaffRecruitDetail', {
       id: recruit?.recruitId,
       fromHost: true,
     });
@@ -161,6 +172,7 @@ const StaffPosting = ({guesthouseId}) => {
               onPress={handleViewDetail}
               isEditable={true}
               isRemovable={true}
+              variant="staffPosting"
               handleEditPosting={handleEditPosting}
               handleDeletePosting={() => handleDeletePosting(item.recruitId)}
             />
