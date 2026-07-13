@@ -190,10 +190,7 @@ const FindPassword = ({route}) => {
                 <AuthBackButton />
               </View>
               <View style={styles.groupParent}>
-                <View style={styles.titleContainer}>
-                  <LogoBlue width={60} height={29} />
-                  <Text style={styles.subTitleText}>워커웨이 비즈니스</Text>
-                </View>
+                <LogoBlue width={60} height={29} />
                 <Text style={styles.titleText}>
                   비밀번호를 재설정 해주세요!
                 </Text>

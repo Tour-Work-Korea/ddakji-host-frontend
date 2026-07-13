@@ -15,7 +15,6 @@ export default function FindIntro({route}) {
 
   // 사장님 분기
   const isHost = userRole === 'HOST';
-  const MainLogo = LogoBlue;
   const mainColor = isHost ? COLORS.primary_blue : COLORS.primary_orange;
 
   return (
@@ -28,12 +27,7 @@ export default function FindIntro({route}) {
             </View>
             {/* 로고 및 문구 */}
             <View style={styles.groupParent}>
-              <View style={styles.titleContainer}>
-                <MainLogo width={60} height={29} />
-                {isHost && (
-                  <Text style={styles.subTitleText}>워커웨이 비즈니스</Text>
-                )}
-              </View>
+              <LogoBlue width={60} height={29} />
               <View>
                 <Text style={[styles.titleText]}>
                   {find === 'email' ? '아이디' : '비밀번호'}를 찾으려면
