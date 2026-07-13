@@ -101,7 +101,15 @@ const HostEditInfo = () => {
         <></>
       )}
 
-      {editPhone ? <HostPhone onPress={handleEditPhone} user="HOST" /> : <></>}
+      {editPhone ? (
+        <HostPhone
+          onPress={handleEditPhone}
+          user="HOST"
+          purpose="PHONE_CHANGE"
+        />
+      ) : (
+        <></>
+      )}
       <AlertModal
         title={errorModal.title}
         buttonText={errorModal.buttonText}

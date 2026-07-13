@@ -1,5 +1,7 @@
-import React, {useEffect, useState} from 'react';
-import {View, Text} from 'react-native';
+import React, {useCallback, useEffect, useState} from 'react';
+import {View, Text, TouchableOpacity} from 'react-native';
+import Clipboard from '@react-native-clipboard/clipboard';
+import Toast from 'react-native-toast-message';
 import {useNavigation} from '@react-navigation/native';
 
 import authApi from '@utils/api/authApi';
@@ -20,11 +22,7 @@ export default function FindId({route}) {
     buttonText: '',
   });
 
-  useEffect(() => {
-    tryFindId();
-  }, [userRole, phoneNumber]);
-
-  const tryFindId = async () => {
+  const tryFindId = useCallback(async () => {
     try {
       const response = await authApi.findId(phoneNumber, userRole);
       setEmail(response.data);
@@ -37,6 +35,23 @@ export default function FindId({route}) {
         buttonText: '확인',
       });
     }
+  }, [phoneNumber, userRole]);
+
+  useEffect(() => {
+    tryFindId();
+  }, [tryFindId]);
+
+  const handleCopyEmail = () => {
+    if (!email) {
+      return;
+    }
+
+    Clipboard.setString(email);
+    Toast.show({
+      type: 'success',
+      text1: '아이디가 복사되었습니다.',
+      position: 'top',
+    });
   };
 
   // 사장님 분기
@@ -63,9 +78,12 @@ export default function FindId({route}) {
                 <Text style={[styles.titleText]}>아이디를 찾았어요!</Text>
               </View>
               {email ? (
-                <View style={styles.findEmailBox}>
+                <TouchableOpacity
+                  style={styles.findEmailBox}
+                  activeOpacity={0.8}
+                  onPress={handleCopyEmail}>
                   <Text style={styles.findEmailText}>{email}</Text>
-                </View>
+                </TouchableOpacity>
               ) : (
                 <></>
               )}

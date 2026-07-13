@@ -47,22 +47,22 @@ const authApi = {
     api.post('/auth/user/verify-ci', {niceAuthToken}, {
       withAuth: true, // 로그인 상태에서 호출, 토큰 포함
     }),
-    
+
   // 소셜 회원가입 완료
   completeSocialSignUp: body =>
     api.post('/auth/user/signup/social/complete', body, {
       withAuth: false,
     }),
-  
+
   //휴대폰 인증
-  sendSms: (phoneNum, userRole) =>
+  sendSms: (phoneNum, userRole, options = {}) =>
     api.post('/auth/sms/send', null, {
-      params: {phoneNum, userRole},
+      params: {phoneNum, userRole, ...options},
       withAuth: false,
     }),
-  verifySms: (phoneNum, code) =>
+  verifySms: (phoneNum, code, options = {}) =>
     api.post('/auth/sms/verify', null, {
-      params: {phoneNum, code},
+      params: {phoneNum, code, ...options},
       withAuth: false,
     }),
   //사장님 회원가입
@@ -129,7 +129,7 @@ const authApi = {
   //비밀번호 찾기
   findPassword: body =>
     api.post('/auth/find/password', body, {withAuth: false}),
-  
+
   //로그아웃
   logout: refreshToken => api.post('/auth/logout', {refreshToken}),
 
