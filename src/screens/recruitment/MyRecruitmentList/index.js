@@ -1,19 +1,37 @@
 import React, {useCallback, useState} from 'react';
 import {View, Text, FlatList, TouchableOpacity} from 'react-native';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import Toast from 'react-native-toast-message';
 
 import Header from '@components/Header';
 import hostEmployApi from '@utils/api/hostEmployApi';
 import AlertModal from '@components/modals/AlertModal';
-import ResultModal from '@components/modals/ResultModal';
 import ApplicantItem from '@components/Employ/ApplicantItem';
 import PrevRecruitModal from '@components/modals/Employ/PrevRecruitModal';
 
 import ApplyLogo from '@assets/images/wa_blue_apply.svg';
 import styles from './MyRecruitmentList.styles';
-import BlueSmileLogo from '@assets/images/logo_blue_smile.svg';
 import PlusIcon from '@assets/images/plus_white.svg';
 import {FONTS} from '@constants/fonts';
+
+const getRecruitSortTime = recruit => {
+  const time = recruit?.deadline ? new Date(recruit.deadline).getTime() : 0;
+
+  return Number.isNaN(time) ? 0 : time;
+};
+
+const isRecruitClosed = recruit => recruit?.isRecruiting === false;
+
+const sortRecruitsByRecent = recruits =>
+  [...(recruits ?? [])].sort((left, right) => {
+    const closedDiff = Number(isRecruitClosed(left)) - Number(isRecruitClosed(right));
+
+    if (closedDiff !== 0) {
+      return closedDiff;
+    }
+
+    return getRecruitSortTime(right) - getRecruitSortTime(left);
+  });
 
 const MyRecruitmentList = () => {
   const navigation = useNavigation();
@@ -26,7 +44,6 @@ const MyRecruitmentList = () => {
     buttonText: '',
     buttonText2: '',
   });
-  const [resultModalVisible, setResultModalVisible] = useState(false);
   const [prevRecruitModalVisible, setPrevRecruitModalVisible] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -40,7 +57,7 @@ const MyRecruitmentList = () => {
     setLoading(true);
     try {
       const response = await hostEmployApi.getMyRecruits();
-      setMyRecruits(response.data);
+      setMyRecruits(sortRecruitsByRecent(response.data));
     } catch (error) {
       setErrorModal({
         visible: true,
@@ -67,11 +84,11 @@ const MyRecruitmentList = () => {
   const handleDeletePosting = id => {
     setErrorModal({
       visible: true,
-      title: '마감 요청은 되돌릴 수 없는 작업이에요\n계속 진행하시겠어요?',
+      title: '공고를 마감 처리하시겠어요?',
       onPress: () => confirmDelete(id),
       onPress2: () => setErrorModal(prev => ({...prev, visible: false})),
-      buttonText: '요청할래요',
-      buttonText2: '보류할게요',
+      buttonText: '마감할래요',
+      buttonText2: '취소할게요',
     });
   };
 
@@ -81,13 +98,31 @@ const MyRecruitmentList = () => {
   };
   const fetchDeleteRecruit = async id => {
     try {
-      await hostEmployApi.requestDeleteRecruit(id, '마감요청');
-      setResultModalVisible(true);
+      await hostEmployApi.closeRecruit(id);
+      Toast.show({
+        type: 'success',
+        text1: '공고가 마감 처리되었어요.',
+        position: 'top',
+      });
+      setMyRecruits(prev =>
+        prev.map(recruit =>
+          recruit?.recruitId === id
+            ? {
+                ...recruit,
+                isRecruiting: false,
+                recruitStatus: 'RECRUIT_END',
+                status: 'RECRUIT_END',
+              }
+            : recruit,
+        ),
+      );
+      getMyRecruits();
     } catch (error) {
       setErrorModal({
         visible: true,
         title:
-          error?.response?.data?.message ?? '마감요청 중 오류가 발생했습니다',
+          error?.response?.data?.message ??
+          '공고 마감 처리 중 오류가 발생했습니다',
         onPress: () => setErrorModal(prev => ({...prev, visible: false})),
         onPress2: null,
         buttonText: '확인',
@@ -148,8 +183,7 @@ const MyRecruitmentList = () => {
                 <ApplicantItem
                   item={item}
                   onPress={handleViewDetail}
-                  isRemovable={true}
-                  handleDeletePosting={() =>
+                  handleClosePosting={() =>
                     handleDeletePosting(item.recruitId)
                   }
                 />
@@ -185,14 +219,6 @@ const MyRecruitmentList = () => {
           onPick={handlePickPrevRecruit}
         />
       </View>
-      <ResultModal
-        visible={resultModalVisible}
-        onClose={() => {
-          setResultModalVisible(false);
-        }}
-        title={'마감요청이 되었어요!'}
-        Icon={BlueSmileLogo}
-      />
     </View>
   );
 };

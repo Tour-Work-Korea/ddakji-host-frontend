@@ -63,9 +63,14 @@ export default StyleSheet.create({
   introductionText: {
     ...FONTS.fs_14_medium,
     color: COLORS.primary_orange,
+    lineHeight: 20,
+    width: '100%',
+    flexShrink: 1,
   },
   tagsRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   hashTag: {
     ...FONTS.fs_12_medium,
@@ -74,7 +79,6 @@ export default StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
-    marginRight: 8,
   },
   infoRow: {
     flexDirection: 'row',
