@@ -21,33 +21,6 @@ const formatDeadlineDate = value => {
   return `${year}. ${month}. ${day}`;
 };
 
-const formatRelativeHour = value => {
-  if (!value) {
-    return '';
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return '';
-  }
-
-  const diffHour = Math.max(
-    0,
-    Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60)),
-  );
-
-  if (diffHour < 1) {
-    return '방금';
-  }
-
-  if (diffHour < 24) {
-    return `${diffHour}h`;
-  }
-
-  return `${Math.floor(diffHour / 24)}d`;
-};
-
 const getTagText = tag =>
   tag?.hashtagName ??
   tag?.hashtag ??
@@ -62,11 +35,24 @@ const getApplicationCount = item =>
     ? 0
     : Number(item?.applicationCount ?? item?.applicantCount ?? item?.applyCount);
 
+const isRecruitClosed = item => {
+  if (item?.isRecruiting === false) {
+    return true;
+  }
+
+  const status = String(
+    item?.recruitStatus ?? item?.status ?? item?.recruitState ?? '',
+  ).toUpperCase();
+
+  return ['RECRUIT_END', 'CLOSED', 'CLOSE', 'END'].includes(status);
+};
+
 const ApplicantItem = ({
   item,
   onPress,
   handleEditPosting = null,
   handleDeletePosting = null,
+  handleClosePosting = null,
   isEditable = false,
   isRemovable = false,
   variant = 'default',
@@ -76,41 +62,67 @@ const ApplicantItem = ({
     const tags = Array.isArray(item?.hashtags)
       ? item.hashtags.map(getTagText).filter(Boolean).slice(0, 3)
       : [];
-    const createdTime = formatRelativeHour(
-      item?.createdAt ?? item?.updatedAt ?? item?.deadline,
-    );
     const deadlineDate = formatDeadlineDate(item?.deadline);
+    const isClosed = isRecruitClosed(item);
 
     return (
       <TouchableOpacity activeOpacity={0.85} onPress={() => onPress(item)}>
-        <View style={styles.staffPostingCard}>
+        <View
+          style={[
+            styles.staffPostingCard,
+            isClosed && styles.staffPostingCardClosed,
+          ]}>
           <View style={styles.staffHeader}>
             <Image
               source={{uri: item.thumbnailImage}}
-              style={styles.staffAvatar}
+              style={[styles.staffAvatar, isClosed && styles.staffAvatarClosed]}
             />
             <View style={styles.staffInfoColumn}>
               <View style={styles.staffTitleRow}>
                 <Text
-                  style={styles.staffTitle}
+                  style={[styles.staffTitle, isClosed && styles.staffTitleClosed]}
                   numberOfLines={2}
                   ellipsizeMode="tail">
                   {item?.recruitTitle}
                 </Text>
-                {!!createdTime && (
-                  <Text style={styles.staffTimeText}>{createdTime}</Text>
-                )}
+                {isClosed ? (
+                  <View style={styles.staffClosedBadge}>
+                    <Text style={styles.staffClosedBadgeText}>마감 완료</Text>
+                  </View>
+                ) : null}
+                {isRemovable && handleDeletePosting ? (
+                  <TouchableOpacity
+                    style={styles.staffTopDeleteButton}
+                    activeOpacity={0.8}
+                    onPress={event => {
+                      event.stopPropagation();
+                      handleDeletePosting?.(item.recruitId);
+                    }}
+                    hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+                    <Text style={styles.staffTopDeleteText}>삭제</Text>
+                  </TouchableOpacity>
+                ) : null}
               </View>
 
               <View style={styles.staffMetaRow}>
                 <Text
-                  style={[styles.staffMetaText, styles.staffAddressText]}
+                  style={[
+                    styles.staffMetaText,
+                    styles.staffAddressText,
+                    isClosed && styles.staffTextClosed,
+                  ]}
                   numberOfLines={1}
                   ellipsizeMode="tail">
                   {item.address}
                 </Text>
                 {!!item.workDuration && (
-                  <Text style={styles.staffMetaText}>{item.workDuration}</Text>
+                  <Text
+                    style={[
+                      styles.staffMetaText,
+                      isClosed && styles.staffTextClosed,
+                    ]}>
+                    {item.workDuration}
+                  </Text>
                 )}
               </View>
             </View>
@@ -119,19 +131,31 @@ const ApplicantItem = ({
           {tags.length ? (
             <View style={styles.staffTagRow}>
               {tags.map((tag, index) => (
-                <View key={`${tag}-${index}`} style={styles.staffTag}>
-                  <Text style={styles.staffTagText}>{tag}</Text>
+                <View
+                  key={`${tag}-${index}`}
+                  style={[styles.staffTag, isClosed && styles.staffTagClosed]}>
+                  <Text
+                    style={[
+                      styles.staffTagText,
+                      isClosed && styles.staffTagTextClosed,
+                    ]}>
+                    {tag}
+                  </Text>
                 </View>
               ))}
             </View>
           ) : null}
 
           <View style={styles.staffDeadlineRow}>
-            <Text style={styles.staffDeadlineText}>
+            <Text
+              style={[
+                styles.staffDeadlineText,
+                isClosed && styles.staffTextClosed,
+              ]}>
               마감날짜: {deadlineDate || item?.deadline}
             </Text>
 
-            {isEditable || isRemovable ? (
+            {!isClosed && (isEditable || handleClosePosting) ? (
               <View style={styles.staffButtonRow}>
                 {isEditable ? (
                   <TouchableOpacity
@@ -145,16 +169,16 @@ const ApplicantItem = ({
                     <Text style={styles.staffEditButtonText}>수정</Text>
                   </TouchableOpacity>
                 ) : null}
-                {isRemovable ? (
+                {!isClosed && handleClosePosting ? (
                   <TouchableOpacity
-                    style={styles.staffDeleteButton}
+                    style={styles.staffCloseButton}
                     activeOpacity={0.8}
                     onPress={event => {
                       event.stopPropagation();
-                      handleDeletePosting?.(item.recruitId);
+                      handleClosePosting?.(item.recruitId);
                     }}
                     hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
-                    <Text style={styles.staffDeleteButtonText}>마감 요청</Text>
+                    <Text style={styles.staffCloseButtonText}>마감 처리</Text>
                   </TouchableOpacity>
                 ) : null}
               </View>
@@ -211,7 +235,7 @@ const ApplicantItem = ({
 
         <View style={[styles.titleRow, styles.fullWidth, {marginTop: 10}]}>
           <Text style={styles.detailText}>마감일: {item.deadline}</Text>
-          {isEditable || isRemovable ? (
+          {isEditable || isRemovable || handleClosePosting ? (
             <View style={styles.iconsContainer}>
               {isEditable ? (
                 <TouchableOpacity
@@ -223,14 +247,24 @@ const ApplicantItem = ({
                   <Text style={styles.editButton}>수정</Text>
                 </TouchableOpacity>
               ) : null}
-              {isRemovable ? (
+              {isRemovable && handleDeletePosting ? (
                 <TouchableOpacity
                   onPress={event => {
                     event.stopPropagation();
                     handleDeletePosting?.(item.recruitId);
                   }}
                   hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
-                  <Text style={styles.deleteButton}>마감요청</Text>
+                  <Text style={styles.deleteButton}>삭제</Text>
+                </TouchableOpacity>
+              ) : null}
+              {handleClosePosting ? (
+                <TouchableOpacity
+                  onPress={event => {
+                    event.stopPropagation();
+                    handleClosePosting?.(item.recruitId);
+                  }}
+                  hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+                  <Text style={styles.deleteButton}>마감처리</Text>
                 </TouchableOpacity>
               ) : null}
             </View>
@@ -255,6 +289,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 18,
   },
+  staffPostingCardClosed: {
+    backgroundColor: COLORS.grayscale_100,
+  },
   staffHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -266,6 +303,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: COLORS.grayscale_200,
   },
+  staffAvatarClosed: {
+    opacity: 0.45,
+  },
   staffInfoColumn: {
     flex: 1,
     minHeight: 64,
@@ -276,16 +316,33 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 8,
   },
-  staffTimeText: {
-    ...FONTS.fs_14_regular,
-    color: COLORS.grayscale_400,
+  staffTopDeleteButton: {
+    paddingHorizontal: 2,
+    paddingVertical: 1,
+  },
+  staffTopDeleteText: {
+    ...FONTS.fs_14_medium,
+    color: COLORS.semantic_red,
+  },
+  staffClosedBadge: {
+    borderRadius: 100,
+    backgroundColor: COLORS.grayscale_200,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     flexShrink: 0,
+  },
+  staffClosedBadgeText: {
+    ...FONTS.fs_12_medium,
+    color: COLORS.grayscale_500,
   },
   staffTitle: {
     ...FONTS.fs_16_semibold,
     color: COLORS.grayscale_900,
     lineHeight: 22,
     flex: 1,
+  },
+  staffTitleClosed: {
+    color: COLORS.grayscale_400,
   },
   staffMetaRow: {
     flexDirection: 'row',
@@ -302,6 +359,9 @@ const styles = StyleSheet.create({
     color: COLORS.grayscale_500,
     lineHeight: 20,
   },
+  staffTextClosed: {
+    color: COLORS.grayscale_400,
+  },
   staffTagRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -314,14 +374,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
+  staffTagClosed: {
+    backgroundColor: COLORS.grayscale_200,
+  },
   staffTagText: {
     ...FONTS.fs_12_medium,
     color: COLORS.primary_blue,
   },
+  staffTagTextClosed: {
+    color: COLORS.grayscale_400,
+  },
   staffDeadlineRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    alignItems: 'stretch',
     gap: 12,
     marginTop: 14,
   },
@@ -333,8 +397,9 @@ const styles = StyleSheet.create({
   staffButtonRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-end',
     gap: 8,
-    flexShrink: 0,
+    flexWrap: 'wrap',
   },
   staffEditButton: {
     minWidth: 54,
@@ -349,7 +414,7 @@ const styles = StyleSheet.create({
     ...FONTS.fs_14_medium,
     color: COLORS.grayscale_0,
   },
-  staffDeleteButton: {
+  staffCloseButton: {
     minWidth: 76,
     height: 34,
     borderRadius: 17,
@@ -358,7 +423,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.grayscale_100,
     paddingHorizontal: 14,
   },
-  staffDeleteButtonText: {
+  staffCloseButtonText: {
     ...FONTS.fs_14_medium,
     color: COLORS.grayscale_800,
   },
@@ -422,6 +487,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   applicationCountBadge: {
+    alignSelf: 'flex-end',
     borderRadius: 100,
     backgroundColor: COLORS.grayscale_100,
     paddingVertical: 6,

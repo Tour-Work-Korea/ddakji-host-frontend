@@ -1,14 +1,13 @@
 import React, {useCallback, useState} from 'react';
 import {FlatList, Text, TouchableOpacity, View} from 'react-native';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import Toast from 'react-native-toast-message';
 
 import ApplicantItem from '@components/Employ/ApplicantItem';
 import AlertModal from '@components/modals/AlertModal';
 import PrevRecruitModal from '@components/modals/Employ/PrevRecruitModal';
-import ResultModal from '@components/modals/ResultModal';
 import {FONTS} from '@constants/fonts';
 import hostEmployApi from '@utils/api/hostEmployApi';
-import BlueSmileLogo from '@assets/images/logo_blue_smile.svg';
 import PlusIcon from '@assets/images/plus_white.svg';
 import styles from './StaffPosting.styles';
 
@@ -18,10 +17,18 @@ const getRecruitSortTime = recruit => {
   return Number.isNaN(time) ? 0 : time;
 };
 
+const isRecruitClosed = recruit => recruit?.isRecruiting === false;
+
 const sortRecruitsByRecent = recruits =>
-  [...(recruits ?? [])].sort(
-    (left, right) => getRecruitSortTime(right) - getRecruitSortTime(left),
-  );
+  [...(recruits ?? [])].sort((left, right) => {
+    const closedDiff = Number(isRecruitClosed(left)) - Number(isRecruitClosed(right));
+
+    if (closedDiff !== 0) {
+      return closedDiff;
+    }
+
+    return getRecruitSortTime(right) - getRecruitSortTime(left);
+  });
 
 const filterRecruitsByGuesthouse = (recruits, guesthouseId) => {
   if (!guesthouseId) {
@@ -44,7 +51,6 @@ const StaffPosting = ({guesthouseId}) => {
     buttonText: '',
     buttonText2: '',
   });
-  const [resultModalVisible, setResultModalVisible] = useState(false);
   const [prevRecruitModalVisible, setPrevRecruitModalVisible] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -97,13 +103,18 @@ const StaffPosting = ({guesthouseId}) => {
 
   const fetchDeleteRecruit = async id => {
     try {
-      await hostEmployApi.requestDeleteRecruit(id, '마감요청');
-      setResultModalVisible(true);
+      await hostEmployApi.deleteRecruit(id);
+      Toast.show({
+        type: 'success',
+        text1: '공고가 삭제되었어요.',
+        position: 'top',
+      });
+      getMyRecruits();
     } catch (error) {
       setErrorModal({
         visible: true,
         title:
-          error?.response?.data?.message ?? '마감요청 중 오류가 발생했습니다',
+          error?.response?.data?.message ?? '공고 삭제 중 오류가 발생했습니다',
         onPress: () => setErrorModal(prev => ({...prev, visible: false})),
         onPress2: null,
         buttonText: '확인',
@@ -120,11 +131,62 @@ const StaffPosting = ({guesthouseId}) => {
   const handleDeletePosting = id => {
     setErrorModal({
       visible: true,
-      title: '마감 요청은 되돌릴 수 없는 작업이에요\n계속 진행하시겠어요?',
+      title: '공고 삭제는 되돌릴 수 없는 작업이에요\n계속 삭제하시겠어요?',
       onPress: () => confirmDelete(id),
       onPress2: () => setErrorModal(prev => ({...prev, visible: false})),
-      buttonText: '요청할래요',
-      buttonText2: '보류할게요',
+      buttonText: '삭제할래요',
+      buttonText2: '취소할게요',
+    });
+  };
+
+  const fetchCloseRecruit = async id => {
+    try {
+      await hostEmployApi.closeRecruit(id);
+      Toast.show({
+        type: 'success',
+        text1: '공고가 마감 처리되었어요.',
+        position: 'top',
+      });
+      setMyRecruits(prev =>
+        prev.map(recruit =>
+          recruit?.recruitId === id
+            ? {
+                ...recruit,
+                isRecruiting: false,
+                recruitStatus: 'RECRUIT_END',
+                status: 'RECRUIT_END',
+              }
+            : recruit,
+        ),
+      );
+      getMyRecruits();
+    } catch (error) {
+      setErrorModal({
+        visible: true,
+        title:
+          error?.response?.data?.message ??
+          '공고 마감 처리 중 오류가 발생했습니다',
+        onPress: () => setErrorModal(prev => ({...prev, visible: false})),
+        onPress2: null,
+        buttonText: '확인',
+        buttonText2: null,
+      });
+    }
+  };
+
+  const confirmClose = id => {
+    setErrorModal(prev => ({...prev, visible: false}));
+    fetchCloseRecruit(id);
+  };
+
+  const handleClosePosting = id => {
+    setErrorModal({
+      visible: true,
+      title: '공고를 마감 처리하시겠어요?',
+      onPress: () => confirmClose(id),
+      onPress2: () => setErrorModal(prev => ({...prev, visible: false})),
+      buttonText: '마감할래요',
+      buttonText2: '취소할게요',
     });
   };
 
@@ -189,6 +251,7 @@ const StaffPosting = ({guesthouseId}) => {
               variant="staffPosting"
               handleEditPosting={handleEditPosting}
               handleDeletePosting={() => handleDeletePosting(item.recruitId)}
+              handleClosePosting={() => handleClosePosting(item.recruitId)}
             />
           )}
           keyExtractor={item => item.recruitId.toString()}
@@ -224,14 +287,6 @@ const StaffPosting = ({guesthouseId}) => {
         items={myRecruits}
         onClose={() => setPrevRecruitModalVisible(false)}
         onPick={handlePickPrevRecruit}
-      />
-      <ResultModal
-        visible={resultModalVisible}
-        onClose={() => {
-          setResultModalVisible(false);
-        }}
-        title="마감요청이 되었어요!"
-        Icon={BlueSmileLogo}
       />
     </View>
   );

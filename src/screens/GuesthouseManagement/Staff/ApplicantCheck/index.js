@@ -14,10 +14,18 @@ const getRecruitSortTime = recruit => {
   return Number.isNaN(time) ? 0 : time;
 };
 
+const isRecruitClosed = recruit => recruit?.isRecruiting === false;
+
 const sortRecruitsByRecent = recruits =>
-  [...(recruits ?? [])].sort(
-    (left, right) => getRecruitSortTime(right) - getRecruitSortTime(left),
-  );
+  [...(recruits ?? [])].sort((left, right) => {
+    const closedDiff = Number(isRecruitClosed(left)) - Number(isRecruitClosed(right));
+
+    if (closedDiff !== 0) {
+      return closedDiff;
+    }
+
+    return getRecruitSortTime(right) - getRecruitSortTime(left);
+  });
 
 const filterRecruitsByGuesthouse = (recruits, guesthouseId) => {
   if (!guesthouseId) {

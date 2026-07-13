@@ -14,6 +14,7 @@ import styles from './RecruitmentForm.styles';
 import Header from '@components/Header';
 import hostEmployApi from '@utils/api/hostEmployApi';
 import {CommonActions, useNavigation} from '@react-navigation/native';
+import Toast from 'react-native-toast-message';
 import {computeValidSections} from '@utils/validation/recruitmentFormValidation';
 
 import RecruitConditionSection from './RecruitConditionSection';
@@ -234,10 +235,10 @@ const RecruitmentForm = ({route}) => {
   const fetchNewRecruit = async payload => {
     try {
       await hostEmployApi.createRecruit(payload);
-      setErrorModal({
-        visible: true,
-        title: '새로운 공고를 등록했습니다',
-        buttonText: '확인',
+      Toast.show({
+        type: 'success',
+        text1: '새로운 공고를 등록했어요.',
+        position: 'top',
       });
       if (returnToStaffTab) {
         navigation.dispatch(
@@ -278,10 +279,10 @@ const RecruitmentForm = ({route}) => {
   const fetchUpdateRecruit = async payload => {
     try {
       await hostEmployApi.updateRecruit(recruitId, payload);
-      setErrorModal({
-        visible: true,
-        title: '공고 수정이 완료되었습니다',
-        buttonText: '확인',
+      Toast.show({
+        type: 'success',
+        text1: '공고 수정이 완료되었어요.',
+        position: 'top',
       });
 
       if (returnToStaffTab) {

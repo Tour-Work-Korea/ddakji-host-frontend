@@ -19,9 +19,11 @@ const hostEmployApi = {
   updateRecruit: (recruitId, updateRecruitData) =>
     api.put(`/host/recruits/${recruitId}`, updateRecruitData),
 
-  //채용공고 삭제 요청
-  requestDeleteRecruit: (recruitId, reason) =>
-    api.post(`/host/recruits/${recruitId}`, reason),
+  //채용공고 삭제
+  deleteRecruit: recruitId => api.delete(`/host/recruits/${recruitId}`),
+
+  //채용공고 마감 처리
+  closeRecruit: recruitId => api.patch(`/host/recruits/${recruitId}/close`),
 
   //지원서 전체 조회
   getAllApplicants: () => api.get('/host/recruits/applications'),
