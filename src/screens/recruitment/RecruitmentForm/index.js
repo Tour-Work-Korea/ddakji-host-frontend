@@ -39,7 +39,7 @@ const sections = [
   {id: 'shortDescription', title: '공고 요약'},
   {id: 'recruitCondition', title: '모집 조건'},
   {id: 'workCondition', title: '근무 조건'},
-  {id: 'workInfo', title: '근무지 정보'},
+  {id: 'workInfo', title: '근무 정보'},
   {id: 'detailInfo', title: '상세 정보'},
 ];
 
