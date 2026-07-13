@@ -4,6 +4,7 @@ import {
   TouchableOpacity,
   Image,
   Modal,
+  ScrollView,
   StyleSheet,
 } from 'react-native';
 
@@ -67,16 +68,19 @@ export default function WorkInfoSection({
           {/* 헤더 */}
           <View style={styles.header}>
             <View />
-            <Text style={recruitStyle.headerText}>근무지 정보</Text>
+            <Text style={recruitStyle.headerText}>근무 정보</Text>
             <TouchableOpacity style={styles.xBtn} onPress={onClose}>
               <XBtn width={24} height={24} />
             </TouchableOpacity>
           </View>
-          <View style={recruitStyle.body}>
+          <ScrollView
+            style={recruitStyle.scrollView}
+            contentContainerStyle={recruitStyle.body}
+            showsVerticalScrollIndicator={false}>
             <View>
               <View style={styles.dateRow}>
                 <Text style={styles.subsectionTitle}>
-                  근무지 사진을 추가해주세요
+                  근무 정보를 추가해주세요
                 </Text>
                 <Text style={recruitStyle.lengthTextAll}>
                   <Text style={recruitStyle.lengthText}>
@@ -115,7 +119,7 @@ export default function WorkInfoSection({
             <View style={recruitStyle.bottomContainer}>
               <ButtonScarlet title="적용하기" onPress={onClose} />
             </View>
-          </View>
+          </ScrollView>
         </View>
         <AlertModal
           visible={errorModal.visible}
@@ -130,8 +134,9 @@ export default function WorkInfoSection({
 
 const recruitStyle = StyleSheet.create({
   headerText: [FONTS.fs_20_semibold],
+  scrollView: {flex: 1},
   body: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'space-between',
   },
   bottomContainer: {marginVertical: 20},

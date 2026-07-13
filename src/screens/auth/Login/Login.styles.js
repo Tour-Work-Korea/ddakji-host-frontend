@@ -31,6 +31,17 @@ export default StyleSheet.create({
     justifyContent: 'flex-end',
     marginBottom: 24,
   },
+  backActionRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    marginBottom: 24,
+  },
+  backButton: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   closeButton: {
     padding: 4,
     alignSelf: 'flex-end',
@@ -41,18 +52,9 @@ export default StyleSheet.create({
     alignSelf: 'stretch',
     marginBottom: 28,
   },
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
   titleText: {
     ...FONTS.fs_20_bold,
     color: COLORS.grayscale_900,
-  },
-  subTitleText: {
-    ...FONTS.fs_16_semibold,
-    color: COLORS.grayscale_700,
   },
   inputGroup: {
     marginTop: 40,
@@ -146,8 +148,8 @@ export default StyleSheet.create({
   bottomSection: {flexDirection: 'column', gap: 20},
   buttonSection: {flexDirection: 'column', gap: 8},
   findSection: {
-    flexDirection: 'row', 
-    justifyContent: 'center', 
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
     gap: 12,
     marginTop: 8,

@@ -75,7 +75,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderColor: COLORS.grayscale_200,
     borderWidth: 1,
-    maxHeight: 450,
   },
   introductionText: {
     ...FONTS.fs_14_medium,

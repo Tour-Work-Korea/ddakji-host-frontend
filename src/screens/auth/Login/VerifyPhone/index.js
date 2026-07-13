@@ -13,6 +13,7 @@ import authApi from '@utils/api/authApi';
 import ButtonWhite from '@components/ButtonWhite';
 import ButtonScarletLogo from '@components/ButtonScarletLogo';
 import AlertModal from '@components/modals/AlertModal';
+import AuthBackButton from '../AuthBackButton';
 
 import styles from '../Login.styles';
 import {COLORS} from '@constants/colors';
@@ -88,7 +89,7 @@ const VerifyPhone = ({route}) => {
         }
       }, 850);
     }
-  }, [isCodeVerified]);
+  }, [find, isCodeVerified, navigation, originPhone, phoneNumber, userRole]);
 
   // 타이머 기능
   useEffect(() => {
@@ -123,7 +124,9 @@ const VerifyPhone = ({route}) => {
       }
     }
     try {
-      await authApi.verifySelfByPhone(phoneNumber, userRole);
+      await authApi.sendSms(phoneNumber, userRole, {
+        purpose: 'FIND_ACCOUNT',
+      });
       setHasRequestedCode(true);
       setIsCodeSent(true);
       setTimeLeft(300);
@@ -158,7 +161,10 @@ const VerifyPhone = ({route}) => {
   const verifyCode = async () => {
     setLoading(true);
     try {
-      await authApi.verifySms(phoneNumber, code);
+      await authApi.verifySms(phoneNumber, code, {
+        userRole,
+        purpose: 'FIND_ACCOUNT',
+      });
       setIsTimerActive(false);
       setIsCodeVerified(true);
     } catch (error) {
@@ -180,25 +186,20 @@ const VerifyPhone = ({route}) => {
   };
 
   // 사장님 분기
-    const isHost = userRole === 'HOST';
-    const MainLogo = LogoBlue;
-    const mainColor = isHost
-      ? COLORS.primary_blue
-      : COLORS.primary_orange;
+  const isHost = userRole === 'HOST';
+  const mainColor = isHost ? COLORS.primary_blue : COLORS.primary_orange;
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <View style={styles.container}>
         <View style={styles.viewFlexBox}>
           <View>
+            <View style={styles.backActionRow}>
+              <AuthBackButton />
+            </View>
             {/* 로고 및 문구 */}
             <View style={styles.groupParent}>
-              <View  style={styles.titleContainer}>
-                <MainLogo width={60} height={29} />
-                {isHost && (
-                  <Text style={styles.subTitleText}>워커웨이 비즈니스</Text>
-                )}
-              </View>
+              <LogoBlue width={60} height={29} />
               <Text style={[styles.titleText]}>전화번호 인증</Text>
             </View>
 
@@ -283,14 +284,14 @@ const VerifyPhone = ({route}) => {
               {loading ? (
                 <ButtonScarletLogo disabled={true} />
               ) : isCodeVerified ? (
-                <ButtonWhite 
+                <ButtonWhite
                   title="인증 성공!"
                   backgroundColor={mainColor}
                   textColor={COLORS.grayscale_0}
                 />
               ) : isCodeValid ? (
-                <ButtonWhite 
-                  title="인증하기" 
+                <ButtonWhite
+                  title="인증하기"
                   onPress={verifyCode}
                   backgroundColor={mainColor}
                   textColor={COLORS.grayscale_0}

@@ -1,10 +1,13 @@
-import React, {useEffect, useState} from 'react';
-import {View, Text} from 'react-native';
+import React, {useCallback, useEffect, useState} from 'react';
+import {View, Text, TouchableOpacity} from 'react-native';
+import Clipboard from '@react-native-clipboard/clipboard';
+import Toast from 'react-native-toast-message';
 import {useNavigation} from '@react-navigation/native';
 
 import authApi from '@utils/api/authApi';
 import AlertModal from '@components/modals/AlertModal';
 import ButtonWhite from '@components/ButtonWhite';
+import AuthBackButton from '../AuthBackButton';
 
 import styles from '../Login.styles';
 import {COLORS} from '@constants/colors';
@@ -20,11 +23,7 @@ export default function FindId({route}) {
     buttonText: '',
   });
 
-  useEffect(() => {
-    tryFindId();
-  }, [userRole, phoneNumber]);
-
-  const tryFindId = async () => {
+  const tryFindId = useCallback(async () => {
     try {
       const response = await authApi.findId(phoneNumber, userRole);
       setEmail(response.data);
@@ -37,35 +36,50 @@ export default function FindId({route}) {
         buttonText: '확인',
       });
     }
+  }, [phoneNumber, userRole]);
+
+  useEffect(() => {
+    tryFindId();
+  }, [tryFindId]);
+
+  const handleCopyEmail = () => {
+    if (!email) {
+      return;
+    }
+
+    Clipboard.setString(email);
+    Toast.show({
+      type: 'success',
+      text1: '아이디가 복사되었습니다.',
+      position: 'top',
+    });
   };
 
   // 사장님 분기
   const isHost = userRole === 'HOST';
-  const MainLogo = LogoBlue;
-  const mainColor = isHost
-    ? COLORS.primary_blue
-    : COLORS.primary_orange;
+  const mainColor = isHost ? COLORS.primary_blue : COLORS.primary_orange;
 
   return (
     <>
       <View style={styles.container}>
         <View style={styles.viewFlexBox}>
           <View>
+            <View style={styles.backActionRow}>
+              <AuthBackButton />
+            </View>
             {/* 로고 및 문구 */}
             <View style={styles.groupParent}>
-              <View  style={styles.titleContainer}>
-                <MainLogo width={60} height={29} />
-                {isHost && (
-                  <Text style={styles.subTitleText}>워커웨이 비즈니스</Text>
-                )}
-              </View>
+              <LogoBlue width={60} height={29} />
               <View>
                 <Text style={[styles.titleText]}>아이디를 찾았어요!</Text>
               </View>
               {email ? (
-                <View style={styles.findEmailBox}>
+                <TouchableOpacity
+                  style={styles.findEmailBox}
+                  activeOpacity={0.8}
+                  onPress={handleCopyEmail}>
                   <Text style={styles.findEmailText}>{email}</Text>
-                </View>
+                </TouchableOpacity>
               ) : (
                 <></>
               )}

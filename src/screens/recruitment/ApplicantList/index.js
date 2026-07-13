@@ -5,12 +5,10 @@ import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import Header from '@components/Header';
 import hostEmployApi from '@utils/api/hostEmployApi';
 import AlertModal from '@components/modals/AlertModal';
-import ResultModal from '@components/modals/ResultModal';
 import ApplicantItem from '@components/Employ/ApplicantItem';
 
 import ApplyLogo from '@assets/images/wa_blue_apply.svg';
 import styles from './ApplicantList.styles';
-import BlueSmileLogo from '@assets/images/logo_blue_smile.svg';
 
 const ApplicantList = () => {
   const navigation = useNavigation();
@@ -23,7 +21,6 @@ const ApplicantList = () => {
     buttonText: '',
     buttonText2: '',
   });
-  const [resultModalVisible, setResultModalVisible] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useFocusEffect(
@@ -95,14 +92,6 @@ const ApplicantList = () => {
           visible={errorModal.visible}
         />
       </View>
-      <ResultModal
-        visible={resultModalVisible}
-        onClose={() => {
-          setResultModalVisible(false);
-        }}
-        title={'마감요청이 되었어요!'}
-        Icon={BlueSmileLogo}
-      />
     </View>
   );
 };

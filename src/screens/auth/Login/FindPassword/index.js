@@ -20,6 +20,7 @@ import {validateNewPassword} from '@utils/validation/registerValidation';
 import AlertModal from '@components/modals/AlertModal';
 import ButtonScarlet from '@components/ButtonScarlet';
 import ButtonWhite from '@components/ButtonWhite';
+import AuthBackButton from '../AuthBackButton';
 
 import LogoBlue from '@assets/images/logo_blue.svg';
 import ShowPassword from '@assets/images/show_password.svg';
@@ -110,9 +111,10 @@ const FindPassword = ({route}) => {
   const handleSubmit = async () => {
     try {
       await authApi.findPassword({
-        ...formData,
         phoneNum: phoneNumber,
         role: userRole,
+        newPassword: formData.newPassword,
+        confirmPassword: formData.confirmPassword,
       });
       setSuccess(true);
     } catch (error) {
@@ -178,107 +180,113 @@ const FindPassword = ({route}) => {
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <View style={styles.container}>
         <KeyboardAvoidingView
-          style={{flex: 1}}
+          style={styles.keyboardAvoidingView}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={0}>
           <View style={styles.viewFlexBox} keyboardShouldPersistTaps="handled">
             {/* 헤더 */}
-            <View style={styles.groupParent}>
-              <View  style={styles.titleContainer}>
-                <LogoBlue width={60} height={29} />
-                <Text style={styles.subTitleText}>워커웨이 비즈니스</Text>
+            <View>
+              <View style={styles.backActionRow}>
+                <AuthBackButton />
               </View>
-              <Text style={styles.titleText}>비밀번호를 재설정 해주세요!</Text>
-              {/* 비밀번호 입력 */}
-              <View style={styles.inputGroup}>
-                {/* 비밀번호 필드 */}
-                <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>비밀번호</Text>
-                  <View style={styles.inputBox}>
-                    <TextInput
-                      style={styles.textInput}
-                      placeholder="비밀번호를 입력해주세요"
-                      placeholderTextColor={COLORS.grayscale_400}
-                      value={formData.newPassword}
-                      onChangeText={handlePasswordChange}
-                      maxLength={20}
-                      secureTextEntry={!isPasswordVisible}
-                      autoCapitalize="none"
-                    />
-                    <TouchableOpacity
-                      onPress={() => setIsPasswordVisible(prev => !prev)}>
-                      {isPasswordVisible ? (
-                        <HidePassword width={24} height={24} />
-                      ) : (
-                        <ShowPassword width={24} height={24} />
-                      )}
-                    </TouchableOpacity>
+              <View style={styles.groupParent}>
+                <LogoBlue width={60} height={29} />
+                <Text style={styles.titleText}>
+                  비밀번호를 재설정 해주세요!
+                </Text>
+                {/* 비밀번호 입력 */}
+                <View style={styles.inputGroup}>
+                  {/* 비밀번호 필드 */}
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.inputLabel}>비밀번호</Text>
+                    <View style={styles.inputBox}>
+                      <TextInput
+                        style={styles.textInput}
+                        placeholder="비밀번호를 입력해주세요"
+                        placeholderTextColor={COLORS.grayscale_400}
+                        value={formData.newPassword}
+                        onChangeText={handlePasswordChange}
+                        maxLength={20}
+                        secureTextEntry={!isPasswordVisible}
+                        autoCapitalize="none"
+                      />
+                      <TouchableOpacity
+                        onPress={() => setIsPasswordVisible(prev => !prev)}>
+                        {isPasswordVisible ? (
+                          <HidePassword width={24} height={24} />
+                        ) : (
+                          <ShowPassword width={24} height={24} />
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                    <View style={styles.validBox}>
+                      <Text
+                        style={[
+                          styles.validDefaultText,
+                          formValid?.newPassword?.hasUpperLowercase &&
+                            styles.validText,
+                        ]}>
+                        영문 대소문자 포함
+                      </Text>
+                      <Text
+                        style={[
+                          styles.validDefaultText,
+                          formValid?.newPassword?.hasNumber && styles.validText,
+                        ]}>
+                        숫자 포함
+                      </Text>
+                      <Text
+                        style={[
+                          styles.validDefaultText,
+                          formValid?.newPassword?.hasSpecialChar &&
+                            styles.validText,
+                        ]}>
+                        특수문자 포함
+                      </Text>
+                      <Text
+                        style={[
+                          styles.validDefaultText,
+                          formValid?.newPassword?.isLengthValid &&
+                            styles.validText,
+                        ]}>
+                        8-20자 이내
+                      </Text>
+                    </View>
                   </View>
-                  <View style={styles.validBox}>
-                    <Text
-                      style={[
-                        styles.validDefaultText,
-                        formValid?.newPassword?.hasUpperLowercase &&
-                          styles.validText,
-                      ]}>
-                      영문 대소문자 포함
-                    </Text>
-                    <Text
-                      style={[
-                        styles.validDefaultText,
-                        formValid?.newPassword?.hasNumber && styles.validText,
-                      ]}>
-                      숫자 포함
-                    </Text>
-                    <Text
-                      style={[
-                        styles.validDefaultText,
-                        formValid?.newPassword?.hasSpecialChar &&
-                          styles.validText,
-                      ]}>
-                      특수문자 포함
-                    </Text>
-                    <Text
-                      style={[
-                        styles.validDefaultText,
-                        formValid?.newPassword?.isLengthValid &&
-                          styles.validText,
-                      ]}>
-                      8-20자 이내
-                    </Text>
-                  </View>
-                </View>
 
-                {/* 비밀번호 확인 필드 */}
-                <View style={styles.inputContainer}>
-                  <View style={styles.inputBox}>
-                    <TextInput
-                      style={styles.textInput}
-                      placeholder="다시 한 번 입력해주세요"
-                      placeholderTextColor={COLORS.grayscale_400}
-                      value={formData.confirmPassword}
-                      onChangeText={handlePasswordConfirmChange}
-                      maxLength={20}
-                      secureTextEntry={!isPasswordCheckVisible}
-                    />
-                    <TouchableOpacity
-                      onPress={() => setIsPasswordCheckVisible(prev => !prev)}>
-                      {isPasswordCheckVisible ? (
-                        <HidePassword width={24} height={24} />
-                      ) : (
-                        <ShowPassword width={24} height={24} />
-                      )}
-                    </TouchableOpacity>
-                  </View>
-                  <View style={styles.validBox}>
-                    <Text
-                      style={[
-                        styles.validDefaultText,
-                        formValid?.confirmPassword?.isMatched &&
-                          styles.validText,
-                      ]}>
-                      비밀번호 일치
-                    </Text>
+                  {/* 비밀번호 확인 필드 */}
+                  <View style={styles.inputContainer}>
+                    <View style={styles.inputBox}>
+                      <TextInput
+                        style={styles.textInput}
+                        placeholder="다시 한 번 입력해주세요"
+                        placeholderTextColor={COLORS.grayscale_400}
+                        value={formData.confirmPassword}
+                        onChangeText={handlePasswordConfirmChange}
+                        maxLength={20}
+                        secureTextEntry={!isPasswordCheckVisible}
+                      />
+                      <TouchableOpacity
+                        onPress={() =>
+                          setIsPasswordCheckVisible(prev => !prev)
+                        }>
+                        {isPasswordCheckVisible ? (
+                          <HidePassword width={24} height={24} />
+                        ) : (
+                          <ShowPassword width={24} height={24} />
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                    <View style={styles.validBox}>
+                      <Text
+                        style={[
+                          styles.validDefaultText,
+                          formValid?.confirmPassword?.isMatched &&
+                            styles.validText,
+                        ]}>
+                        비밀번호 일치
+                      </Text>
+                    </View>
                   </View>
                 </View>
               </View>
