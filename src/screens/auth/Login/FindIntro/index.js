@@ -3,6 +3,7 @@ import {View, Text} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 
 import ButtonWhite from '@components/ButtonWhite';
+import AuthBackButton from '../AuthBackButton';
 
 import styles from '../Login.styles';
 import {COLORS} from '@constants/colors';
@@ -15,18 +16,19 @@ export default function FindIntro({route}) {
   // 사장님 분기
   const isHost = userRole === 'HOST';
   const MainLogo = LogoBlue;
-  const mainColor = isHost
-    ? COLORS.primary_blue
-    : COLORS.primary_orange;
+  const mainColor = isHost ? COLORS.primary_blue : COLORS.primary_orange;
 
   return (
     <>
       <View style={styles.container}>
         <View style={styles.viewFlexBox}>
           <View>
+            <View style={styles.backActionRow}>
+              <AuthBackButton />
+            </View>
             {/* 로고 및 문구 */}
             <View style={styles.groupParent}>
-              <View  style={styles.titleContainer}>
+              <View style={styles.titleContainer}>
                 <MainLogo width={60} height={29} />
                 {isHost && (
                   <Text style={styles.subTitleText}>워커웨이 비즈니스</Text>
