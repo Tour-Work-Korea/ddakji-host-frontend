@@ -16,7 +16,7 @@ import AlertModal from '@components/modals/AlertModal';
 import styles from './Certificate.styles';
 import {COLORS} from '@constants/colors';
 
-const HostPhone = ({user, onPress}) => {
+const HostPhone = ({user, onPress, purpose = 'SIGN_UP'}) => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isPhoneNumberValid, setIsPhoneNumberValid] = useState(false);
   const [code, setCode] = useState('');
@@ -79,7 +79,7 @@ const HostPhone = ({user, onPress}) => {
         onPress(phoneNumber);
       }, 850);
     }
-  }, [isCodeVerified]);
+  }, [isCodeVerified, onPress, phoneNumber]);
 
   // 타이머 기능
   useEffect(() => {
@@ -103,7 +103,7 @@ const HostPhone = ({user, onPress}) => {
   //인증번호 발송
   const sendVerificationCode = async () => {
     try {
-      await authApi.sendSms(phoneNumber, user);
+      await authApi.sendSms(phoneNumber, user, {purpose});
       setHasRequestedCode(true);
       setIsCodeSent(true);
       setTimeLeft(300);
@@ -131,7 +131,10 @@ const HostPhone = ({user, onPress}) => {
   const verifyCode = async () => {
     setLoading(true);
     try {
-      await authApi.verifySms(phoneNumber, code);
+      await authApi.verifySms(phoneNumber, code, {
+        userRole: user,
+        purpose,
+      });
       setIsTimerActive(false);
       setIsCodeVerified(true);
     } catch (error) {
@@ -247,15 +250,15 @@ const HostPhone = ({user, onPress}) => {
               {loading ? (
                 <ButtonScarletLogo disabled={true} />
               ) : isCodeVerified ? (
-                <ButtonWhite 
+                <ButtonWhite
                   title="인증 성공!"
                   backgroundColor={COLORS.primary_blue}
                   textColor={COLORS.grayscale_0}
                 />
               ) : isCodeValid ? (
-                <ButtonWhite 
-                  title="인증하기" 
-                  onPress={verifyCode} 
+                <ButtonWhite
+                  title="인증하기"
+                  onPress={verifyCode}
                   backgroundColor={COLORS.primary_blue}
                   textColor={COLORS.grayscale_0}
                 />

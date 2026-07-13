@@ -110,9 +110,10 @@ const FindPassword = ({route}) => {
   const handleSubmit = async () => {
     try {
       await authApi.findPassword({
-        ...formData,
         phoneNum: phoneNumber,
         role: userRole,
+        newPassword: formData.newPassword,
+        confirmPassword: formData.confirmPassword,
       });
       setSuccess(true);
     } catch (error) {
