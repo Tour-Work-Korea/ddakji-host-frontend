@@ -37,7 +37,7 @@ export default StyleSheet.create({
   listContent: {
     paddingHorizontal: 16,
     paddingTop: 28,
-    paddingBottom: 24,
+    paddingBottom: 88,
   },
   cardContainer: {
     marginBottom: 24,
@@ -97,5 +97,22 @@ export default StyleSheet.create({
   },
   actionIcon: {
     marginLeft: 8,
+  },
+  addButton: {
+    alignItems: 'center',
+    backgroundColor: COLORS.primary_blue,
+    flexDirection: 'row',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 100,
+  },
+  addButtonLocation: {
+    position: 'absolute',
+    right: 20,
+    bottom: 20,
+  },
+  addButtonText: {
+    color: COLORS.grayscale_0,
+    marginRight: 10,
   },
 });

@@ -24,11 +24,19 @@ import CheckWhite from '@assets/images/check_white.svg';
 import CheckIcon from '@assets/images/star_filled.svg';
 import EmptyStarIcon from '@assets/images/star_empty.svg';
 import XBtn from '@assets/images/x_gray.svg';
+import DisabledRadioButton from '@assets/images/radio_button_disabled.svg';
+import EnabledRadioButton from '@assets/images/radio_button_enabled.svg';
 
 const MODAL_HEIGHT = Math.round(Dimensions.get('window').height * 0.9);
 const MAX_IMAGES = 10;
 const TITLE_MAX = 50;
 const TAG_MAX = 200;
+const CONTENT_TYPE_OPTIONS = [
+  {value: 'POTLUCK', label: '포틀럭'},
+  {value: 'DINNER_PARTY', label: '디너파티'},
+  {value: 'BOOK', label: '독서'},
+  {value: 'WALK', label: '산책'},
+];
 
 const stripDuplicatesByUrl = (arr = []) => {
   const seen = new Set();
@@ -51,9 +59,17 @@ const enforceSingleThumbnail = (arr = []) => {
   });
 };
 
-const normalize = ({partyTitle = '', tags = '', partyImages = []} = {}) => ({
+const normalize = ({
+  partyTitle = '',
+  tags = '',
+  partyImages = [],
+  contentType = 'POTLUCK',
+} = {}) => ({
   partyTitle: typeof partyTitle === 'string' ? partyTitle : '',
   tags: typeof tags === 'string' ? tags : '',
+  contentType: CONTENT_TYPE_OPTIONS.some(option => option.value === contentType)
+    ? contentType
+    : 'POTLUCK',
   partyImages: Array.isArray(partyImages)
     ? enforceSingleThumbnail(stripDuplicatesByUrl(partyImages))
     : [],
@@ -77,6 +93,7 @@ const PartyTitleIntroModal = ({
   initialPartyTitle = '',
   initialTags = '',
   initialPartyImages = [],
+  initialContentType = 'POTLUCK',
 }) => {
   const {keyboardHeight} = useKeyboardAwareScrollView({iosOnly: false});
   const isKeyboardVisible = keyboardHeight > 0;
@@ -85,6 +102,7 @@ const PartyTitleIntroModal = ({
       partyTitle: initialPartyTitle,
       tags: initialTags,
       partyImages: initialPartyImages,
+      contentType: initialContentType,
     }),
   );
   const [appliedData, setAppliedData] = useState(null);
@@ -98,18 +116,29 @@ const PartyTitleIntroModal = ({
           partyTitle: initialPartyTitle,
           tags: initialTags,
           partyImages: initialPartyImages,
+          contentType: initialContentType,
         }),
     );
-  }, [visible, appliedData, initialPartyTitle, initialTags, initialPartyImages]);
+  }, [
+    visible,
+    appliedData,
+    initialPartyTitle,
+    initialTags,
+    initialPartyImages,
+    initialContentType,
+  ]);
 
   const isDisabled = useMemo(() => {
     const hasTitle = form.partyTitle.trim().length > 0;
     const hasTags = form.tags.trim().length > 0;
+    const hasContentType = CONTENT_TYPE_OPTIONS.some(
+      option => option.value === form.contentType,
+    );
     const hasThumbnail =
       form.partyImages.length > 0 &&
       form.partyImages.some(item => item?.isThumbnail === true);
 
-    return !(hasTitle && hasTags && hasThumbnail);
+    return !(hasTitle && hasTags && hasThumbnail && hasContentType);
   }, [form]);
 
   const handleModalClose = () => {
@@ -120,6 +149,7 @@ const PartyTitleIntroModal = ({
             partyTitle: initialPartyTitle,
             tags: initialTags,
             partyImages: initialPartyImages,
+            contentType: initialContentType,
           }),
       );
     }
@@ -176,6 +206,7 @@ const PartyTitleIntroModal = ({
       partyTitle: form.partyTitle.trim(),
       tags: form.tags.trim(),
       partyImages: form.partyImages,
+      contentType: form.contentType,
     };
 
     setAppliedData(payload);
@@ -257,6 +288,33 @@ const PartyTitleIntroModal = ({
                     </View>
                   ))}
                 </ScrollView>
+              </View>
+
+              <Text style={[FONTS.fs_16_medium, styles.label, styles.categoryLabel]}>
+                카테고리
+              </Text>
+              <View style={styles.categoryGrid}>
+                {CONTENT_TYPE_OPTIONS.map(option => {
+                  const selected = form.contentType === option.value;
+
+                  return (
+                    <TouchableOpacity
+                      key={option.value}
+                      style={styles.categoryOption}
+                      onPress={() =>
+                        setForm(prev => ({...prev, contentType: option.value}))
+                      }>
+                      {selected ? (
+                        <EnabledRadioButton width={28} height={28} />
+                      ) : (
+                        <DisabledRadioButton width={28} height={28} />
+                      )}
+                      <Text style={[FONTS.fs_14_medium, styles.categoryOptionText]}>
+                        {option.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
 
               <View style={[styles.sectionTopRow, {marginTop: 18}]}>
@@ -351,6 +409,24 @@ const styles = StyleSheet.create({
   },
   imageGrid: {
     marginTop: 8,
+  },
+  categoryLabel: {
+    marginTop: 28,
+    marginBottom: 16,
+  },
+  categoryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    rowGap: 16,
+  },
+  categoryOption: {
+    width: '50%',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  categoryOptionText: {
+    color: COLORS.grayscale_900,
+    marginLeft: 12,
   },
   addImageBox: {
     width: 100,

@@ -43,14 +43,17 @@ const MyMeetAdd = () => {
     partyTitle: '',
     tags: '',
     partyImages: [],
+    contentType: 'POTLUCK',
 
     // 기본 정보
     guesthouseId: initialGuesthouseId,
     partyStartTime: '19:00:00',
     partyEndTime: '22:00:00',
+    applicationType: 'SAME_DAY',
     minAttendees: null,
     maxAttendees: null,
     isGuest: false,
+    chargeType: 'FREE',
     amount: null,
     femaleAmount: null,
     maleNonAmount: null,
@@ -153,15 +156,27 @@ const MyMeetAdd = () => {
           partyTitle: data?.partyTitle ?? '',
           tags: data?.partyTags ?? data?.tags ?? '',
           partyImages: normalizePartyImages(data?.partyImages),
+          contentType: ['POTLUCK', 'DINNER_PARTY', 'BOOK', 'WALK'].includes(
+            data?.contentType,
+          )
+            ? data.contentType
+            : prev.contentType,
           guesthouseId:
             Number(data?.guesthouseId) > 0
               ? Number(data.guesthouseId)
               : prev.guesthouseId,
           partyStartTime: data?.partyStartTime ?? prev.partyStartTime,
           partyEndTime: data?.partyEndTime ?? prev.partyEndTime,
+          applicationType: ['SAME_DAY', 'ADVANCE'].includes(
+            data?.applicationType,
+          )
+            ? data.applicationType
+            : prev.applicationType,
           minAttendees: data?.minAttendees ?? data?.minAttendance ?? prev.minAttendees,
           maxAttendees: data?.maxAttendees ?? data?.maxAttendance ?? prev.maxAttendees,
           isGuest: data?.isGuest ?? prev.isGuest,
+          chargeType:
+            data?.chargeType ?? (Number(data?.amount) > 0 ? 'PAID' : 'FREE'),
           amount: data?.amount ?? prev.amount,
           femaleAmount: data?.femaleAmount ?? prev.femaleAmount,
           maleNonAmount: data?.maleNonAmount ?? prev.maleNonAmount,
@@ -248,6 +263,7 @@ const MyMeetAdd = () => {
         // Keep local state key stable while accepting API's partyTags field on read/write.
         tags: payload.tags ?? prev.tags,
         partyImages: nextImages,
+        contentType: payload.contentType ?? prev.contentType,
       };
     });
     setTitleIntroModalReset(false);
@@ -257,8 +273,9 @@ const MyMeetAdd = () => {
   // 기본 정보 페이지에서 돌아올 때
   // payload 예시:
   // {
-  //   guesthouseId, partyStartTime, partyEndTime,
-  //   minAttendees, maxAttendees, isGuest, amount, femaleAmount, maleNonAmount, femaleNonAmount
+  //   guesthouseId, partyStartTime, partyEndTime, applicationType,
+  //   minAttendees, maxAttendees, isGuest, chargeType, amount,
+  //   femaleAmount, maleNonAmount, femaleNonAmount
   // }
   const onSelectBasic = payload => {
     if (!payload) return;
@@ -269,9 +286,11 @@ const MyMeetAdd = () => {
         guesthouseId: payload.guesthouseId ?? prev.guesthouseId,
         partyStartTime: payload.partyStartTime ?? prev.partyStartTime,
         partyEndTime: payload.partyEndTime ?? prev.partyEndTime,
+        applicationType: payload.applicationType ?? prev.applicationType,
         minAttendees: payload.minAttendees ?? prev.minAttendees,
         maxAttendees: payload.maxAttendees ?? prev.maxAttendees,
         isGuest: payload.isGuest ?? prev.isGuest,
+        chargeType: payload.chargeType ?? prev.chargeType,
         amount: payload.amount ?? prev.amount,
         femaleAmount: payload.femaleAmount ?? prev.femaleAmount,
         maleNonAmount: payload.maleNonAmount ?? prev.maleNonAmount,
@@ -385,13 +404,17 @@ const MyMeetAdd = () => {
     isTitleDone &&
     Array.isArray(party.partyImages) &&
     party.partyImages.length >= 1 &&
-    exactlyOneThumbnail(party.partyImages);
+    exactlyOneThumbnail(party.partyImages) &&
+    ['POTLUCK', 'DINNER_PARTY', 'BOOK', 'WALK'].includes(party.contentType);
   const isBasicDone =
     Number(party.guesthouseId) > 0 &&
     isNonEmpty(party.partyStartTime) &&
     isNonEmpty(party.partyEndTime) &&
+    ['SAME_DAY', 'ADVANCE'].includes(party.applicationType) &&
     Number(party.minAttendees) > 0 &&
-    Number(party.maxAttendees) >= Number(party.minAttendees);
+    Number(party.maxAttendees) >= Number(party.minAttendees) &&
+    ['FREE', 'PAID'].includes(party.chargeType) &&
+    (party.chargeType === 'FREE' || Number(party.amount) > 0);
   const isAnnouncementsDone =
     Array.isArray(party.partyAnnouncements) && party.partyAnnouncements.length > 0;
   const isEventDone = Array.isArray(party.partyEvents) && party.partyEvents.length > 0;
@@ -420,15 +443,18 @@ const MyMeetAdd = () => {
         isThumbnail: !!img.isThumbnail,
       })),
       partyTags: isNonEmpty(party.tags) ? String(party.tags).trim() : undefined,
+      contentType: party.contentType,
 
       // 기본 정보
       guesthouseId: Number(party.guesthouseId),
       partyStartTime: party.partyStartTime,
       partyEndTime: party.partyEndTime,
+      applicationType: party.applicationType,
       minAttendees: Number(party.minAttendees),
       maxAttendees: Number(party.maxAttendees),
       isGuest: !!party.isGuest,
-      amount: party.amount !== null && party.amount !== undefined ? Number(party.amount) : undefined,
+      chargeType: party.chargeType,
+      amount: party.chargeType === 'FREE' ? 0 : Number(party.amount),
       femaleAmount: party.femaleAmount !== null && party.femaleAmount !== undefined ? Number(party.femaleAmount) : undefined,
       maleNonAmount: party.maleNonAmount !== null && party.maleNonAmount !== undefined ? Number(party.maleNonAmount) : undefined,
       femaleNonAmount: party.femaleNonAmount !== null && party.femaleNonAmount !== undefined ? Number(party.femaleNonAmount) : undefined,
@@ -706,6 +732,7 @@ const MyMeetAdd = () => {
         initialPartyTitle={party.partyTitle}
         initialTags={party.tags}
         initialPartyImages={party.partyImages}
+        initialContentType={party.contentType}
       />
 
       <PartyAnnouncementsModal
@@ -733,9 +760,11 @@ const MyMeetAdd = () => {
           guesthouseId: party.guesthouseId,
           partyStartTime: party.partyStartTime,
           partyEndTime: party.partyEndTime,
+          applicationType: party.applicationType,
           minAttendees: party.minAttendees,
           maxAttendees: party.maxAttendees,
           isGuest: party.isGuest,
+          chargeType: party.chargeType,
           amount: party.amount,
           femaleAmount: party.femaleAmount,
           maleNonAmount: party.maleNonAmount,

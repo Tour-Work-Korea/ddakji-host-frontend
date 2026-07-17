@@ -19,6 +19,7 @@ import styles from './PartyInfo.styles';
 import PeopleIcon from '@assets/images/people_gray.svg';
 import PencilIcon from '@assets/images/edit_gray.svg';
 import TrashIcon from '@assets/images/delete_gray.svg';
+import PlusIcon from '@assets/images/plus_white.svg';
 
 const PartyInfo = ({ guesthouseId }) => {
   const navigation = useNavigation();
@@ -67,7 +68,9 @@ const PartyInfo = ({ guesthouseId }) => {
   };
 
   const confirmDelete = async () => {
-    if (!deleteTargetId) return;
+    if (!deleteTargetId) {
+      return;
+    }
 
     try {
       await hostMeetApi.deleteParty(deleteTargetId);
@@ -165,6 +168,16 @@ const PartyInfo = ({ guesthouseId }) => {
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
       />
+
+      <TouchableOpacity
+        style={[styles.addButton, styles.addButtonLocation]}
+        activeOpacity={0.8}
+        onPress={handleRegister}>
+        <Text style={[FONTS.fs_14_medium, styles.addButtonText]}>
+          파티 등록하기
+        </Text>
+        <PlusIcon width={24} height={24} />
+      </TouchableOpacity>
 
       <AlertModal
         visible={deleteTargetId !== null}
