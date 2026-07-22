@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
+import Clipboard from '@react-native-clipboard/clipboard';
 import {
   ActivityIndicator,
   FlatList,
@@ -19,6 +20,7 @@ import {COLORS} from '@constants/colors';
 import {FONTS} from '@constants/fonts';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
 import {formatLocalDateToDotWithDay} from '@utils/formatDate';
+import {formatPhoneNumber} from '@utils/formatPhoneNumber';
 import InfoIcon from '@assets/images/info_circle_red.svg';
 import Toast from 'react-native-toast-message';
 
@@ -168,7 +170,7 @@ const normalizeReservation = reservation => {
     statusText: reservation?.statusText ?? `완료 ${completedTotal}, 취소 ${canceledTotal}`,
     name: reservation?.userName ?? reservation?.name,
     age: reservation?.age ?? (birthYear ? `${birthYear}년생` : ''),
-    phone: reservation?.userPhone ?? reservation?.phone,
+    phone: formatPhoneNumber(reservation?.userPhone ?? reservation?.phone),
     reservationNumber: reservation?.reservationCode ?? reservation?.reservationNumber,
     guestCount:
       reservation?.guestCount != null && `${reservation?.guestCount}` !== ''
@@ -213,6 +215,21 @@ const ReservationList = ({
   const [decisionReasonOpen, setDecisionReasonOpen] = useState(false);
   const [decisionReason, setDecisionReason] = useState('');
   const [decisionReasonInput, setDecisionReasonInput] = useState('');
+
+  const handleCopyPhone = (phone, event) => {
+    event?.stopPropagation?.();
+
+    if (!phone) {
+      return;
+    }
+
+    Clipboard.setString(String(phone));
+    Toast.show({
+      type: 'success',
+      text1: '연락처가 복사되었습니다.',
+      position: 'top',
+    });
+  };
   const [decisionSubmitting, setDecisionSubmitting] = useState(false);
   const [roomCloseModal, setRoomCloseModal] = useState({
     visible: false,
@@ -529,7 +546,15 @@ const ReservationList = ({
         <View style={styles.infoSection}>
           <InfoRow label="예약자" value={reservation.name} />
           <InfoRow label="나이" value={reservation.age} />
-          <InfoRow label="전화번호" value={reservation.phone} />
+          <InfoRow
+            label="전화번호"
+            value={reservation.phone}
+            onPress={
+              reservation.phone
+                ? event => handleCopyPhone(reservation.phone, event)
+                : null
+            }
+          />
           <InfoRow label="예약번호" value={reservation.reservationNumber} />
           <InfoRow label="인원수" value={reservation.guestCount} />
           <InfoRow label="객실" value={reservation.room} isHighlight />
@@ -667,18 +692,28 @@ const ReservationList = ({
   );
 };
 
-const InfoRow = ({label, value, isHighlight = false}) => {
+const InfoRow = ({label, value, isHighlight = false, onPress = null}) => {
   return (
     <View style={styles.infoRow}>
       <Text style={[FONTS.fs_14_medium, styles.infoLabel]}>{label}</Text>
-      <Text
-        style={[
-          FONTS.fs_14_medium,
-          styles.infoValue,
-          isHighlight && styles.infoValueHighlight,
-        ]}>
-        {value}
-      </Text>
+      {onPress ? (
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={onPress}
+          accessibilityRole="button"
+          accessibilityLabel={`${label} ${value}, 복사`}>
+          <Text style={[FONTS.fs_14_medium, styles.infoValue]}>{value}</Text>
+        </TouchableOpacity>
+      ) : (
+        <Text
+          style={[
+            FONTS.fs_14_medium,
+            styles.infoValue,
+            isHighlight && styles.infoValueHighlight,
+          ]}>
+          {value}
+        </Text>
+      )}
     </View>
   );
 };

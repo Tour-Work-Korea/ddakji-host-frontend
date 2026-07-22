@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import Clipboard from '@react-native-clipboard/clipboard';
 
 import ButtonWhite from '@components/ButtonWhite';
 import Header from '@components/Header';
@@ -10,6 +11,7 @@ import { COLORS } from '@constants/colors';
 import { FONTS } from '@constants/fonts';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
 import { formatLocalDateToDotWithDay } from '@utils/formatDate';
+import { formatPhoneNumber } from '@utils/formatPhoneNumber';
 import Toast from 'react-native-toast-message';
 import styles from './MyGuesthouseReservationDetail.styles';
 import InfoIcon from '@assets/images/info_circle_red.svg';
@@ -165,7 +167,7 @@ const mapReservationDetailToViewData = (reservation = {}) => {
     statusText: reservation?.statusText ?? `완료 ${completedTotal}, 취소 ${canceledTotal}`,
     name: reservation?.userName ?? reservation?.name,
     age: reservation?.age ?? (birthYear ? `${birthYear}년생` : ''),
-    phone: reservation?.userPhone ?? reservation?.phone,
+    phone: formatPhoneNumber(reservation?.userPhone ?? reservation?.phone),
     reservationNumber: reservation?.reservationCode ?? reservation?.reservationNumber,
     email: reservation?.userEmail ?? reservation?.email,
     guestCount:
@@ -209,6 +211,19 @@ const formatDateWithTime = (dateStr) => {
 
 const MyGuesthouseReservationDetail = ({ route }) => {
   const navigation = useNavigation();
+
+  const handleCopyPhone = phone => {
+    if (!phone) {
+      return;
+    }
+
+    Clipboard.setString(String(phone));
+    Toast.show({
+      type: 'success',
+      text1: '연락처가 복사되었습니다.',
+      position: 'top',
+    });
+  };
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const [decisionModalType, setDecisionModalType] = useState(null);
   const [decisionReasonOpen, setDecisionReasonOpen] = useState(false);
@@ -534,7 +549,15 @@ const MyGuesthouseReservationDetail = ({ route }) => {
         <View style={styles.section}>
           <InfoRow label="예약자" value={reservation.name} />
           <InfoRow label="나이" value={reservation.age} />
-          <InfoRow label="전화번호" value={reservation.phone} />
+          <InfoRow
+            label="전화번호"
+            value={reservation.phone}
+            onPress={
+              reservation.phone
+                ? () => handleCopyPhone(reservation.phone)
+                : null
+            }
+          />
           <InfoRow label="예약번호" value={reservation.reservationNumber} />
           <InfoRow label="이메일" value={reservation.email} />
           <InfoRow label="인원수" value={reservation.guestCount} />
@@ -696,7 +719,13 @@ const MyGuesthouseReservationDetail = ({ route }) => {
   );
 };
 
-const InfoRow = ({ label, value, highlight = false, valueStyle = null }) => {
+const InfoRow = ({
+  label,
+  value,
+  highlight = false,
+  valueStyle = null,
+  onPress = null,
+}) => {
   if (!value && value !== 0) {
     return null;
   }
@@ -704,16 +733,32 @@ const InfoRow = ({ label, value, highlight = false, valueStyle = null }) => {
   return (
     <View style={styles.infoRow}>
       <Text style={[FONTS.fs_14_medium, styles.infoLabel]}>{label}</Text>
-      <Text
-        style={[
-          FONTS.fs_14_medium,
-          styles.infoValue,
-          highlight ? styles.highlightText : null,
-          valueStyle,
-        ]}
-      >
-        {value}
-      </Text>
+      {onPress ? (
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={onPress}
+          accessibilityRole="button"
+          accessibilityLabel={`${label} ${value}, 복사`}>
+          <Text
+            style={[
+              FONTS.fs_14_medium,
+              styles.infoValue,
+              valueStyle,
+            ]}>
+            {value}
+          </Text>
+        </TouchableOpacity>
+      ) : (
+        <Text
+          style={[
+            FONTS.fs_14_medium,
+            styles.infoValue,
+            highlight ? styles.highlightText : null,
+            valueStyle,
+          ]}>
+          {value}
+        </Text>
+      )}
     </View>
   );
 };
