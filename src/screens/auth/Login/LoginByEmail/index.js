@@ -113,6 +113,10 @@ export default function LoginByEmail({route}) {
                     onChangeText={setEmail}
                     keyboardType="email-address"
                     autoCapitalize="none"
+                    autoCorrect={false}
+                    autoComplete="username"
+                    textContentType="username"
+                    importantForAutofill="yes"
                     maxLength={30}
                   />
                 </View>
@@ -129,6 +133,10 @@ export default function LoginByEmail({route}) {
                     maxLength={20}
                     secureTextEntry={!isPasswordVisible}
                     autoCapitalize="none"
+                    autoCorrect={false}
+                    autoComplete="current-password"
+                    textContentType="password"
+                    importantForAutofill="yes"
                   />
                   <TouchableOpacity
                     onPress={() => setIsPasswordVisible(prev => !prev)}>
@@ -145,9 +153,9 @@ export default function LoginByEmail({route}) {
           <View style={styles.bottomSection}>
             <View>
               <View style={styles.buttonSection}>
-                <ButtonWhite 
-                  title={'로그인하기'} 
-                  onPress={handleLogin} 
+                <ButtonWhite
+                  title={'로그인하기'}
+                  onPress={handleLogin}
                   backgroundColor={mainColor}
                   textColor={COLORS.grayscale_0}
                 />
