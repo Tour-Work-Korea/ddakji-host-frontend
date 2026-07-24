@@ -184,6 +184,32 @@ export default StyleSheet.create({
     paddingVertical: 4,
   },
   statusBadgeText: {},
+  reservationSummary: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  guestName: {
+    color: COLORS.grayscale_900,
+    flexShrink: 1,
+  },
+  genderBadge: {
+    flexShrink: 0,
+    backgroundColor: COLORS.secondary_blue,
+    borderRadius: 100,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  genderBadgeFemale: {
+    backgroundColor: COLORS.secondary_pink,
+  },
+  genderBadgeText: {
+    color: COLORS.semantic_blue,
+  },
+  genderBadgeTextFemale: {
+    color: COLORS.semantic_pink,
+  },
   roomName: {
     flex: 1,
     color: COLORS.grayscale_900,

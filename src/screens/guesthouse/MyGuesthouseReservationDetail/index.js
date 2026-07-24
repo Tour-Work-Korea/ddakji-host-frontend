@@ -137,6 +137,19 @@ const getApprovalDeadlineText = (reservation, now) => {
   return `${hours}시간 내 승인 필요`;
 };
 
+const getGenderLabel = gender => {
+  const normalizedGender = gender?.toUpperCase?.();
+
+  if (normalizedGender === 'M') {
+    return '남성';
+  }
+  if (normalizedGender === 'F') {
+    return '여성';
+  }
+
+  return gender || '';
+};
+
 const mapReservationDetailToViewData = (reservation = {}) => {
   let status = STATUS_LABEL_MAP[reservation?.status] || reservation?.status || '완료';
   let isRejected = false;
@@ -167,6 +180,7 @@ const mapReservationDetailToViewData = (reservation = {}) => {
     statusText: reservation?.statusText ?? `완료 ${completedTotal}, 취소 ${canceledTotal}`,
     name: reservation?.userName ?? reservation?.name,
     age: reservation?.age ?? (birthYear ? `${birthYear}년생` : ''),
+    gender: getGenderLabel(reservation?.guestGender ?? reservation?.gender),
     phone: formatPhoneNumber(reservation?.userPhone ?? reservation?.phone),
     reservationNumber: reservation?.reservationCode ?? reservation?.reservationNumber,
     email: reservation?.userEmail ?? reservation?.email,
@@ -548,6 +562,7 @@ const MyGuesthouseReservationDetail = ({ route }) => {
 
         <View style={styles.section}>
           <InfoRow label="예약자" value={reservation.name} />
+          <InfoRow label="성별" value={reservation.gender} />
           <InfoRow label="나이" value={reservation.age} />
           <InfoRow
             label="전화번호"
