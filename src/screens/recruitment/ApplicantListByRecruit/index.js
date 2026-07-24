@@ -8,8 +8,6 @@ import AlertModal from '@components/modals/AlertModal';
 import ApplicantItem from '@components/Employ/ApplicantItem';
 import ApplicantCard from './ApplicantCard';
 
-import {FONTS} from '@constants/fonts';
-import {COLORS} from '@constants/colors';
 import styles from './ApplicantList.styles';
 
 const ApplicantListByRecruit = ({route}) => {
@@ -25,30 +23,37 @@ const ApplicantListByRecruit = ({route}) => {
   });
   const [applicants, setApplicants] = useState([]);
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchApplicants();
-    }, []),
-  );
-
-  const fetchApplicants = async () => {
+  const fetchApplicants = useCallback(async () => {
     try {
       const response = await hostEmployApi.getApplicantsByRecruit(
         recruit?.recruitId,
       );
-      setApplicants(response.data);
-    } catch (error) {
+      const data = response?.data;
+      const applicantList = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.content)
+          ? data.content
+          : [];
+
+      setApplicants(applicantList);
+    } catch (fetchError) {
+      setApplicants([]);
       setErrorModal(prev => ({
         ...prev,
         visible: true,
         buttonText: '확인',
         title:
-          error?.response?.data?.message ??
+          fetchError?.response?.data?.message ??
           '지원자를 불러오는 중 오류가 발생했습니다',
       }));
-    } finally {
     }
-  };
+  }, [recruit?.recruitId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchApplicants();
+    }, [fetchApplicants]),
+  );
 
   const handleViewDetail = recruitId => {
     navigation.navigate('ResumeDetail', {
