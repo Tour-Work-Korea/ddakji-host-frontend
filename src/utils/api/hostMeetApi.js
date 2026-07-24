@@ -50,10 +50,11 @@ const hostMeetApi = {
     }),
 
   // 날짜별 파티 예약 요약 조회
-  getPartyReservationSummary: (guesthouseId, date) =>
+  getPartyReservationSummary: (guesthouseId, date, partyId) =>
     api.get(`/host/parties/daily/${guesthouseId}/reservations/summary`, {
       params: {
         date,
+        ...(partyId != null ? {partyId} : {}),
       },
     }),
 
@@ -70,8 +71,10 @@ const hostMeetApi = {
     }),
 
   // 호스트 파티 설정 화면 통합 조회 API
-  getPartySettings: (guesthouseId) =>
-    api.get(`/host/guesthouses/${guesthouseId}/party-settings`),
+  getPartySettings: (guesthouseId, templateId) =>
+    api.get(`/host/guesthouses/${guesthouseId}/party-settings`, {
+      params: templateId != null ? {templateId} : undefined,
+    }),
 
   // 모임 예약 승인/거절 API
   approvePartyReservation: (partyId, reservationId, isApproved, cancleReason = '') =>
@@ -84,4 +87,3 @@ const hostMeetApi = {
 };
 
 export default hostMeetApi;
-

@@ -115,7 +115,7 @@ const buildRatioText = (maleCount, femaleCount) => {
   return `${male}:${female}`;
 };
 
-const ReservationCheck = ({ guesthouseId }) => {
+const ReservationCheck = ({ guesthouseId, templateId }) => {
   const navigation = useNavigation();
   const today = useMemo(() => getTodayLocalDate(), []);
   const formattedToday = useMemo(() => formatHeaderDate(today), [today]);
@@ -138,9 +138,28 @@ const ReservationCheck = ({ guesthouseId }) => {
   const fetchReservationSummary = useCallback(async (isMounted = true) => {
     try {
       setIsLoading(true);
+      let partyId = null;
+      if (templateId != null) {
+        const settingsResponse = await hostMeetApi.getPartySettings(
+          guesthouseId,
+          templateId,
+        );
+        partyId = settingsResponse?.data?.partyId ?? null;
+
+        if (partyId == null) {
+          if (isMounted) {
+            setReservations([]);
+            setCanceledReservations([]);
+            setMaleCount(0);
+            setFemaleCount(0);
+          }
+          return;
+        }
+      }
       const response = await hostMeetApi.getPartyReservationSummary(
         guesthouseId,
         today,
+        partyId,
       );
       const data = response?.data ?? {};
 
@@ -176,7 +195,7 @@ const ReservationCheck = ({ guesthouseId }) => {
         setIsLoading(false);
       }
     }
-  }, [guesthouseId, today]);
+  }, [guesthouseId, templateId, today]);
 
   useEffect(() => {
     if (!guesthouseId) {

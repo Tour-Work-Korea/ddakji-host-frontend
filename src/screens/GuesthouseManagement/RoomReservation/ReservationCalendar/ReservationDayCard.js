@@ -67,6 +67,19 @@ const formatSelectedDateTitle = localDate => {
   return formatLocalDateToDotWithDay(localDate).replace(' (', ' ').replace(')', '');
 };
 
+const getGenderLabel = gender => {
+  const normalizedGender = gender?.toUpperCase?.();
+
+  if (normalizedGender === 'M') {
+    return '남';
+  }
+  if (normalizedGender === 'F') {
+    return '여';
+  }
+
+  return '';
+};
+
 const normalizeReservation = (reservation = {}) => {
   let status = STATUS_LABEL_MAP[reservation?.status] || reservation?.status || '완료';
   if (reservation?.status === 'CANCELLED' && reservation?.approvalStatus === 'REJECTED') {
@@ -76,6 +89,7 @@ const normalizeReservation = (reservation = {}) => {
   const checkOutDate =
     reservation?.checkOutDate?.split?.('T')?.[0] ?? reservation?.checkOutDate;
   const guestName = reservation?.guestName ?? reservation?.userName ?? reservation?.name ?? '게스트';
+  const guestGender = reservation?.guestGender ?? reservation?.gender;
 
   return {
     ...reservation,
@@ -86,6 +100,8 @@ const normalizeReservation = (reservation = {}) => {
     checkInDate,
     checkOutDate,
     guestName,
+    guestGender,
+    genderLabel: getGenderLabel(guestGender),
   };
 };
 
@@ -286,9 +302,35 @@ const ReservationDayCard = ({guesthouseId, targetDate, onNavigate}) => {
                           {statusStyle.label}
                         </Text>
                       </View>
-                      <Text style={[FONTS.fs_14_semibold, styles.roomName]} numberOfLines={1}>
-                        {reservation.guestName} · {reservation.roomName}
-                      </Text>
+                      <View style={styles.reservationSummary}>
+                        <Text
+                          style={[FONTS.fs_14_semibold, styles.guestName]}
+                          numberOfLines={1}>
+                          {reservation.guestName}
+                        </Text>
+                        {reservation.genderLabel ? (
+                          <View
+                            style={[
+                              styles.genderBadge,
+                              reservation.genderLabel === '여' && styles.genderBadgeFemale,
+                            ]}>
+                            <Text
+                              style={[
+                                FONTS.fs_12_medium,
+                                styles.genderBadgeText,
+                                reservation.genderLabel === '여' &&
+                                  styles.genderBadgeTextFemale,
+                              ]}>
+                              {reservation.genderLabel}
+                            </Text>
+                          </View>
+                        ) : null}
+                        <Text
+                          style={[FONTS.fs_14_semibold, styles.roomName]}
+                          numberOfLines={1}>
+                          · {reservation.roomName}
+                        </Text>
+                      </View>
                     </View>
 
                     <Text style={[FONTS.fs_14_regular, styles.periodText]}>
