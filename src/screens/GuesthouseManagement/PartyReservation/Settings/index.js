@@ -1,5 +1,13 @@
 import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, Dimensions, Platform, Switch, Text, TouchableOpacity, View} from 'react-native';
+import {
+  ActivityIndicator,
+  Platform,
+  ScrollView,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import Toast from 'react-native-toast-message';
 
 import AlertModal from '@components/modals/AlertModal';
@@ -14,7 +22,7 @@ import PlusIcon from '@assets/images/plus_black.svg';
 
 const MENU_TOAST_TOP_OFFSET = Platform.OS === 'ios' ? 220 : 190;
 
-const Settings = ({guesthouseId}) => {
+const Settings = ({guesthouseId, selectedTemplateId}) => {
   const [dailyParty, setDailyParty] = useState(null);
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const [isExposed, setIsExposed] = useState(true);
@@ -29,13 +37,23 @@ const Settings = ({guesthouseId}) => {
         setDailyParty(null);
         setTemplateId(null);
         setIsApplyOpen(false);
+        setIsExposed(true);
+        setMaxCapacity(20);
         setLoading(false);
         return;
       }
 
       try {
         setLoading(true);
-        const response = await hostMeetApi.getPartySettings(guesthouseId);
+        setDailyParty(null);
+        setTemplateId(null);
+        setIsApplyOpen(false);
+        setIsExposed(true);
+        setMaxCapacity(20);
+        const response = await hostMeetApi.getPartySettings(
+          guesthouseId,
+          selectedTemplateId,
+        );
         const data = response?.data;
         if (data) {
           setTemplateId(data.templateId || null);
@@ -55,23 +73,27 @@ const Settings = ({guesthouseId}) => {
           setDailyParty(null);
           setTemplateId(null);
           setIsApplyOpen(false);
+          setIsExposed(true);
+          setMaxCapacity(20);
         }
       } catch (error) {
         console.error('Error fetching party settings:', error);
         setDailyParty(null);
         setTemplateId(null);
         setIsApplyOpen(false);
+        setIsExposed(true);
+        setMaxCapacity(20);
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [guesthouseId]);
+  }, [guesthouseId, selectedTemplateId]);
 
   if (loading) {
     return (
-      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+      <View style={styles.loadingContainer}>
         <ActivityIndicator size="small" color={COLORS.primary_orange} />
       </View>
     );
@@ -222,7 +244,10 @@ const Settings = ({guesthouseId}) => {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}>
       <View style={styles.sectionCard}>
         <View style={styles.cancelContentRow}>
           <CancelReservationIcon width={20} height={20} />
@@ -389,7 +414,7 @@ const Settings = ({guesthouseId}) => {
         onPress={handleCancelParty}
         onPress2={() => setCancelModalVisible(false)}
       />
-    </View>
+    </ScrollView>
   );
 };
 

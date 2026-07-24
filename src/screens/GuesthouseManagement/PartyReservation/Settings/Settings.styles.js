@@ -3,11 +3,19 @@ import { StyleSheet } from 'react-native';
 import { COLORS } from '@constants/colors';
 
 export default StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   container: {
     flex: 1,
     backgroundColor: COLORS.grayscale_0,
+  },
+  scrollContent: {
     paddingHorizontal: 12,
     paddingTop: 14,
+    paddingBottom: 40,
   },
   section: {
     marginTop: 20,
