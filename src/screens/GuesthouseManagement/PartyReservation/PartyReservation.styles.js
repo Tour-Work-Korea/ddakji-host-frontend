@@ -32,22 +32,17 @@ export default StyleSheet.create({
     marginHorizontal: 12,
     marginTop: 16,
   },
-  partySelectorHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  sectionLabel: {
     marginBottom: 7,
-  },
-  partySelectorLabel: {
     color: COLORS.grayscale_500,
   },
   partyManagementCard: {
-    minHeight: 78,
-    padding: 16,
-    borderRadius: 14,
+    minHeight: 52,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderWidth: 1,
     borderColor: COLORS.grayscale_200,
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.primary_orange,
+    borderRadius: 14,
     backgroundColor: COLORS.grayscale_0,
     flexDirection: 'row',
     alignItems: 'center',
@@ -57,16 +52,15 @@ export default StyleSheet.create({
   partyManagementContent: {
     flex: 1,
     minWidth: 0,
-    gap: 5,
-  },
-  selectedPartyTitle: {
-    flexShrink: 1,
-    color: COLORS.grayscale_800,
-  },
-  selectedPartyTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
+  },
+  selectedPartyTitle: {
+    flex: 1,
+    minWidth: 0,
+    flexShrink: 1,
+    color: COLORS.grayscale_800,
   },
   applicationTypeBadge: {
     flexShrink: 0,
@@ -78,18 +72,13 @@ export default StyleSheet.create({
   applicationTypeBadgeText: {
     color: COLORS.primary_orange,
   },
-  partyManagementHint: {
-    color: COLORS.grayscale_500,
-  },
   changePartyButton: {
     flexShrink: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    borderRadius: 8,
-    backgroundColor: COLORS.secondary_orange,
+    paddingLeft: 4,
+    paddingVertical: 5,
   },
   changePartyText: {
     color: COLORS.primary_orange,
@@ -98,27 +87,30 @@ export default StyleSheet.create({
     marginTop: 16,
   },
   dateSelectorLabel: {
-    color: COLORS.grayscale_500,
     marginHorizontal: 12,
     marginBottom: 8,
+    color: COLORS.grayscale_500,
+  },
+  dateSelectorScroll: {
+    flexGrow: 0,
   },
   dateSelectorContent: {
     gap: 8,
     paddingHorizontal: 12,
   },
   dateOption: {
-    minWidth: 132,
+    minWidth: 112,
     paddingHorizontal: 12,
-    paddingVertical: 11,
-    gap: 5,
+    paddingVertical: 9,
+    gap: 3,
     borderWidth: 1,
     borderColor: COLORS.grayscale_200,
-    borderRadius: 12,
+    borderRadius: 10,
     backgroundColor: COLORS.grayscale_0,
   },
   dateOptionSelected: {
     borderColor: COLORS.primary_orange,
-    backgroundColor: COLORS.secondary_orange,
+    backgroundColor: COLORS.grayscale_0,
   },
   dateOptionDate: {
     color: COLORS.grayscale_700,
@@ -129,8 +121,7 @@ export default StyleSheet.create({
   dateOptionMetaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
+    gap: 3,
   },
   dateOptionStatus: {
     color: COLORS.grayscale_500,
