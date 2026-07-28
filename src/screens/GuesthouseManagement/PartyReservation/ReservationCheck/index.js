@@ -1,4 +1,10 @@
-import React, {useEffect, useMemo, useState, useCallback} from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   ActivityIndicator,
   Linking,
@@ -154,6 +160,11 @@ const ReservationCheck = ({
   const [reservations, setReservations] = useState([]);
   const [maleCount, setMaleCount] = useState(0);
   const [femaleCount, setFemaleCount] = useState(0);
+  const reservationScrollRef = useRef(null);
+  const listSectionOffsetRef = useRef(null);
+  const targetCardOffsetRef = useRef(null);
+  const scrolledReservationRef = useRef(null);
+  const scrollTimerRef = useRef(null);
 
   // Rejection modal states
   const [rejectModalVisible, setRejectModalVisible] = useState(false);
@@ -282,6 +293,44 @@ const ReservationCheck = ({
   const confirmedList = useMemo(() => {
     return filteredReservations.filter(item => !item.needsHostAction);
   }, [filteredReservations]);
+
+  useEffect(() => {
+    listSectionOffsetRef.current = null;
+    targetCardOffsetRef.current = null;
+    scrolledReservationRef.current = null;
+
+    return () => {
+      if (scrollTimerRef.current) {
+        clearTimeout(scrollTimerRef.current);
+      }
+    };
+  }, [initialReservationId, selectedDailyParty?.partyId]);
+
+  const scrollToNotificationTarget = () => {
+    if (
+      initialReservationId == null ||
+      listSectionOffsetRef.current == null ||
+      targetCardOffsetRef.current == null ||
+      String(scrolledReservationRef.current) === String(initialReservationId)
+    ) {
+      return;
+    }
+
+    if (scrollTimerRef.current) {
+      clearTimeout(scrollTimerRef.current);
+    }
+
+    scrollTimerRef.current = setTimeout(() => {
+      reservationScrollRef.current?.scrollTo({
+        y: Math.max(
+          0,
+          listSectionOffsetRef.current + targetCardOffsetRef.current - 12,
+        ),
+        animated: true,
+      });
+      scrolledReservationRef.current = initialReservationId;
+    }, 100);
+  };
 
   const handleApprove = async (partyId, reservationId) => {
     if (!partyId || !reservationId) {
@@ -419,6 +468,14 @@ const ReservationCheck = ({
     return (
       <View
         key={item.id}
+        onLayout={
+          isNotificationTarget
+            ? event => {
+                targetCardOffsetRef.current = event.nativeEvent.layout.y;
+                scrollToNotificationTarget();
+              }
+            : undefined
+        }
         style={[
           styles.reservationCard,
           isNotificationTarget && styles.reservationCardHighlighted,
@@ -499,6 +556,7 @@ const ReservationCheck = ({
   return (
     <View style={styles.container}>
       <ScrollView
+        ref={reservationScrollRef}
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}>
@@ -615,7 +673,12 @@ const ReservationCheck = ({
                 </Text>
               </View>
             ) : (
-              <View style={styles.listSection}>
+              <View
+                style={styles.listSection}
+                onLayout={event => {
+                  listSectionOffsetRef.current = event.nativeEvent.layout.y;
+                  scrollToNotificationTarget();
+                }}>
                 {waitingList.length > 0 && (
                   <>
                     <Text style={[FONTS.fs_14_semibold, styles.groupTitle]}>

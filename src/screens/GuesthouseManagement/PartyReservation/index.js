@@ -173,7 +173,7 @@ const PartyReservation = ({
 
     const scrollTimer = setTimeout(() => {
       dateSelectorScrollRef.current?.scrollTo({
-        x: Math.max(0, selectedIndex * 140),
+        x: Math.max(0, selectedIndex * 120),
         animated: true,
       });
     }, 100);
