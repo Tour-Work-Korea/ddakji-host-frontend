@@ -125,12 +125,30 @@ const buildLines = item => {
     .slice(0, 2);
 };
 
+const buildNotificationTitle = item => {
+  if (normalizeType(item?.type) !== 'partyReservation' || !item?.partyTitle) {
+    return item?.title || '새로운 알림';
+  }
+
+  const titlePrefix = String(item?.title || '').match(/^\[[^\]]+\]/)?.[0];
+  const dateParts = String(item?.partyDate || '').split('-');
+  const dateLabel =
+    dateParts.length === 3
+      ? `${Number(dateParts[1])}/${Number(dateParts[2])}`
+      : '';
+  const partyLabel = dateLabel
+    ? `${dateLabel} · ${item.partyTitle}`
+    : item.partyTitle;
+
+  return `${titlePrefix || '[파티]'} ${partyLabel}`;
+};
+
 const mapNotificationItem = item => ({
   id: String(item?.id ?? `${Date.now()}-${Math.random()}`),
   notificationId: item?.id ?? null,
   type: normalizeType(item?.type),
   status: normalizeStatus(item?.type),
-  title: item?.title || '새로운 알림',
+  title: buildNotificationTitle(item),
   lines: buildLines(item),
   date: formatDate(item?.createdAt),
   isRead: Boolean(item?.isRead),

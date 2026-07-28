@@ -24,6 +24,15 @@ export default StyleSheet.create({
     color: COLORS.grayscale_500,
     marginBottom: 8,
   },
+  commonSettingHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  commonSettingHint: {
+    color: COLORS.primary_orange,
+    marginBottom: 8,
+  },
   sectionCard: {
     borderWidth: 1,
     borderColor: COLORS.grayscale_200,
@@ -59,6 +68,12 @@ export default StyleSheet.create({
   },
   cancelButtonText: {
     color: COLORS.grayscale_0,
+  },
+  cancelButtonDisabled: {
+    backgroundColor: COLORS.grayscale_200,
+  },
+  cancelButtonTextDisabled: {
+    color: COLORS.grayscale_500,
   },
 
   exposureRow: {
@@ -149,11 +164,6 @@ export default StyleSheet.create({
   applyButtonText: {
     color: COLORS.grayscale_0,
   },
-  divider: {
-    height: 1,
-    backgroundColor: COLORS.grayscale_200,
-    marginVertical: 16,
-  },
   applyOpenRow: {
     gap: 4,
   },
@@ -180,5 +190,23 @@ export default StyleSheet.create({
   },
   applyOpenDescriptionDisabled: {
     color: COLORS.grayscale_400,
+  },
+  cancelModalContent: {
+    alignItems: 'center',
+    marginTop: 4,
+    marginBottom: 4,
+    gap: 6,
+  },
+  cancelModalApplicant: {
+    color: COLORS.grayscale_900,
+    textAlign: 'center',
+  },
+  cancelModalApplicantCount: {
+    color: COLORS.semantic_red,
+  },
+  cancelModalDescription: {
+    color: COLORS.grayscale_700,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });

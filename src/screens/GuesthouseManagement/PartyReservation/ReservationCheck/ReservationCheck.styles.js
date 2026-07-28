@@ -27,6 +27,39 @@ export default StyleSheet.create({
   headerDate: {
     color: COLORS.grayscale_600,
   },
+  dailyPartyFeedback: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 52,
+  },
+  emptyPartyCard: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 40,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: COLORS.grayscale_200,
+    borderRadius: 16,
+    backgroundColor: COLORS.grayscale_100,
+  },
+  emptyPartyTitle: {
+    color: COLORS.grayscale_700,
+  },
+  emptyPartyDescription: {
+    color: COLORS.grayscale_500,
+    textAlign: 'center',
+  },
+  selectedDateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  selectedPartyStatus: {
+    color: COLORS.primary_orange,
+  },
   summaryCard: {
     flexDirection: 'row',
     alignItems: 'stretch',
@@ -114,6 +147,10 @@ export default StyleSheet.create({
     borderColor: COLORS.grayscale_200,
     borderRadius: 16,
   },
+  reservationCardHighlighted: {
+    borderColor: COLORS.primary_orange,
+    backgroundColor: COLORS.secondary_orange,
+  },
   reservationInfo: {
     flex: 1,
     gap: 8,
@@ -144,13 +181,6 @@ export default StyleSheet.create({
   },
   genderFemaleText: {
     color: COLORS.semantic_pink,
-  },
-  birthdayBadge: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  birthdayText: {
-    color: COLORS.primary_orange,
   },
   birthText: {
     color: COLORS.grayscale_500,

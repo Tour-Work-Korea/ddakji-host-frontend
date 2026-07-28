@@ -110,7 +110,9 @@ const PastReservationList = () => {
   const route = useRoute();
   const today = useMemo(() => getTodayLocalDate(), []);
   const guesthouseId = route?.params?.guesthouseId ?? null;
-  const [selectedDate, setSelectedDate] = useState(route?.params?.selectedDate ?? today);
+  const partyId = route?.params?.partyId ?? null;
+  const initialSelectedDate = route?.params?.selectedDate ?? today;
+  const [selectedDate, setSelectedDate] = useState(initialSelectedDate);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -125,6 +127,8 @@ const PastReservationList = () => {
     },
   };
   const isTodaySelected = selectedDate === today;
+  const scopedPartyId =
+    selectedDate === initialSelectedDate ? partyId : null;
 
   useEffect(() => {
     if (!guesthouseId) {
@@ -142,6 +146,7 @@ const PastReservationList = () => {
         const response = await hostMeetApi.getPartyReservationSummary(
           guesthouseId,
           selectedDate,
+          scopedPartyId,
         );
         const data = response?.data ?? {};
 
@@ -181,7 +186,7 @@ const PastReservationList = () => {
     return () => {
       isMounted = false;
     };
-  }, [guesthouseId, selectedDate]);
+  }, [guesthouseId, scopedPartyId, selectedDate]);
 
   const summaryCards = useMemo(
     () => [

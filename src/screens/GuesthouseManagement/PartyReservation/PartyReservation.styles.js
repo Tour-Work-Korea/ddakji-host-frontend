@@ -10,7 +10,7 @@ export default StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
-    paddingTop: 10,
+    paddingTop: 16,
   },
   chip: {
     paddingHorizontal: 12,
@@ -60,7 +60,23 @@ export default StyleSheet.create({
     gap: 5,
   },
   selectedPartyTitle: {
+    flexShrink: 1,
     color: COLORS.grayscale_800,
+  },
+  selectedPartyTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  applicationTypeBadge: {
+    flexShrink: 0,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: COLORS.secondary_orange,
+  },
+  applicationTypeBadgeText: {
+    color: COLORS.primary_orange,
   },
   partyManagementHint: {
     color: COLORS.grayscale_500,
@@ -76,6 +92,50 @@ export default StyleSheet.create({
     backgroundColor: COLORS.secondary_orange,
   },
   changePartyText: {
+    color: COLORS.primary_orange,
+  },
+  dateSelectorSection: {
+    marginTop: 16,
+  },
+  dateSelectorLabel: {
+    color: COLORS.grayscale_500,
+    marginHorizontal: 12,
+    marginBottom: 8,
+  },
+  dateSelectorContent: {
+    gap: 8,
+    paddingHorizontal: 12,
+  },
+  dateOption: {
+    minWidth: 132,
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+    gap: 5,
+    borderWidth: 1,
+    borderColor: COLORS.grayscale_200,
+    borderRadius: 12,
+    backgroundColor: COLORS.grayscale_0,
+  },
+  dateOptionSelected: {
+    borderColor: COLORS.primary_orange,
+    backgroundColor: COLORS.secondary_orange,
+  },
+  dateOptionDate: {
+    color: COLORS.grayscale_700,
+  },
+  dateOptionCount: {
+    color: COLORS.grayscale_500,
+  },
+  dateOptionMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  dateOptionStatus: {
+    color: COLORS.grayscale_500,
+  },
+  dateOptionTextSelected: {
     color: COLORS.primary_orange,
   },
   modalOverlay: {

@@ -56,6 +56,9 @@ const GuesthouseManagement = () => {
     ? route.params.initialTab
     : HOME_TAB;
   const routeInitialChip = route.params?.initialChip;
+  const routePartyId = route.params?.partyId;
+  const routePartyTemplateId = route.params?.templateId;
+  const routePartyReservationId = route.params?.reservationId;
   const routeInitialRoomManagementDate = route.params?.initialRoomManagementDate;
   const initialProfileKey =
     routeProfileKey != null
@@ -455,7 +458,12 @@ const GuesthouseManagement = () => {
       ) : activeTab === PARTY_INFO_TAB ? (
         <PartyInfo guesthouseId={effectiveGuesthouseId} />
       ) : activeTab === PARTY_RESERVATION_TAB ? (
-        <PartyReservation guesthouseId={effectiveGuesthouseId} />
+        <PartyReservation
+          guesthouseId={effectiveGuesthouseId}
+          initialTemplateId={routePartyTemplateId}
+          initialPartyId={routePartyId}
+          initialReservationId={routePartyReservationId}
+        />
       ) : (
         <Staff guesthouseId={effectiveGuesthouseId} />
       )}
