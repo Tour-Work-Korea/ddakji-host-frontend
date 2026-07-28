@@ -351,12 +351,9 @@ const PartyReservation = ({
     <View style={styles.container}>
       {!isTemplateLoading && selectedTemplate ? (
         <View style={styles.partySelector}>
-          <View style={styles.partySelectorHeader}>
-            <Text style={[FONTS.fs_12_medium, styles.partySelectorLabel]}>
-              현재 관리 중인 파티
-            </Text>
-          </View>
-
+          <Text style={[FONTS.fs_12_medium, styles.sectionLabel]}>
+            현재 관리 중인 파티
+          </Text>
           <TouchableOpacity
             activeOpacity={0.8}
             style={styles.partyManagementCard}
@@ -366,29 +363,22 @@ const PartyReservation = ({
               }
             }}>
             <View style={styles.partyManagementContent}>
-              <View style={styles.selectedPartyTitleRow}>
-                <Text
-                  numberOfLines={2}
-                  style={[FONTS.fs_16_semibold, styles.selectedPartyTitle]}>
-                  {selectedTemplate?.partyTitle || '파티를 선택해주세요'}
-                </Text>
-                {effectiveApplicationType ? (
-                  <View style={styles.applicationTypeBadge}>
-                    <Text
-                      style={[
-                        FONTS.fs_12_medium,
-                        styles.applicationTypeBadgeText,
-                      ]}>
-                      {getApplicationTypeLabel(effectiveApplicationType)}
-                    </Text>
-                  </View>
-                ) : null}
-              </View>
-              <Text style={[FONTS.fs_12_medium, styles.partyManagementHint]}>
-                {isAdvanceApplication
-                  ? '날짜를 선택해 신청 현황과 설정을 관리할 수 있어요'
-                  : '오늘 파티의 신청 현황과 설정을 관리할 수 있어요'}
+              <Text
+                numberOfLines={1}
+                style={[FONTS.fs_16_semibold, styles.selectedPartyTitle]}>
+                {selectedTemplate?.partyTitle || '파티를 선택해주세요'}
               </Text>
+              {effectiveApplicationType ? (
+                <View style={styles.applicationTypeBadge}>
+                  <Text
+                    style={[
+                      FONTS.fs_12_medium,
+                      styles.applicationTypeBadgeText,
+                    ]}>
+                    {getApplicationTypeLabel(effectiveApplicationType)}
+                  </Text>
+                </View>
+              ) : null}
             </View>
             {partyTemplates.length > 1 ? (
               <View style={styles.changePartyButton}>
@@ -409,6 +399,7 @@ const PartyReservation = ({
           </Text>
           <ScrollView
             ref={dateSelectorScrollRef}
+            style={styles.dateSelectorScroll}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.dateSelectorContent}>
@@ -448,7 +439,7 @@ const PartyReservation = ({
                         styles.dateOptionStatus,
                         isSelected && styles.dateOptionTextSelected,
                       ]}>
-                      {getPartyStatusLabel(party.partyStatus)}
+                      · {getPartyStatusLabel(party.partyStatus)}
                     </Text>
                   </View>
                 </TouchableOpacity>
