@@ -21,6 +21,10 @@ const hostMeetApi = {
   getPartyTemplateDetail: (templateId) =>
     api.get(`/host/parties/templates/${templateId}`),
 
+  // 템플릿으로 생성된 현재 신청 관리 대상 일별 파티 조회
+  getTemplateDailyParties: (templateId) =>
+    api.get(`/host/parties/templates/${templateId}/daily`),
+
   // 파티 공고 등록
   createParty: (data) =>
     api.post('/host/parties/templates', data),

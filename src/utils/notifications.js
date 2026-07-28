@@ -179,9 +179,7 @@ const getNotificationLocalDate = data => {
   const dateCandidate =
     data?.partyDate ||
     data?.date ||
-    data?.partyStartDateTime ||
-    data?.createdAt ||
-    data?.actionTime;
+    data?.partyStartDateTime;
 
   if (dateCandidate) {
     const d = new Date(dateCandidate);
@@ -229,6 +227,10 @@ export const resolveNotificationTarget = notification => {
     normalizeNumber(data.targetReservationId);
   const partyId =
     normalizeNumber(data.partyId) ?? normalizeNumber(data.targetPartyId);
+  const templateId =
+    normalizeNumber(data.templateId) ??
+    normalizeNumber(data.partyTemplateId) ??
+    normalizeNumber(data.targetTemplateId);
   const reviewId =
     normalizeNumber(data.reviewId) ?? normalizeNumber(data.targetReviewId);
   const batchId =
@@ -322,6 +324,7 @@ export const resolveNotificationTarget = notification => {
       params: {
         guesthouseId: fallbackGuesthouseId,
         selectedDate: notificationLocalDate,
+        partyId,
       },
     };
   }
@@ -336,6 +339,7 @@ export const resolveNotificationTarget = notification => {
         params: {
           guesthouseId: fallbackGuesthouseId,
           selectedDate: notificationLocalDate,
+          partyId,
         },
       };
     }
@@ -348,6 +352,7 @@ export const resolveNotificationTarget = notification => {
         initialTab: '파티 관리',
         reservationId,
         partyId,
+        templateId,
       },
     };
   }

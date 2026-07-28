@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -9,8 +9,8 @@ import {
   View,
 } from 'react-native';
 
-import { COLORS } from '@constants/colors';
-import { FONTS } from '@constants/fonts';
+import {COLORS} from '@constants/colors';
+import {FONTS} from '@constants/fonts';
 import hostMeetApi from '@utils/api/hostMeetApi';
 import CheckIcon from '@assets/images/check_orange.svg';
 import ChevronRightIcon from '@assets/images/chevron_right_orange.svg';
@@ -19,13 +19,53 @@ import Settings from './Settings';
 import styles from './PartyReservation.styles';
 
 const chips = ['신청 관리', '설정'];
+const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
-const PartyReservation = ({ guesthouseId }) => {
+const formatPartyDate = value => {
+  const [year, month, day] = String(value).split('-').map(Number);
+  const date = new Date(year, (month || 1) - 1, day || 1);
+  return `${String(month).padStart(2, '0')}/${String(day).padStart(2, '0')} (${
+    DAY_LABELS[date.getDay()]
+  })`;
+};
+
+const getApplicationTypeLabel = value =>
+  value === 'ADVANCE' ? '사전 신청' : '당일 신청';
+
+const getPartyStatusLabel = value => {
+  switch (value) {
+    case 'RECRUIT_BEFORE':
+      return '모집 전';
+    case 'RECRUIT':
+      return '모집 중';
+    case 'CANCELLED':
+    case 'CANCELED':
+      return '취소';
+    case 'CLOSED':
+    case 'FINISHED':
+      return '마감';
+    default:
+      return value || '-';
+  }
+};
+
+const PartyReservation = ({
+  guesthouseId,
+  initialTemplateId,
+  initialPartyId,
+  initialReservationId,
+}) => {
   const [activeChip, setActiveChip] = useState(chips[0]);
   const [partyTemplates, setPartyTemplates] = useState([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState(null);
   const [isTemplateLoading, setIsTemplateLoading] = useState(true);
   const [isPartySelectorOpen, setIsPartySelectorOpen] = useState(false);
+  const [applicationType, setApplicationType] = useState(null);
+  const [dailyParties, setDailyParties] = useState([]);
+  const [selectedPartyId, setSelectedPartyId] = useState(null);
+  const [isDailyPartyLoading, setIsDailyPartyLoading] = useState(false);
+  const resolvedNotificationPartyRef = useRef(null);
+  const dateSelectorScrollRef = useRef(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -57,20 +97,20 @@ const PartyReservation = ({ guesthouseId }) => {
             template?.templateId != null,
         );
 
-        let preferredTemplateId = null;
-        try {
-          const settingsResponse = await hostMeetApi.getPartySettings(guesthouseId);
-          preferredTemplateId = settingsResponse?.data?.templateId ?? null;
-        } catch (error) {
-          preferredTemplateId = null;
-        }
-
         if (!isMounted) {
           return;
         }
 
         setPartyTemplates(templates);
         setSelectedTemplateId(prev => {
+          const notifiedTemplateExists = templates.some(
+            template =>
+              String(template.templateId) === String(initialTemplateId),
+          );
+          if (notifiedTemplateExists) {
+            return initialTemplateId;
+          }
+
           const previousExists = templates.some(
             template => String(template.templateId) === String(prev),
           );
@@ -78,13 +118,7 @@ const PartyReservation = ({ guesthouseId }) => {
             return prev;
           }
 
-          const preferredExists = templates.some(
-            template =>
-              String(template.templateId) === String(preferredTemplateId),
-          );
-          return preferredExists
-            ? preferredTemplateId
-            : templates[0]?.templateId ?? null;
+          return templates[0]?.templateId ?? null;
         });
       } catch (error) {
         if (isMounted) {
@@ -103,14 +137,327 @@ const PartyReservation = ({ guesthouseId }) => {
     return () => {
       isMounted = false;
     };
-  }, [guesthouseId]);
+  }, [guesthouseId, initialTemplateId]);
 
   const selectedTemplate = partyTemplates.find(
     template => String(template.templateId) === String(selectedTemplateId),
   );
+  const selectedDailyParty = useMemo(
+    () =>
+      dailyParties.find(
+        party => String(party.partyId) === String(selectedPartyId),
+      ) ?? null,
+    [dailyParties, selectedPartyId],
+  );
+  const effectiveApplicationType =
+    applicationType ??
+    selectedTemplate?.applicationType ??
+    (dailyParties.length > 1 ? 'ADVANCE' : null);
+  const isAdvanceApplication = effectiveApplicationType === 'ADVANCE';
+
+  useEffect(() => {
+    if (
+      !isAdvanceApplication ||
+      initialPartyId == null ||
+      String(selectedPartyId) !== String(initialPartyId)
+    ) {
+      return;
+    }
+
+    const selectedIndex = dailyParties.findIndex(
+      party => String(party.partyId) === String(initialPartyId),
+    );
+    if (selectedIndex < 0) {
+      return;
+    }
+
+    const scrollTimer = setTimeout(() => {
+      dateSelectorScrollRef.current?.scrollTo({
+        x: Math.max(0, selectedIndex * 140),
+        animated: true,
+      });
+    }, 100);
+
+    return () => clearTimeout(scrollTimer);
+  }, [
+    dailyParties,
+    initialPartyId,
+    isAdvanceApplication,
+    selectedPartyId,
+  ]);
+
+  useEffect(() => {
+    if (!selectedTemplateId) {
+      setApplicationType(null);
+      setDailyParties([]);
+      setSelectedPartyId(null);
+      setIsDailyPartyLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+
+    const fetchDailyParties = async () => {
+      try {
+        setIsDailyPartyLoading(true);
+        setApplicationType(null);
+        setDailyParties([]);
+        setSelectedPartyId(null);
+
+        const response =
+          await hostMeetApi.getTemplateDailyParties(selectedTemplateId);
+        const data = response?.data ?? {};
+        const parties = (Array.isArray(data?.parties) ? data.parties : [])
+          .filter(
+            party =>
+              party?.partyId != null && typeof party?.partyDate === 'string',
+          )
+          .sort((a, b) => a.partyDate.localeCompare(b.partyDate));
+
+        if (!isMounted) {
+          return;
+        }
+
+        setApplicationType(
+          data?.applicationType ??
+            selectedTemplate?.applicationType ??
+            (parties.length > 1 ? 'ADVANCE' : 'SAME_DAY'),
+        );
+        setDailyParties(parties);
+        setSelectedPartyId(
+          parties.find(
+            party => String(party.partyId) === String(initialPartyId),
+          )?.partyId ??
+            parties[0]?.partyId ??
+            null,
+        );
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+        setApplicationType(selectedTemplate?.applicationType ?? null);
+        setDailyParties([]);
+        setSelectedPartyId(null);
+      } finally {
+        if (isMounted) {
+          setIsDailyPartyLoading(false);
+        }
+      }
+    };
+
+    fetchDailyParties();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    initialPartyId,
+    selectedTemplate?.applicationType,
+    selectedTemplateId,
+  ]);
+
+  useEffect(() => {
+    if (
+      !initialPartyId ||
+      initialTemplateId ||
+      !partyTemplates.length ||
+      String(resolvedNotificationPartyRef.current) === String(initialPartyId)
+    ) {
+      return;
+    }
+
+    let isMounted = true;
+
+    const resolveNotificationParty = async () => {
+      const results = await Promise.all(
+        partyTemplates.map(async template => {
+          try {
+            const response = await hostMeetApi.getTemplateDailyParties(
+              template.templateId,
+            );
+            const parties = Array.isArray(response?.data?.parties)
+              ? response.data.parties
+              : [];
+            return {template, parties};
+          } catch (error) {
+            return null;
+          }
+        }),
+      );
+
+      if (!isMounted) {
+        return;
+      }
+
+      const matched = results.find(result =>
+        result?.parties?.some(
+          party => String(party.partyId) === String(initialPartyId),
+        ),
+      );
+
+      if (!matched) {
+        return;
+      }
+
+      resolvedNotificationPartyRef.current = initialPartyId;
+      setSelectedTemplateId(matched.template.templateId);
+    };
+
+    resolveNotificationParty();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [initialPartyId, initialTemplateId, partyTemplates]);
+
+  const handleUpdateDailyParty = updates => {
+    if (!selectedPartyId) {
+      return;
+    }
+    setDailyParties(prev =>
+      prev.map(party =>
+        String(party.partyId) === String(selectedPartyId)
+          ? {...party, ...updates}
+          : party,
+      ),
+    );
+  };
+  const handleReservationApproved = partyId => {
+    setDailyParties(prev =>
+      prev.map(party =>
+        String(party.partyId) === String(partyId)
+          ? {
+              ...party,
+              numOfAttendance: (Number(party.numOfAttendance) || 0) + 1,
+            }
+          : party,
+      ),
+    );
+  };
+  const handleUpdateTemplate = updates => {
+    if (!selectedTemplateId) {
+      return;
+    }
+    setPartyTemplates(prev =>
+      prev.map(template =>
+        String(template.templateId) === String(selectedTemplateId)
+          ? {...template, ...updates}
+          : template,
+      ),
+    );
+  };
 
   return (
     <View style={styles.container}>
+      {!isTemplateLoading && selectedTemplate ? (
+        <View style={styles.partySelector}>
+          <View style={styles.partySelectorHeader}>
+            <Text style={[FONTS.fs_12_medium, styles.partySelectorLabel]}>
+              현재 관리 중인 파티
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={styles.partyManagementCard}
+            onPress={() => {
+              if (partyTemplates.length > 1) {
+                setIsPartySelectorOpen(true);
+              }
+            }}>
+            <View style={styles.partyManagementContent}>
+              <View style={styles.selectedPartyTitleRow}>
+                <Text
+                  numberOfLines={2}
+                  style={[FONTS.fs_16_semibold, styles.selectedPartyTitle]}>
+                  {selectedTemplate?.partyTitle || '파티를 선택해주세요'}
+                </Text>
+                {effectiveApplicationType ? (
+                  <View style={styles.applicationTypeBadge}>
+                    <Text
+                      style={[
+                        FONTS.fs_12_medium,
+                        styles.applicationTypeBadgeText,
+                      ]}>
+                      {getApplicationTypeLabel(effectiveApplicationType)}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+              <Text style={[FONTS.fs_12_medium, styles.partyManagementHint]}>
+                {isAdvanceApplication
+                  ? '날짜를 선택해 신청 현황과 설정을 관리할 수 있어요'
+                  : '오늘 파티의 신청 현황과 설정을 관리할 수 있어요'}
+              </Text>
+            </View>
+            {partyTemplates.length > 1 ? (
+              <View style={styles.changePartyButton}>
+                <Text style={[FONTS.fs_12_medium, styles.changePartyText]}>
+                  변경
+                </Text>
+                <ChevronRightIcon width={14} height={14} />
+              </View>
+            ) : null}
+          </TouchableOpacity>
+        </View>
+      ) : null}
+
+      {isAdvanceApplication && dailyParties.length > 0 ? (
+        <View style={styles.dateSelectorSection}>
+          <Text style={[FONTS.fs_12_medium, styles.dateSelectorLabel]}>
+            관리할 날짜
+          </Text>
+          <ScrollView
+            ref={dateSelectorScrollRef}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.dateSelectorContent}>
+            {dailyParties.map(party => {
+              const isSelected =
+                String(party.partyId) === String(selectedPartyId);
+              return (
+                <TouchableOpacity
+                  key={String(party.partyId)}
+                  activeOpacity={0.8}
+                  style={[
+                    styles.dateOption,
+                    isSelected && styles.dateOptionSelected,
+                  ]}
+                  onPress={() => setSelectedPartyId(party.partyId)}>
+                  <Text
+                    style={[
+                      FONTS.fs_14_semibold,
+                      styles.dateOptionDate,
+                      isSelected && styles.dateOptionTextSelected,
+                    ]}>
+                    {formatPartyDate(party.partyDate)}
+                  </Text>
+                  <View style={styles.dateOptionMetaRow}>
+                    <Text
+                      style={[
+                        FONTS.fs_12_medium,
+                        styles.dateOptionCount,
+                        isSelected && styles.dateOptionTextSelected,
+                      ]}>
+                      {Number(party.numOfAttendance) || 0}/
+                      {Number(party.maxAttendance) || 0}명
+                    </Text>
+                    <Text
+                      style={[
+                        FONTS.fs_12_medium,
+                        styles.dateOptionStatus,
+                        isSelected && styles.dateOptionTextSelected,
+                      ]}>
+                      {getPartyStatusLabel(party.partyStatus)}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+      ) : null}
+
       <View style={styles.chipRow}>
         {chips.map(chip => (
           <TouchableOpacity
@@ -129,38 +476,6 @@ const PartyReservation = ({ guesthouseId }) => {
         ))}
       </View>
 
-      {partyTemplates.length > 1 ? (
-        <View style={styles.partySelector}>
-          <View style={styles.partySelectorHeader}>
-            <Text style={[FONTS.fs_12_medium, styles.partySelectorLabel]}>
-              현재 관리 중인 파티
-            </Text>
-          </View>
-
-          <TouchableOpacity
-            activeOpacity={0.8}
-            style={styles.partyManagementCard}
-            onPress={() => setIsPartySelectorOpen(true)}>
-            <View style={styles.partyManagementContent}>
-              <Text
-                numberOfLines={2}
-                style={[FONTS.fs_16_semibold, styles.selectedPartyTitle]}>
-                {selectedTemplate?.partyTitle || '파티를 선택해주세요'}
-              </Text>
-              <Text style={[FONTS.fs_12_medium, styles.partyManagementHint]}>
-                신청 현황과 설정이 이 파티를 기준으로 표시돼요
-              </Text>
-            </View>
-            <View style={styles.changePartyButton}>
-              <Text style={[FONTS.fs_12_medium, styles.changePartyText]}>
-                변경
-              </Text>
-              <ChevronRightIcon width={14} height={14} />
-            </View>
-          </TouchableOpacity>
-        </View>
-      ) : null}
-
       {isTemplateLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="small" color={COLORS.primary_orange} />
@@ -169,13 +484,23 @@ const PartyReservation = ({ guesthouseId }) => {
         <ReservationCheck
           key={`reservation-${selectedTemplateId ?? 'default'}`}
           guesthouseId={guesthouseId}
-          templateId={selectedTemplateId}
+          applicationType={effectiveApplicationType}
+          dailyParties={dailyParties}
+          selectedDailyParty={selectedDailyParty}
+          isDailyPartyLoading={isDailyPartyLoading}
+          initialReservationId={initialReservationId}
+          onReservationApproved={handleReservationApproved}
         />
       ) : (
         <Settings
           key={`settings-${selectedTemplateId ?? 'default'}`}
           guesthouseId={guesthouseId}
           selectedTemplateId={selectedTemplateId}
+          selectedTemplate={selectedTemplate}
+          selectedDailyParty={selectedDailyParty}
+          isDailyPartyLoading={isDailyPartyLoading}
+          onUpdateDailyParty={handleUpdateDailyParty}
+          onUpdateTemplate={handleUpdateTemplate}
         />
       )}
 
@@ -203,7 +528,8 @@ const PartyReservation = ({ guesthouseId }) => {
                   showsVerticalScrollIndicator={false}>
                   {partyTemplates.map(template => {
                     const isSelected =
-                      String(template.templateId) === String(selectedTemplateId);
+                      String(template.templateId) ===
+                      String(selectedTemplateId);
 
                     return (
                       <TouchableOpacity
@@ -226,7 +552,9 @@ const PartyReservation = ({ guesthouseId }) => {
                           ]}>
                           {template.partyTitle || '파티 이름 없음'}
                         </Text>
-                        {isSelected ? <CheckIcon width={20} height={20} /> : null}
+                        {isSelected ? (
+                          <CheckIcon width={20} height={20} />
+                        ) : null}
                       </TouchableOpacity>
                     );
                   })}

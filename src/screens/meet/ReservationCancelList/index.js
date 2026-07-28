@@ -96,6 +96,7 @@ const ReservationCancelList = () => {
   const route = useRoute();
   const initialSelectedDate = route?.params?.selectedDate ?? getTodayLocalDate();
   const guesthouseId = route?.params?.guesthouseId ?? null;
+  const partyId = route?.params?.partyId ?? null;
   const [selectedDate, setSelectedDate] = useState(initialSelectedDate);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -106,6 +107,8 @@ const ReservationCancelList = () => {
       selectedColor: COLORS.primary_orange,
     },
   };
+  const scopedPartyId =
+    selectedDate === initialSelectedDate ? partyId : null;
 
   useEffect(() => {
     if (!guesthouseId) {
@@ -121,6 +124,7 @@ const ReservationCancelList = () => {
         const response = await hostMeetApi.getPartyReservationSummary(
           guesthouseId,
           selectedDate,
+          scopedPartyId,
         );
         const data = response?.data ?? {};
 
@@ -153,7 +157,7 @@ const ReservationCancelList = () => {
     return () => {
       isMounted = false;
     };
-  }, [guesthouseId, selectedDate]);
+  }, [guesthouseId, scopedPartyId, selectedDate]);
 
   const handleCall = async phoneNumber => {
     const digits = String(phoneNumber || '').replace(/[^\d]/g, '');
