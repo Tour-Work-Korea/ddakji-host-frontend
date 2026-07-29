@@ -81,11 +81,11 @@ const hostMeetApi = {
     }),
 
   // 모임 예약 승인/거절 API
-  approvePartyReservation: (partyId, reservationId, isApproved, cancleReason = '') =>
+  approvePartyReservation: (partyId, reservationId, isApproved, cancelReason = '') =>
     api.post(`/host/parties/daily/${partyId}/reservations/${reservationId}/approve`, null, {
       params: {
         isApproved,
-        cancleReason,
+        cancelReason,
       },
     }),
 };
