@@ -165,7 +165,7 @@ export default StyleSheet.create({
     flexGrow: 0,
   },
   partyOption: {
-    minHeight: 58,
+    minHeight: 62,
     paddingHorizontal: 16,
     paddingVertical: 12,
     marginBottom: 8,
@@ -187,6 +187,29 @@ export default StyleSheet.create({
   },
   partyOptionTextSelected: {
     color: COLORS.primary_orange,
+  },
+  partyOptionRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flexShrink: 0,
+  },
+  partyApplyStatusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  partyApplyStatusBadgeOpen: {
+    backgroundColor: COLORS.secondary_orange,
+  },
+  partyApplyStatusBadgeClosed: {
+    backgroundColor: COLORS.grayscale_100,
+  },
+  partyApplyStatusTextOpen: {
+    color: COLORS.primary_orange,
+  },
+  partyApplyStatusTextClosed: {
+    color: COLORS.grayscale_500,
   },
   loadingContainer: {
     flex: 1,

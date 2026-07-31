@@ -38,9 +38,14 @@ const getPartyStatusLabel = value => {
       return '모집 전';
     case 'RECRUIT':
       return '모집 중';
+    case 'RECRUIT_BLOCK':
+    case 'RECRUIT_END':
+      return '신청 마감';
     case 'CANCELLED':
     case 'CANCELED':
       return '취소';
+    case 'PARTY_END':
+      return '종료';
     case 'CLOSED':
     case 'FINISHED':
       return '마감';
@@ -96,14 +101,33 @@ const PartyReservation = ({
             String(template?.guesthouseId) === String(guesthouseId) &&
             template?.templateId != null,
         );
+        const resolvedTemplates = await Promise.all(
+          templates.map(async template => {
+            const applyOpen =
+              template?.isApplyOpen ?? template?.isApply;
+            if (typeof applyOpen === 'boolean') {
+              return template;
+            }
+
+            try {
+              const detailResponse =
+                await hostMeetApi.getPartyTemplateDetail(
+                  template.templateId,
+                );
+              return {...template, ...(detailResponse?.data ?? {})};
+            } catch (error) {
+              return template;
+            }
+          }),
+        );
 
         if (!isMounted) {
           return;
         }
 
-        setPartyTemplates(templates);
+        setPartyTemplates(resolvedTemplates);
         setSelectedTemplateId(prev => {
-          const notifiedTemplateExists = templates.some(
+          const notifiedTemplateExists = resolvedTemplates.some(
             template =>
               String(template.templateId) === String(initialTemplateId),
           );
@@ -111,14 +135,14 @@ const PartyReservation = ({
             return initialTemplateId;
           }
 
-          const previousExists = templates.some(
+          const previousExists = resolvedTemplates.some(
             template => String(template.templateId) === String(prev),
           );
           if (previousExists) {
             return prev;
           }
 
-          return templates[0]?.templateId ?? null;
+          return resolvedTemplates[0]?.templateId ?? null;
         });
       } catch (error) {
         if (isMounted) {
@@ -173,7 +197,7 @@ const PartyReservation = ({
 
     const scrollTimer = setTimeout(() => {
       dateSelectorScrollRef.current?.scrollTo({
-        x: Math.max(0, selectedIndex * 140),
+        x: Math.max(0, selectedIndex * 120),
         animated: true,
       });
     }, 100);
@@ -334,19 +358,6 @@ const PartyReservation = ({
       ),
     );
   };
-  const handleUpdateTemplate = updates => {
-    if (!selectedTemplateId) {
-      return;
-    }
-    setPartyTemplates(prev =>
-      prev.map(template =>
-        String(template.templateId) === String(selectedTemplateId)
-          ? {...template, ...updates}
-          : template,
-      ),
-    );
-  };
-
   return (
     <View style={styles.container}>
       {!isTemplateLoading && selectedTemplate ? (
@@ -491,7 +502,6 @@ const PartyReservation = ({
           selectedDailyParty={selectedDailyParty}
           isDailyPartyLoading={isDailyPartyLoading}
           onUpdateDailyParty={handleUpdateDailyParty}
-          onUpdateTemplate={handleUpdateTemplate}
         />
       )}
 
@@ -521,6 +531,9 @@ const PartyReservation = ({
                     const isSelected =
                       String(template.templateId) ===
                       String(selectedTemplateId);
+                    const isApplyOpen = Boolean(
+                      template?.isApplyOpen ?? template?.isApply,
+                    );
 
                     return (
                       <TouchableOpacity
@@ -543,9 +556,30 @@ const PartyReservation = ({
                           ]}>
                           {template.partyTitle || '파티 이름 없음'}
                         </Text>
-                        {isSelected ? (
-                          <CheckIcon width={20} height={20} />
-                        ) : null}
+                        <View style={styles.partyOptionRight}>
+                          <View
+                            style={[
+                              styles.partyApplyStatusBadge,
+                              isApplyOpen
+                                ? styles.partyApplyStatusBadgeOpen
+                                : styles.partyApplyStatusBadgeClosed,
+                            ]}>
+                            <Text
+                              style={[
+                                FONTS.fs_12_medium,
+                                isApplyOpen
+                                  ? styles.partyApplyStatusTextOpen
+                                  : styles.partyApplyStatusTextClosed,
+                              ]}>
+                              {isApplyOpen
+                                ? '신청 받는 중'
+                                : '정보만 노출'}
+                            </Text>
+                          </View>
+                          {isSelected ? (
+                            <CheckIcon width={20} height={20} />
+                          ) : null}
+                        </View>
                       </TouchableOpacity>
                     );
                   })}

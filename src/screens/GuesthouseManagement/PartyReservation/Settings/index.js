@@ -29,14 +29,12 @@ const Settings = ({
   selectedDailyParty,
   isDailyPartyLoading,
   onUpdateDailyParty,
-  onUpdateTemplate,
 }) => {
   const [dailyParty, setDailyParty] = useState(null);
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
-  const [isExposed, setIsExposed] = useState(true);
+  const [isStatusUpdating, setIsStatusUpdating] = useState(false);
   const [maxCapacity, setMaxCapacity] = useState(20);
-  const [isApplyOpen, setIsApplyOpen] = useState(false);
-  const [templateId, setTemplateId] = useState(null);
+  const [isTemplateApplyOpen, setIsTemplateApplyOpen] = useState(false);
   const [currentApplicantCount, setCurrentApplicantCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -44,9 +42,7 @@ const Settings = ({
     const fetchData = async () => {
       if (!selectedTemplateId) {
         setDailyParty(null);
-        setTemplateId(null);
-        setIsApplyOpen(false);
-        setIsExposed(true);
+        setIsTemplateApplyOpen(false);
         setMaxCapacity(20);
         setCurrentApplicantCount(0);
         setLoading(false);
@@ -55,7 +51,6 @@ const Settings = ({
 
       try {
         setLoading(true);
-        setTemplateId(selectedTemplateId);
 
         let templateApplyOpen =
           selectedTemplate?.isApplyOpen ?? selectedTemplate?.isApply;
@@ -67,18 +62,17 @@ const Settings = ({
             templateResponse?.data?.isApply ??
             false;
         }
-        setIsApplyOpen(Boolean(templateApplyOpen));
+        setIsTemplateApplyOpen(Boolean(templateApplyOpen));
 
         if (!selectedDailyParty?.partyId) {
           setDailyParty(null);
-          setIsExposed(true);
           setMaxCapacity(20);
           setCurrentApplicantCount(0);
           return;
         }
 
         let partyData = selectedDailyParty;
-        if (typeof partyData?.isVisible !== 'boolean') {
+        if (!partyData?.partyStatus) {
           const partyResponse = await hostMeetApi.getPartyDetail(
             selectedDailyParty.partyId,
           );
@@ -90,7 +84,6 @@ const Settings = ({
           templateId: selectedTemplateId,
           partyTitle: selectedTemplate?.partyTitle || '파티 이름 없음',
         });
-        setIsExposed(Boolean(partyData?.isVisible));
         setMaxCapacity(Number(partyData?.maxAttendance) || 20);
 
         if (guesthouseId && selectedDailyParty.partyDate) {
@@ -118,7 +111,7 @@ const Settings = ({
       } catch (error) {
         console.error('Error fetching party settings:', error);
         setDailyParty(null);
-        setIsExposed(true);
+        setIsTemplateApplyOpen(false);
         setMaxCapacity(20);
         setCurrentApplicantCount(0);
       } finally {
@@ -147,85 +140,67 @@ const Settings = ({
   const isPartyCanceled =
     normalizedPartyStatus === 'CANCELED' ||
     normalizedPartyStatus === 'CANCELLED';
+  const isPartyStatusLocked =
+    isPartyCanceled ||
+    normalizedPartyStatus === 'PARTY_END' ||
+    normalizedPartyStatus === 'DELETED';
+  const canApply =
+    isTemplateApplyOpen && normalizedPartyStatus === 'RECRUIT';
   const partyTitle = dailyParty?.partyTitle || '파티 이름 없음';
-  const exposureLabel = isExposed ? '노출중' : '미노출';
-  const exposureDescription = isExposed
-    ? '현재 유저에게 노출 중입니다'
-    : '현재 유저에게 노출되지 않고 있습니다';
-
-  const applyOpenDescription = isApplyOpen
-    ? '모든 일정에서 참여 신청을 받고 있어요.'
-    : '파티 정보만 노출하고 신규 신청은 받지 않아요.';
+  const applicationStatusLabel = canApply ? '신청 가능' : '신청 마감';
+  const applicationStatusDescription = canApply
+    ? '현재 선택한 날짜의 참여 신청을 받고 있어요.'
+    : '현재 선택한 날짜의 신규 신청을 받지 않고 있어요.';
 
   const handleChangeCapacity = diff => {
     setMaxCapacity(prev => Math.max(currentAttendees, prev + diff));
   };
 
-  const handleToggleVisibility = async nextValue => {
+  const handleToggleRecruitment = async nextValue => {
     const partyId = dailyParty?.partyId;
 
     if (!partyId) {
       Toast.show({
         type: 'error',
-        text1: '노출 상태를 변경할 파티 정보가 없어요.',
+        text1: '신청 상태를 변경할 파티 정보가 없어요.',
         position: 'top',
         topOffset: MENU_TOAST_TOP_OFFSET,
       });
       return;
     }
 
-    try {
-      await hostMeetApi.updatePartyVisibility(partyId, nextValue);
-      setIsExposed(nextValue);
-      onUpdateDailyParty?.({isVisible: nextValue});
-      Toast.show({
-        type: 'success',
-        text1: nextValue
-          ? '파티가 노출 처리 되었습니다'
-          : '파티가 숨김 처리 되었습니다',
-        position: 'top',
-        topOffset: MENU_TOAST_TOP_OFFSET,
-      });
-    } catch (error) {
-      Toast.show({
-        type: 'error',
-        text1: '노출 상태 변경 중 오류가 발생했어요.',
-        position: 'top',
-        topOffset: MENU_TOAST_TOP_OFFSET,
-      });
-    }
-  };
-
-  const handleToggleApplyOpen = async nextValue => {
-    if (!templateId) {
-      Toast.show({
-        type: 'error',
-        text1: '신청 설정을 변경할 파티 템플릿 정보가 없어요.',
-        position: 'top',
-        topOffset: MENU_TOAST_TOP_OFFSET,
-      });
+    if (!isTemplateApplyOpen || isPartyStatusLocked || isStatusUpdating) {
       return;
     }
 
+    const nextStatus = nextValue ? 'RECRUIT' : 'RECRUIT_BLOCK';
+
     try {
-      await hostMeetApi.updatePartyApplicationOpen(templateId, nextValue);
-      setIsApplyOpen(nextValue);
-      onUpdateTemplate?.({isApplyOpen: nextValue, isApply: nextValue});
+      setIsStatusUpdating(true);
+      await hostMeetApi.updateDailyPartyStatus(partyId, nextStatus);
+      setDailyParty(prev =>
+        prev ? {...prev, partyStatus: nextStatus} : prev,
+      );
+      onUpdateDailyParty?.({partyStatus: nextStatus});
       Toast.show({
         type: 'success',
         text1: nextValue
-          ? '이제 파티 신청을 받을 수 있어요.'
-          : '이제 파티 정보만 노출돼요.',
+          ? '선택한 날짜의 신청을 다시 받기 시작했어요.'
+          : '선택한 날짜의 신청이 마감되었어요.',
         position: 'top',
         topOffset: MENU_TOAST_TOP_OFFSET,
       });
     } catch (error) {
       Toast.show({
         type: 'error',
-        text1: '파티 신청 설정 변경 중 오류가 발생했어요.',
+        text1:
+          error?.response?.data?.message ||
+          '신청 상태 변경 중 오류가 발생했어요.',
         position: 'top',
         topOffset: MENU_TOAST_TOP_OFFSET,
       });
+    } finally {
+      setIsStatusUpdating(false);
     }
   };
 
@@ -343,58 +318,65 @@ const Settings = ({
         </TouchableOpacity>
       </View>
 
-      <View style={styles.section}>
-        <Text style={[FONTS.fs_14_semibold, styles.sectionTitle]}>
-          선택한 날짜 파티 노출
-        </Text>
+      {isTemplateApplyOpen ? (
+        <View style={styles.section}>
+          <Text style={[FONTS.fs_14_semibold, styles.sectionTitle]}>
+            선택한 날짜 신청 상태
+          </Text>
 
-        <View style={styles.sectionCard}>
-          <View style={styles.exposureRow}>
-            <View style={styles.exposureTopRow}>
-              <Text
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                style={[FONTS.fs_16_semibold, styles.partyTitle]}>
-                {partyTitle}
-              </Text>
+          <View style={styles.sectionCard}>
+            <View style={styles.applicationStatusRow}>
+              <View style={styles.applicationStatusTopRow}>
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={[FONTS.fs_16_semibold, styles.partyTitle]}>
+                  {partyTitle}
+                </Text>
 
-              <View style={styles.exposureRightGroup}>
-                <View
-                  style={[
-                    styles.exposureBadge,
-                    isExposed
-                      ? styles.exposureBadgeVisible
-                      : styles.exposureBadgeHidden,
-                  ]}>
-                  <Text
+                <View style={styles.applicationStatusRightGroup}>
+                  <View
                     style={[
-                      FONTS.fs_12_medium,
-                      isExposed
-                        ? styles.exposureBadgeTextVisible
-                        : styles.exposureBadgeTextHidden,
+                      styles.applicationStatusBadge,
+                      canApply
+                        ? styles.applicationStatusBadgeOpen
+                        : styles.applicationStatusBadgeClosed,
                     ]}>
-                    {exposureLabel}
-                  </Text>
+                    <Text
+                      style={[
+                        FONTS.fs_12_medium,
+                        canApply
+                          ? styles.applicationStatusBadgeTextOpen
+                          : styles.applicationStatusBadgeTextClosed,
+                      ]}>
+                      {applicationStatusLabel}
+                    </Text>
+                  </View>
+
+                  <Switch
+                    value={canApply}
+                    onValueChange={handleToggleRecruitment}
+                    disabled={isPartyStatusLocked || isStatusUpdating}
+                    trackColor={{
+                      false: COLORS.grayscale_300,
+                      true: COLORS.primary_orange,
+                    }}
+                    thumbColor={COLORS.grayscale_0}
+                  />
                 </View>
-
-                <Switch
-                  value={isExposed}
-                  onValueChange={handleToggleVisibility}
-                  trackColor={{
-                    false: COLORS.grayscale_300,
-                    true: COLORS.primary_orange,
-                  }}
-                  thumbColor={COLORS.grayscale_0}
-                />
               </View>
-            </View>
 
-            <Text style={[FONTS.fs_12_medium, styles.exposureDescription]}>
-              {exposureDescription}
-            </Text>
+              <Text
+                style={[
+                  FONTS.fs_12_medium,
+                  styles.applicationStatusDescription,
+                ]}>
+                {applicationStatusDescription}
+              </Text>
+            </View>
           </View>
         </View>
-      </View>
+      ) : null}
 
       <View style={styles.section}>
         <Text style={[FONTS.fs_14_semibold, styles.sectionTitle]}>
@@ -439,49 +421,6 @@ const Settings = ({
               인원 적용하기
             </Text>
           </TouchableOpacity>
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <View style={styles.commonSettingHeader}>
-          <Text style={[FONTS.fs_14_semibold, styles.sectionTitle]}>
-            전체 일정 공통 설정
-          </Text>
-          <Text style={[FONTS.fs_12_medium, styles.commonSettingHint]}>
-            모든 날짜에 적용
-          </Text>
-        </View>
-
-        <View style={styles.sectionCard}>
-          <View style={styles.applyOpenRow}>
-            <View style={styles.applyOpenTopRow}>
-              <Text style={[FONTS.fs_16_semibold, styles.applyOpenTitle]}>
-                파티 신청 받기
-              </Text>
-
-              <View style={styles.applyOpenRightGroup}>
-                <Switch
-                  value={isApplyOpen}
-                  onValueChange={handleToggleApplyOpen}
-                  trackColor={{
-                    false: COLORS.grayscale_300,
-                    true: COLORS.primary_orange,
-                  }}
-                  thumbColor={COLORS.grayscale_0}
-                />
-              </View>
-            </View>
-
-            <Text
-              style={[
-                FONTS.fs_12_medium,
-                isApplyOpen
-                  ? styles.applyOpenDescription
-                  : styles.applyOpenDescriptionDisabled,
-              ]}>
-              {applyOpenDescription}
-            </Text>
-          </View>
         </View>
       </View>
 

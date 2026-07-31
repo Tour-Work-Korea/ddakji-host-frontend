@@ -37,11 +37,11 @@ const hostMeetApi = {
   deleteParty: (templateId) =>
     api.delete(`/host/parties/templates/${templateId}`),
 
-  // 오늘 파티 노출 여부 수정
-  updatePartyVisibility: (partyId, isVisible) =>
-    api.patch(`/host/parties/daily/${partyId}/visibility`, null, {
+  // 개별 파티 모집 상태 변경
+  updateDailyPartyStatus: (partyId, partyStatus) =>
+    api.patch(`/host/parties/daily/${partyId}/status`, null, {
       params: {
-        isVisible,
+        partyStatus,
       },
     }),
 
@@ -81,11 +81,11 @@ const hostMeetApi = {
     }),
 
   // 모임 예약 승인/거절 API
-  approvePartyReservation: (partyId, reservationId, isApproved, cancleReason = '') =>
+  approvePartyReservation: (partyId, reservationId, isApproved, cancelReason = '') =>
     api.post(`/host/parties/daily/${partyId}/reservations/${reservationId}/approve`, null, {
       params: {
         isApproved,
-        cancleReason,
+        cancelReason,
       },
     }),
 };
