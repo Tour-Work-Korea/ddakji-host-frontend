@@ -24,15 +24,6 @@ export default StyleSheet.create({
     color: COLORS.grayscale_500,
     marginBottom: 8,
   },
-  commonSettingHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  commonSettingHint: {
-    color: COLORS.primary_orange,
-    marginBottom: 8,
-  },
   sectionCard: {
     borderWidth: 1,
     borderColor: COLORS.grayscale_200,
@@ -76,10 +67,10 @@ export default StyleSheet.create({
     color: COLORS.grayscale_500,
   },
 
-  exposureRow: {
+  applicationStatusRow: {
     gap: 4,
   },
-  exposureTopRow: {
+  applicationStatusTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -90,32 +81,32 @@ export default StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
-  exposureRightGroup: {
+  applicationStatusRightGroup: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
     flexShrink: 0,
     marginLeft: 8,
   },
-  exposureBadge: {
+  applicationStatusBadge: {
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 4,
     borderWidth: 1,
   },
-  exposureBadgeVisible: {
+  applicationStatusBadgeOpen: {
     borderColor: COLORS.primary_blue,
   },
-  exposureBadgeHidden: {
+  applicationStatusBadgeClosed: {
     borderColor: COLORS.grayscale_300,
   },
-  exposureBadgeTextVisible: {
+  applicationStatusBadgeTextOpen: {
     color: COLORS.primary_blue,
   },
-  exposureBadgeTextHidden: {
+  applicationStatusBadgeTextClosed: {
     color: COLORS.grayscale_400,
   },
-  exposureDescription: {
+  applicationStatusDescription: {
     color: COLORS.grayscale_500,
   },
 
@@ -163,33 +154,6 @@ export default StyleSheet.create({
   },
   applyButtonText: {
     color: COLORS.grayscale_0,
-  },
-  applyOpenRow: {
-    gap: 4,
-  },
-  applyOpenTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 8,
-  },
-  applyOpenTitle: {
-    color: COLORS.grayscale_700,
-    flex: 1,
-    minWidth: 0,
-  },
-  applyOpenRightGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-    flexShrink: 0,
-    marginLeft: 8,
-  },
-  applyOpenDescription: {
-    color: COLORS.primary_blue,
-  },
-  applyOpenDescriptionDisabled: {
-    color: COLORS.grayscale_400,
   },
   cancelModalContent: {
     alignItems: 'center',

@@ -7,8 +7,11 @@ import {
   FlatList,
   ActivityIndicator,
   Alert,
+  Platform,
+  Switch,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import Toast from 'react-native-toast-message';
 
 import { FONTS } from '@constants/fonts';
 import { COLORS } from '@constants/colors';
@@ -21,11 +24,14 @@ import PencilIcon from '@assets/images/edit_gray.svg';
 import TrashIcon from '@assets/images/delete_gray.svg';
 import PlusIcon from '@assets/images/plus_white.svg';
 
+const MENU_TOAST_TOP_OFFSET = Platform.OS === 'ios' ? 220 : 190;
+
 const PartyInfo = ({ guesthouseId }) => {
   const navigation = useNavigation();
   const [parties, setParties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deleteTargetId, setDeleteTargetId] = useState(null);
+  const [updatingTemplateIds, setUpdatingTemplateIds] = useState([]);
 
   const fetchParties = useCallback(async () => {
     try {
@@ -38,7 +44,24 @@ const PartyInfo = ({ guesthouseId }) => {
       const filtered = allParties.filter(
         party => String(party.guesthouseId) === String(guesthouseId),
       );
-      setParties(filtered);
+      const resolvedParties = await Promise.all(
+        filtered.map(async party => {
+          const applyOpen = party?.isApplyOpen ?? party?.isApply;
+          if (typeof applyOpen === 'boolean' || party?.templateId == null) {
+            return party;
+          }
+
+          try {
+            const detailResponse = await hostMeetApi.getPartyTemplateDetail(
+              party.templateId,
+            );
+            return {...party, ...(detailResponse?.data ?? {})};
+          } catch (error) {
+            return party;
+          }
+        }),
+      );
+      setParties(resolvedParties);
     } catch (error) {
       console.log('Error fetching parties:', error);
       setParties([]);
@@ -65,6 +88,49 @@ const PartyInfo = ({ guesthouseId }) => {
 
   const handleDelete = templateId => {
     setDeleteTargetId(templateId);
+  };
+
+  const handleToggleApplyOpen = async (templateId, nextValue) => {
+    if (
+      templateId == null ||
+      updatingTemplateIds.some(id => String(id) === String(templateId))
+    ) {
+      return;
+    }
+
+    setUpdatingTemplateIds(prev => [...prev, templateId]);
+
+    try {
+      await hostMeetApi.updatePartyApplicationOpen(templateId, nextValue);
+      setParties(prev =>
+        prev.map(party =>
+          String(party.templateId) === String(templateId)
+            ? {...party, isApplyOpen: nextValue, isApply: nextValue}
+            : party,
+        ),
+      );
+      Toast.show({
+        type: 'success',
+        text1: nextValue
+          ? '이제 파티 참여 신청을 받을 수 있어요.'
+          : '이제 파티 정보만 보여줘요.',
+        position: 'top',
+        topOffset: MENU_TOAST_TOP_OFFSET,
+      });
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1:
+          error?.response?.data?.message ||
+          '파티 신청 설정 변경 중 오류가 발생했어요.',
+        position: 'top',
+        topOffset: MENU_TOAST_TOP_OFFSET,
+      });
+    } finally {
+      setUpdatingTemplateIds(prev =>
+        prev.filter(id => String(id) !== String(templateId)),
+      );
+    }
   };
 
   const confirmDelete = async () => {
@@ -106,56 +172,104 @@ const PartyInfo = ({ guesthouseId }) => {
     );
   }
 
-  const renderItem = ({ item }) => (
-    <View style={styles.cardContainer}>
-      <View style={styles.card}>
-        <Image
-          source={{ uri: item.partyImageUrl }}
-          style={styles.thumbnail}
-          resizeMode="cover"
-        />
-        <View style={styles.cardContent}>
-          <View style={styles.cardTop}>
-            <Text
-              style={[FONTS.fs_16_semibold, styles.partyTitle]}
-              numberOfLines={2}>
-              {item.partyTitle}
-            </Text>
-            <View style={styles.attendanceRow}>
-              <PeopleIcon width={14} height={14} />
-              <Text style={[FONTS.fs_12_medium, styles.attendanceText]}>
-                최대인원 {item.maxAttendance}명
+  const renderItem = ({ item }) => {
+    const isApplyOpen = Boolean(item?.isApplyOpen ?? item?.isApply);
+    const isUpdating = updatingTemplateIds.some(
+      id => String(id) === String(item.templateId),
+    );
+
+    return (
+      <View style={styles.cardContainer}>
+        <View style={styles.card}>
+          <Image
+            source={{ uri: item.partyImageUrl }}
+            style={styles.thumbnail}
+            resizeMode="cover"
+          />
+          <View style={styles.cardContent}>
+            <View style={styles.cardTop}>
+              <Text
+                style={[FONTS.fs_16_semibold, styles.partyTitle]}
+                numberOfLines={2}>
+                {item.partyTitle}
               </Text>
+              <View style={styles.attendanceRow}>
+                <PeopleIcon width={14} height={14} />
+                <Text style={[FONTS.fs_12_medium, styles.attendanceText]}>
+                  최대인원 {item.maxAttendance}명
+                </Text>
+              </View>
             </View>
           </View>
         </View>
+
+        <View style={styles.actionButtonRow}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            activeOpacity={0.8}
+            onPress={() => handleEdit(item.templateId)}>
+            <Text style={[FONTS.fs_14_medium, styles.actionButtonText]}>
+              수정
+            </Text>
+            <PencilIcon width={18} height={18} />
+          </TouchableOpacity>
+
+          <View style={styles.actionDivider} />
+
+          <TouchableOpacity
+            style={styles.actionButton}
+            activeOpacity={0.8}
+            onPress={() => handleDelete(item.templateId)}>
+            <Text style={[FONTS.fs_14_medium, styles.actionButtonText]}>
+              삭제
+            </Text>
+            <TrashIcon width={18} height={18} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.applicationSetting}>
+          <View style={styles.applicationSettingTextWrap}>
+            <View style={styles.applicationSettingLabelRow}>
+              <Text
+                style={[FONTS.fs_14_semibold, styles.applicationSettingTitle]}>
+                참여 신청
+              </Text>
+              <Text
+                style={[
+                  FONTS.fs_12_semibold,
+                  isApplyOpen
+                    ? styles.applicationStatusOpen
+                    : styles.applicationStatusClosed,
+                ]}>
+                {isApplyOpen ? '신청 받는 중' : '정보만 노출'}
+              </Text>
+            </View>
+            <Text
+              style={[
+                FONTS.fs_12_medium,
+                styles.applicationSettingDescription,
+              ]}>
+              {isApplyOpen
+                ? '게스트가 파티를 확인하고 참여 신청할 수 있어요.'
+                : '파티 정보만 보여주고 신규 신청은 받지 않아요.'}
+            </Text>
+          </View>
+          <Switch
+            value={isApplyOpen}
+            onValueChange={nextValue =>
+              handleToggleApplyOpen(item.templateId, nextValue)
+            }
+            disabled={isUpdating}
+            trackColor={{
+              false: COLORS.grayscale_300,
+              true: COLORS.primary_orange,
+            }}
+            thumbColor={COLORS.grayscale_0}
+          />
+        </View>
       </View>
-
-      <View style={styles.actionButtonRow}>
-        <TouchableOpacity
-          style={styles.actionButton}
-          activeOpacity={0.8}
-          onPress={() => handleEdit(item.templateId)}>
-          <Text style={[FONTS.fs_14_medium, styles.actionButtonText]}>
-            수정하기
-          </Text>
-          <PencilIcon width={20} height={20} />
-        </TouchableOpacity>
-
-        <View style={styles.actionButtonSpacer} />
-
-        <TouchableOpacity
-          style={styles.actionButton}
-          activeOpacity={0.8}
-          onPress={() => handleDelete(item.templateId)}>
-          <Text style={[FONTS.fs_14_medium, styles.actionButtonText]}>
-            삭제하기
-          </Text>
-          <TrashIcon width={20} height={20} />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <View style={styles.container}>

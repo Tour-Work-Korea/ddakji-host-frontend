@@ -132,9 +132,14 @@ const getPartyStatusLabel = partyStatus => {
       return '모집 전';
     case 'RECRUIT':
       return '모집 중';
+    case 'RECRUIT_BLOCK':
+    case 'RECRUIT_END':
+      return '신청 마감';
     case 'CANCELLED':
     case 'CANCELED':
       return '취소';
+    case 'PARTY_END':
+      return '종료';
     case 'CLOSED':
     case 'FINISHED':
       return '마감';
