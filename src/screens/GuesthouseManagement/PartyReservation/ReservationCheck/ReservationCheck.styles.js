@@ -200,6 +200,9 @@ export default StyleSheet.create({
     borderRadius: 100,
     marginHorizontal: 2,
   },
+  phoneCopyButton: {
+    justifyContent: 'center',
+  },
   callButton: {
     padding: 8,
     borderRadius: 12,

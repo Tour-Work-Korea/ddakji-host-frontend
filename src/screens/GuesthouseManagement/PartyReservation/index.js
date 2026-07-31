@@ -125,9 +125,14 @@ const PartyReservation = ({
           return;
         }
 
-        setPartyTemplates(resolvedTemplates);
+        const manageableTemplates = resolvedTemplates.filter(
+          template =>
+            (template?.isApplyOpen ?? template?.isApply) === true,
+        );
+
+        setPartyTemplates(manageableTemplates);
         setSelectedTemplateId(prev => {
-          const notifiedTemplateExists = resolvedTemplates.some(
+          const notifiedTemplateExists = manageableTemplates.some(
             template =>
               String(template.templateId) === String(initialTemplateId),
           );
@@ -135,14 +140,14 @@ const PartyReservation = ({
             return initialTemplateId;
           }
 
-          const previousExists = resolvedTemplates.some(
+          const previousExists = manageableTemplates.some(
             template => String(template.templateId) === String(prev),
           );
           if (previousExists) {
             return prev;
           }
 
-          return resolvedTemplates[0]?.templateId ?? null;
+          return manageableTemplates[0]?.templateId ?? null;
         });
       } catch (error) {
         if (isMounted) {
@@ -460,49 +465,65 @@ const PartyReservation = ({
         </View>
       ) : null}
 
-      <View style={styles.chipRow}>
-        {chips.map(chip => (
-          <TouchableOpacity
-            key={chip}
-            activeOpacity={0.8}
-            style={[styles.chip, activeChip === chip && styles.chipActive]}
-            onPress={() => setActiveChip(chip)}>
-            <Text
-              style={[
-                FONTS.fs_14_medium,
-                activeChip === chip ? styles.chipTextActive : styles.chipText,
-              ]}>
-              {chip}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
       {isTemplateLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="small" color={COLORS.primary_orange} />
         </View>
-      ) : activeChip === chips[0] ? (
-        <ReservationCheck
-          key={`reservation-${selectedTemplateId ?? 'default'}`}
-          guesthouseId={guesthouseId}
-          applicationType={effectiveApplicationType}
-          dailyParties={dailyParties}
-          selectedDailyParty={selectedDailyParty}
-          isDailyPartyLoading={isDailyPartyLoading}
-          initialReservationId={initialReservationId}
-          onReservationApproved={handleReservationApproved}
-        />
+      ) : !selectedTemplate ? (
+        <View style={styles.emptyContainer}>
+          <Text style={[FONTS.fs_16_semibold, styles.emptyTitle]}>
+            신청을 받는 파티가 없습니다
+          </Text>
+          <Text style={[FONTS.fs_14_regular, styles.emptyDescription]}>
+            파티 정보에서 참여 신청을 켜면{'\n'}신청 현황과 날짜별 설정을
+            관리할 수 있어요.
+          </Text>
+        </View>
       ) : (
-        <Settings
-          key={`settings-${selectedTemplateId ?? 'default'}`}
-          guesthouseId={guesthouseId}
-          selectedTemplateId={selectedTemplateId}
-          selectedTemplate={selectedTemplate}
-          selectedDailyParty={selectedDailyParty}
-          isDailyPartyLoading={isDailyPartyLoading}
-          onUpdateDailyParty={handleUpdateDailyParty}
-        />
+        <>
+          <View style={styles.chipRow}>
+            {chips.map(chip => (
+              <TouchableOpacity
+                key={chip}
+                activeOpacity={0.8}
+                style={[styles.chip, activeChip === chip && styles.chipActive]}
+                onPress={() => setActiveChip(chip)}>
+                <Text
+                  style={[
+                    FONTS.fs_14_medium,
+                    activeChip === chip
+                      ? styles.chipTextActive
+                      : styles.chipText,
+                  ]}>
+                  {chip}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {activeChip === chips[0] ? (
+            <ReservationCheck
+              key={`reservation-${selectedTemplateId}`}
+              guesthouseId={guesthouseId}
+              applicationType={effectiveApplicationType}
+              dailyParties={dailyParties}
+              selectedDailyParty={selectedDailyParty}
+              isDailyPartyLoading={isDailyPartyLoading}
+              initialReservationId={initialReservationId}
+              onReservationApproved={handleReservationApproved}
+            />
+          ) : (
+            <Settings
+              key={`settings-${selectedTemplateId}`}
+              guesthouseId={guesthouseId}
+              selectedTemplateId={selectedTemplateId}
+              selectedTemplate={selectedTemplate}
+              selectedDailyParty={selectedDailyParty}
+              isDailyPartyLoading={isDailyPartyLoading}
+              onUpdateDailyParty={handleUpdateDailyParty}
+            />
+          )}
+        </>
       )}
 
       <Modal
@@ -520,7 +541,7 @@ const PartyReservation = ({
                     관리할 파티 선택
                   </Text>
                   <Text style={[FONTS.fs_12_medium, styles.modalDescription]}>
-                    선택한 파티의 신청 현황과 설정을 확인할 수 있어요
+                    신청을 받고 있는 파티만 표시돼요
                   </Text>
                 </View>
 
@@ -531,10 +552,6 @@ const PartyReservation = ({
                     const isSelected =
                       String(template.templateId) ===
                       String(selectedTemplateId);
-                    const isApplyOpen = Boolean(
-                      template?.isApplyOpen ?? template?.isApply,
-                    );
-
                     return (
                       <TouchableOpacity
                         key={String(template.templateId)}
@@ -556,30 +573,9 @@ const PartyReservation = ({
                           ]}>
                           {template.partyTitle || '파티 이름 없음'}
                         </Text>
-                        <View style={styles.partyOptionRight}>
-                          <View
-                            style={[
-                              styles.partyApplyStatusBadge,
-                              isApplyOpen
-                                ? styles.partyApplyStatusBadgeOpen
-                                : styles.partyApplyStatusBadgeClosed,
-                            ]}>
-                            <Text
-                              style={[
-                                FONTS.fs_12_medium,
-                                isApplyOpen
-                                  ? styles.partyApplyStatusTextOpen
-                                  : styles.partyApplyStatusTextClosed,
-                              ]}>
-                              {isApplyOpen
-                                ? '신청 받는 중'
-                                : '정보만 노출'}
-                            </Text>
-                          </View>
-                          {isSelected ? (
-                            <CheckIcon width={20} height={20} />
-                          ) : null}
-                        </View>
+                        {isSelected ? (
+                          <CheckIcon width={20} height={20} />
+                        ) : null}
                       </TouchableOpacity>
                     );
                   })}
