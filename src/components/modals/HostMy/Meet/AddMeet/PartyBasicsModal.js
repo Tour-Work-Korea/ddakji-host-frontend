@@ -5,10 +5,11 @@ import {
   Modal,
   TouchableOpacity,
   StyleSheet,
-  Dimensions,
   Pressable,
   ScrollView,
   TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 
 import {FONTS} from '@constants/fonts';
@@ -23,8 +24,6 @@ import PlusIcon from '@assets/images/plus_gray.svg';
 import MinusIcon from '@assets/images/minus_gray.svg';
 import DisabledRadioButton from '@assets/images/radio_button_disabled.svg';
 import EnabledRadioButton from '@assets/images/radio_button_enabled.svg';
-
-const MODAL_HEIGHT = Math.round(Dimensions.get('window').height * 0.9);
 
 const normalize = initialValues => {
   const amount = initialValues?.amount ?? 0;
@@ -171,7 +170,9 @@ const PartyBasicsModal = ({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleModalClose}>
-      <View style={styles.overlay}>
+      <KeyboardAvoidingView
+        style={styles.overlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <Pressable style={StyleSheet.absoluteFill} onPress={handleModalClose} />
         <View style={styles.modalContainer}>
           <View style={styles.header}>
@@ -181,7 +182,12 @@ const PartyBasicsModal = ({
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.body}
+            contentContainerStyle={styles.bodyContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            automaticallyAdjustKeyboardInsets>
             <Text style={[FONTS.fs_16_medium, styles.label]}>파티 시간</Text>
             <View style={styles.timeRow}>
               {['partyStartTime', 'partyEndTime'].map(key => (
@@ -300,8 +306,6 @@ const PartyBasicsModal = ({
                 onChange={v => setForm(prev => ({...prev, amount: v}))}
               />
             ) : null}
-
-            <View style={{height: 20}} />
           </ScrollView>
 
           <View style={styles.footer}>
@@ -318,7 +322,7 @@ const PartyBasicsModal = ({
             setTimePickerType(null);
           }}
         />
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
@@ -332,7 +336,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContainer: {
-    height: MODAL_HEIGHT,
+    height: '90%',
     backgroundColor: COLORS.grayscale_0,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -354,7 +358,10 @@ const styles = StyleSheet.create({
   },
   body: {
     flex: 1,
+  },
+  bodyContent: {
     paddingTop: 10,
+    paddingBottom: 40,
   },
   label: {
     color: COLORS.grayscale_900,

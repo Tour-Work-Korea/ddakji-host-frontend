@@ -96,7 +96,6 @@ export default StyleSheet.create({
   },
   contentImage: {
     width: '100%',
-    height: 220,
     borderRadius: 12,
     marginBottom: 16,
     backgroundColor: COLORS.grayscale_100,

@@ -16,6 +16,7 @@ import {
   View,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
+import Clipboard from '@react-native-clipboard/clipboard';
 import Toast from 'react-native-toast-message';
 
 import {COLORS} from '@constants/colors';
@@ -464,6 +465,20 @@ const ReservationCheck = ({
     }
   };
 
+  const handleCopyPhone = phoneNumber => {
+    if (!phoneNumber) {
+      return;
+    }
+
+    Clipboard.setString(String(phoneNumber));
+    Toast.show({
+      type: 'success',
+      text1: '연락처가 복사되었습니다.',
+      position: 'top',
+      topOffset: MENU_TOAST_TOP_OFFSET,
+    });
+  };
+
   const renderReservationCard = item => {
     const isWaiting = item.needsHostAction;
     const isNotificationTarget =
@@ -517,9 +532,16 @@ const ReservationCheck = ({
               {item.time}
             </Text>
             <Text style={[FONTS.fs_12_medium, styles.metaDivider]}>|</Text>
-            <Text style={[FONTS.fs_12_medium, styles.metaText]}>
-              {item.phone}
-            </Text>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              style={styles.phoneCopyButton}
+              onPress={() => handleCopyPhone(item.phone)}
+              accessibilityRole="button"
+              accessibilityLabel={`연락처 ${item.phone}, 복사`}>
+              <Text style={[FONTS.fs_12_medium, styles.metaText]}>
+                {item.phone}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
 
