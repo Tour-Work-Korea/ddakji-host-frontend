@@ -355,6 +355,7 @@ export const resolveNotificationTarget = notification => {
           guesthouseId: fallbackGuesthouseId,
           selectedDate: notificationLocalDate,
           partyId,
+          templateId,
         },
       };
     }

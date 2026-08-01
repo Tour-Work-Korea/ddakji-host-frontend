@@ -15,22 +15,32 @@ export default StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 28,
   },
-  dateSelectContainer: {
+  partyContextCard: {
     marginBottom: 12,
-  },
-  dateSelectBox: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     borderWidth: 1,
     borderColor: COLORS.grayscale_200,
     borderRadius: 12,
     backgroundColor: COLORS.grayscale_0,
   },
+  partyContextTitle: {
+    flex: 1,
+    minWidth: 0,
+    color: COLORS.grayscale_700,
+  },
+  dateNavigationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flexShrink: 0,
+  },
   calendarContainer: {
-    marginTop: 8,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: COLORS.grayscale_200,
     borderRadius: 12,
