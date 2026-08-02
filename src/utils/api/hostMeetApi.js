@@ -21,6 +21,10 @@ const hostMeetApi = {
   getPartyTemplateDetail: (templateId) =>
     api.get(`/host/parties/templates/${templateId}`),
 
+  // 템플릿으로 생성된 현재 신청 관리 대상 일별 파티 조회
+  getTemplateDailyParties: (templateId) =>
+    api.get(`/host/parties/templates/${templateId}/daily`),
+
   // 파티 공고 등록
   createParty: (data) =>
     api.post('/host/parties/templates', data),
@@ -33,11 +37,11 @@ const hostMeetApi = {
   deleteParty: (templateId) =>
     api.delete(`/host/parties/templates/${templateId}`),
 
-  // 오늘 파티 노출 여부 수정
-  updatePartyVisibility: (partyId, isVisible) =>
-    api.patch(`/host/parties/daily/${partyId}/visibility`, null, {
+  // 개별 파티 모집 상태 변경
+  updateDailyPartyStatus: (partyId, partyStatus) =>
+    api.patch(`/host/parties/daily/${partyId}/status`, null, {
       params: {
-        isVisible,
+        partyStatus,
       },
     }),
 
@@ -50,10 +54,11 @@ const hostMeetApi = {
     }),
 
   // 날짜별 파티 예약 요약 조회
-  getPartyReservationSummary: (guesthouseId, date) =>
+  getPartyReservationSummary: (guesthouseId, date, partyId) =>
     api.get(`/host/parties/daily/${guesthouseId}/reservations/summary`, {
       params: {
         date,
+        ...(partyId != null ? {partyId} : {}),
       },
     }),
 
@@ -70,18 +75,19 @@ const hostMeetApi = {
     }),
 
   // 호스트 파티 설정 화면 통합 조회 API
-  getPartySettings: (guesthouseId) =>
-    api.get(`/host/guesthouses/${guesthouseId}/party-settings`),
+  getPartySettings: (guesthouseId, templateId) =>
+    api.get(`/host/guesthouses/${guesthouseId}/party-settings`, {
+      params: templateId != null ? {templateId} : undefined,
+    }),
 
   // 모임 예약 승인/거절 API
-  approvePartyReservation: (partyId, reservationId, isApproved, cancleReason = '') =>
+  approvePartyReservation: (partyId, reservationId, isApproved, cancelReason = '') =>
     api.post(`/host/parties/daily/${partyId}/reservations/${reservationId}/approve`, null, {
       params: {
         isApproved,
-        cancleReason,
+        cancelReason,
       },
     }),
 };
 
 export default hostMeetApi;
-

@@ -66,6 +66,19 @@ const getCurrentYearMonth = () => {
   return `${year}-${month}`;
 };
 
+const getGenderLabel = gender => {
+  const normalizedGender = gender?.toUpperCase?.();
+
+  if (normalizedGender === 'M') {
+    return '남성';
+  }
+  if (normalizedGender === 'F') {
+    return '여성';
+  }
+
+  return gender || '';
+};
+
 const normalizeReservation = reservation => {
   const status = STATUS_LABEL_MAP[reservation?.status] || reservation?.status || '완료';
   const completedTotal = Number(reservation?.completedTotal || 0);
@@ -89,6 +102,7 @@ const normalizeReservation = reservation => {
     statusText: reservation?.statusText ?? `완료 ${completedTotal}, 취소 ${canceledTotal}`,
     name: reservation?.userName ?? reservation?.name,
     age: reservation?.age ?? (birthYear ? `${birthYear}년생` : ''),
+    gender: getGenderLabel(reservation?.guestGender ?? reservation?.gender),
     phone: reservation?.userPhone ?? reservation?.phone,
     reservationNumber: reservation?.reservationCode ?? reservation?.reservationNumber,
     guestCount:
@@ -233,6 +247,7 @@ const ReservationMetricList = () => {
 
         <View style={styles.infoSection}>
           <InfoRow label="예약자" value={reservation.name} />
+          <InfoRow label="성별" value={reservation.gender} />
           <InfoRow label="나이" value={reservation.age} />
           <InfoRow label="전화번호" value={reservation.phone} />
           <InfoRow label="예약번호" value={reservation.reservationNumber} />

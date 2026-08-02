@@ -179,9 +179,7 @@ const getNotificationLocalDate = data => {
   const dateCandidate =
     data?.partyDate ||
     data?.date ||
-    data?.partyStartDateTime ||
-    data?.createdAt ||
-    data?.actionTime;
+    data?.partyStartDateTime;
 
   if (dateCandidate) {
     const d = new Date(dateCandidate);
@@ -221,14 +219,26 @@ export const resolveNotificationTarget = notification => {
   const guesthouseId = normalizeNumber(data.guesthouseId);
   const fallbackGuesthouseId = guesthouseId ?? getFallbackGuesthouseId();
   const roomId = normalizeNumber(data.roomId);
+  const isNoticeNotification =
+    type.includes('NOTICE') || type.includes('EVENT');
   const noticeId =
     normalizeNumber(data.noticeId) ??
-    (type === 'NOTICE' ? normalizeNumber(data.targetId) : null);
+    normalizeNumber(data.targetNoticeId) ??
+    normalizeNumber(data.notice?.id) ??
+    (isNoticeNotification
+      ? normalizeNumber(data.targetId) ??
+        normalizeNumber(data.referenceId) ??
+        normalizeNumber(data.resourceId)
+      : null);
   const reservationId =
     normalizeNumber(data.reservationId) ??
     normalizeNumber(data.targetReservationId);
   const partyId =
     normalizeNumber(data.partyId) ?? normalizeNumber(data.targetPartyId);
+  const templateId =
+    normalizeNumber(data.templateId) ??
+    normalizeNumber(data.partyTemplateId) ??
+    normalizeNumber(data.targetTemplateId);
   const reviewId =
     normalizeNumber(data.reviewId) ?? normalizeNumber(data.targetReviewId);
   const batchId =
@@ -248,11 +258,18 @@ export const resolveNotificationTarget = notification => {
 
   if (explicitScreen) {
     const targetId = normalizeNumber(data.id) ?? data.id;
+    const isNoticeDetailScreen =
+      String(explicitScreen).toUpperCase() === 'NOTICEDETAIL';
 
     return {
       kind: 'screen',
       value: explicitScreen,
-      params: targetId ? {id: targetId} : undefined,
+      params:
+        isNoticeDetailScreen && noticeId
+          ? {noticeId}
+          : targetId
+            ? {id: targetId}
+            : undefined,
     };
   }
 
@@ -264,7 +281,7 @@ export const resolveNotificationTarget = notification => {
     };
   }
 
-  if ((type.includes('NOTICE') || type.includes('EVENT')) && guesthouseId) {
+  if (isNoticeNotification && guesthouseId) {
     return {
       kind: 'screen',
       value: 'GuesthouseManagement',
@@ -272,7 +289,7 @@ export const resolveNotificationTarget = notification => {
     };
   }
 
-  if (type.includes('NOTICE') || type.includes('EVENT')) {
+  if (isNoticeNotification) {
     return {
       kind: 'screen',
       value: 'NoticeList',
@@ -322,6 +339,7 @@ export const resolveNotificationTarget = notification => {
       params: {
         guesthouseId: fallbackGuesthouseId,
         selectedDate: notificationLocalDate,
+        partyId,
       },
     };
   }
@@ -336,6 +354,7 @@ export const resolveNotificationTarget = notification => {
         params: {
           guesthouseId: fallbackGuesthouseId,
           selectedDate: notificationLocalDate,
+          partyId,
         },
       };
     }
@@ -348,6 +367,7 @@ export const resolveNotificationTarget = notification => {
         initialTab: '파티 관리',
         reservationId,
         partyId,
+        templateId,
       },
     };
   }

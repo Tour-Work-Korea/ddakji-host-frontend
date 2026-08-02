@@ -5,10 +5,11 @@ import {
   Modal,
   TouchableOpacity,
   StyleSheet,
-  Dimensions,
   Pressable,
   ScrollView,
   TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 
 import {FONTS} from '@constants/fonts';
@@ -21,21 +22,34 @@ import CheckWhite from '@assets/images/check_white.svg';
 import ClockIcon from '@assets/images/clock_gray.svg';
 import PlusIcon from '@assets/images/plus_gray.svg';
 import MinusIcon from '@assets/images/minus_gray.svg';
+import DisabledRadioButton from '@assets/images/radio_button_disabled.svg';
+import EnabledRadioButton from '@assets/images/radio_button_enabled.svg';
 
-const MODAL_HEIGHT = Math.round(Dimensions.get('window').height * 0.9);
+const normalize = initialValues => {
+  const amount = initialValues?.amount ?? 0;
+  const chargeType = ['FREE', 'PAID'].includes(initialValues?.chargeType)
+    ? initialValues.chargeType
+    : Number(amount) > 0 ? 'PAID' : 'FREE';
 
-const normalize = initialValues => ({
-  guesthouseId: initialValues?.guesthouseId ?? null,
-  partyStartTime: initialValues?.partyStartTime || '20:00:00',
-  partyEndTime: initialValues?.partyEndTime || '20:00:00',
-  minAttendees: Number(initialValues?.minAttendees) || 10,
-  maxAttendees: Number(initialValues?.maxAttendees) || 15,
-  isGuest: initialValues?.isGuest ?? true,
-  amount: initialValues?.amount ?? 0,
-  femaleAmount: initialValues?.femaleAmount ?? 0,
-  maleNonAmount: initialValues?.maleNonAmount ?? 0,
-  femaleNonAmount: initialValues?.femaleNonAmount ?? 0,
-});
+  return {
+    guesthouseId: initialValues?.guesthouseId ?? null,
+    partyStartTime: initialValues?.partyStartTime || '20:00:00',
+    partyEndTime: initialValues?.partyEndTime || '20:00:00',
+    applicationType: ['SAME_DAY', 'ADVANCE'].includes(
+      initialValues?.applicationType,
+    )
+      ? initialValues.applicationType
+      : 'SAME_DAY',
+    minAttendees: Number(initialValues?.minAttendees) || 10,
+    maxAttendees: Number(initialValues?.maxAttendees) || 15,
+    isGuest: initialValues?.isGuest ?? true,
+    chargeType,
+    amount: chargeType === 'PAID' ? amount : 0,
+    femaleAmount: initialValues?.femaleAmount ?? 0,
+    maleNonAmount: initialValues?.maleNonAmount ?? 0,
+    femaleNonAmount: initialValues?.femaleNonAmount ?? 0,
+  };
+};
 
 const PillSubmitButton = ({disabled, onPress}) => (
   <TouchableOpacity
@@ -61,10 +75,13 @@ const Counter = ({value, onMinus, onPlus}) => (
   </View>
 );
 
-/*
 const formatWithComma = (num) => {
-  if (!num && num !== 0) return '';
-  if (num === 0) return '';
+  if (!num && num !== 0) {
+    return '';
+  }
+  if (num === 0) {
+    return '';
+  }
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 };
 
@@ -76,15 +93,27 @@ const PriceInput = ({value, onChange}) => (
       value={formatWithComma(value)}
       onChangeText={text => {
         const cleaned = text.replace(/[^0-9]/g, '');
-        onChange(cleaned === '' ? 0 : Number(cleaned));
+        onChange(cleaned);
       }}
-      placeholder="0"
+      placeholder="참가비를 입력해주세요"
       placeholderTextColor={COLORS.grayscale_300}
     />
     <Text style={[FONTS.fs_14_medium, styles.priceUnit]}>원</Text>
   </View>
 );
-*/
+
+const RadioOption = ({selected, label, onPress, style, textStyle}) => (
+  <TouchableOpacity style={[styles.radioOption, style]} onPress={onPress}>
+    {selected ? (
+      <EnabledRadioButton width={28} height={28} />
+    ) : (
+      <DisabledRadioButton width={28} height={28} />
+    )}
+    <Text style={[FONTS.fs_16_medium, styles.radioOptionText, textStyle]}>
+      {label}
+    </Text>
+  </TouchableOpacity>
+);
 
 const PartyBasicsModal = ({
   visible,
@@ -106,8 +135,11 @@ const PartyBasicsModal = ({
     return !(
       !!form.partyStartTime &&
       !!form.partyEndTime &&
+      ['SAME_DAY', 'ADVANCE'].includes(form.applicationType) &&
       Number(form.minAttendees) > 0 &&
-      Number(form.maxAttendees) >= Number(form.minAttendees)
+      Number(form.maxAttendees) >= Number(form.minAttendees) &&
+      ['FREE', 'PAID'].includes(form.chargeType) &&
+      (form.chargeType === 'FREE' || Number(form.amount) > 0)
     );
   }, [form]);
 
@@ -138,7 +170,9 @@ const PartyBasicsModal = ({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleModalClose}>
-      <View style={styles.overlay}>
+      <KeyboardAvoidingView
+        style={styles.overlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <Pressable style={StyleSheet.absoluteFill} onPress={handleModalClose} />
         <View style={styles.modalContainer}>
           <View style={styles.header}>
@@ -148,7 +182,12 @@ const PartyBasicsModal = ({
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.body}
+            contentContainerStyle={styles.bodyContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            automaticallyAdjustKeyboardInsets>
             <Text style={[FONTS.fs_16_medium, styles.label]}>파티 시간</Text>
             <View style={styles.timeRow}>
               {['partyStartTime', 'partyEndTime'].map(key => (
@@ -164,7 +203,33 @@ const PartyBasicsModal = ({
               ))}
             </View>
 
-            <Text style={[FONTS.fs_16_medium, styles.label, {marginTop: 18}]}>참여 인원</Text>
+            <Text style={[FONTS.fs_16_medium, styles.label, styles.sectionLabel]}>
+              신청 기간
+            </Text>
+            <View style={styles.radioGroup}>
+              <RadioOption
+                style={styles.applicationTypeOption}
+                textStyle={FONTS.fs_14_medium}
+                selected={form.applicationType === 'SAME_DAY'}
+                label="당일 신청만 가능"
+                onPress={() =>
+                  setForm(prev => ({...prev, applicationType: 'SAME_DAY'}))
+                }
+              />
+              <RadioOption
+                style={styles.applicationTypeOption}
+                textStyle={FONTS.fs_14_medium}
+                selected={form.applicationType === 'ADVANCE'}
+                label="사전 신청 가능 (7일 전부터 신청 가능)"
+                onPress={() =>
+                  setForm(prev => ({...prev, applicationType: 'ADVANCE'}))
+                }
+              />
+            </View>
+
+            <Text style={[FONTS.fs_16_medium, styles.label, styles.sectionLabel]}>
+              참여 인원
+            </Text>
             <View style={styles.infoRow}>
               <Text style={[FONTS.fs_14_medium, styles.infoLabel]}>최소</Text>
               <Counter
@@ -182,19 +247,10 @@ const PartyBasicsModal = ({
               />
             </View>
 
-            <Text style={[FONTS.fs_16_medium, styles.label, {marginTop: 18}]}>숙박 여부</Text>
+            <Text style={[FONTS.fs_16_medium, styles.label, styles.sectionLabel]}>
+              참여 대상
+            </Text>
             <View style={styles.segment}>
-              <TouchableOpacity
-                style={[styles.segmentItem, form.isGuest && styles.segmentItemActive]}
-                onPress={() => setForm(prev => ({...prev, isGuest: true}))}>
-                <Text
-                  style={[
-                    FONTS.fs_14_medium,
-                    form.isGuest ? styles.segmentTextActive : styles.segmentText,
-                  ]}>
-                  숙박객만 참여가능
-                </Text>
-              </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.segmentItem, !form.isGuest && styles.segmentItemActive]}
                 onPress={() => setForm(prev => ({...prev, isGuest: false}))}>
@@ -203,23 +259,53 @@ const PartyBasicsModal = ({
                     FONTS.fs_14_medium,
                     !form.isGuest ? styles.segmentTextActive : styles.segmentText,
                   ]}>
-                  비숙박객 참여가능
+                  누구나 참여
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.segmentItem, form.isGuest && styles.segmentItemActive]}
+                onPress={() => setForm(prev => ({...prev, isGuest: true}))}>
+                <Text
+                  style={[
+                    FONTS.fs_14_medium,
+                    form.isGuest ? styles.segmentTextActive : styles.segmentText,
+                  ]}>
+                  숙박객 전용
                 </Text>
               </TouchableOpacity>
             </View>
 
-            {/* 
-            <Text style={[FONTS.fs_16_medium, styles.label, {marginTop: 24}]}>참가비</Text>
-            <View style={styles.infoRow}>
-              <Text style={[FONTS.fs_14_medium, styles.infoLabel]}>1인당 금액</Text>
+            <Text style={[FONTS.fs_16_medium, styles.label, styles.sectionLabel]}>
+              참가비
+            </Text>
+            <View style={styles.chargeTypeRow}>
+              <RadioOption
+                style={styles.chargeTypeOption}
+                selected={form.chargeType === 'FREE'}
+                label="무료"
+                onPress={() =>
+                  setForm(prev => ({...prev, chargeType: 'FREE', amount: 0}))
+                }
+              />
+              <RadioOption
+                style={styles.chargeTypeOption}
+                selected={form.chargeType === 'PAID'}
+                label="유료"
+                onPress={() =>
+                  setForm(prev => ({
+                    ...prev,
+                    chargeType: 'PAID',
+                    amount: Number(prev.amount) > 0 ? prev.amount : '',
+                  }))
+                }
+              />
+            </View>
+            {form.chargeType === 'PAID' ? (
               <PriceInput
                 value={form.amount}
                 onChange={v => setForm(prev => ({...prev, amount: v}))}
               />
-            </View>
-            */}
-
-            <View style={{height: 20}} />
+            ) : null}
           </ScrollView>
 
           <View style={styles.footer}>
@@ -236,7 +322,7 @@ const PartyBasicsModal = ({
             setTimePickerType(null);
           }}
         />
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
@@ -250,7 +336,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContainer: {
-    height: MODAL_HEIGHT,
+    height: '90%',
     backgroundColor: COLORS.grayscale_0,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -272,7 +358,10 @@ const styles = StyleSheet.create({
   },
   body: {
     flex: 1,
+  },
+  bodyContent: {
     paddingTop: 10,
+    paddingBottom: 40,
   },
   label: {
     color: COLORS.grayscale_900,
@@ -370,23 +459,45 @@ const styles = StyleSheet.create({
   priceInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.grayscale_200,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    width: 140,
-    height: 40,
-    backgroundColor: COLORS.grayscale_0,
+    marginTop: 14,
   },
   priceInput: {
     flex: 1,
     ...FONTS.fs_14_medium,
     color: COLORS.grayscale_900,
-    padding: 0,
-    textAlign: 'right',
+    borderWidth: 1,
+    borderColor: COLORS.grayscale_200,
+    borderRadius: 24,
+    height: 48,
+    paddingHorizontal: 16,
   },
   priceUnit: {
     color: COLORS.grayscale_600,
-    marginLeft: 6,
+    marginLeft: 12,
+  },
+  chargeTypeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  radioGroup: {
+    gap: 16,
+  },
+  applicationTypeOption: {
+    width: '100%',
+    justifyContent: 'space-between',
+  },
+  radioOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  chargeTypeOption: {
+    flex: 1,
+  },
+  radioOptionText: {
+    color: COLORS.grayscale_900,
+    marginLeft: 12,
+  },
+  sectionLabel: {
+    marginTop: 28,
   },
 });

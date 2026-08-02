@@ -40,6 +40,37 @@ const mapNoticeDetail = item => ({
     : [],
 });
 
+const NoticeContentImage = ({imageUrl, sortOrder}) => {
+  const [aspectRatio, setAspectRatio] = useState(16 / 9);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    Image.getSize(
+      imageUrl,
+      (width, height) => {
+        if (isMounted && width > 0 && height > 0) {
+          setAspectRatio(width / height);
+        }
+      },
+      () => {},
+    );
+
+    return () => {
+      isMounted = false;
+    };
+  }, [imageUrl]);
+
+  return (
+    <Image
+      source={{uri: imageUrl}}
+      style={[styles.contentImage, {aspectRatio}]}
+      resizeMode="contain"
+      accessibilityLabel={`공지사항 이미지 ${sortOrder}`}
+    />
+  );
+};
+
 const NoticeDetail = () => {
   const route = useRoute();
   const noticeId = route.params?.noticeId;
@@ -144,11 +175,10 @@ const NoticeDetail = () => {
         {notice.blocks.map((block, index) => {
           if (block?.type === 'IMAGE' && block?.imageUrl) {
             return (
-              <Image
+              <NoticeContentImage
                 key={`image-${block.sortOrder ?? index}`}
-                source={{uri: block.imageUrl}}
-                style={styles.contentImage}
-                resizeMode="cover"
+                imageUrl={block.imageUrl}
+                sortOrder={block.sortOrder ?? index + 1}
               />
             );
           }

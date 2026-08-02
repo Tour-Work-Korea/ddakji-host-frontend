@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   ActivityIndicator,
   Linking,
@@ -9,11 +15,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
+import Clipboard from '@react-native-clipboard/clipboard';
 import Toast from 'react-native-toast-message';
 
-import { COLORS } from '@constants/colors';
-import { FONTS } from '@constants/fonts';
+import {COLORS} from '@constants/colors';
+import {FONTS} from '@constants/fonts';
 import hostMeetApi from '@utils/api/hostMeetApi';
 import AlertModal from '@components/modals/AlertModal';
 import styles from './ReservationCheck.styles';
@@ -45,10 +52,9 @@ const getTodayLocalDate = () => {
 const formatHeaderDate = localDate => {
   const [year, month, day] = localDate.split('-').map(Number);
   const date = new Date(year, (month || 1) - 1, day || 1);
-  return `${String(month).padStart(2, '0')}/${String(day).padStart(
-    2,
-    '0',
-  )} (${DAY_LABELS[date.getDay()]})`;
+  return `${String(month).padStart(2, '0')}/${String(day).padStart(2, '0')} (${
+    DAY_LABELS[date.getDay()]
+  })`;
 };
 
 const formatActionTime = (value, suffix) => {
@@ -82,13 +88,18 @@ const formatPhoneNumber = phone => {
   return phone;
 };
 
-const normalizeReservationItem = (item, isCanceled = false) => {
-  let suffix = '신청';
-  if (isCanceled) {
-    suffix = item?.approvalStatus === 'REJECTED' ? '신청반려' : '신청취소';
-  } else {
-    suffix = item?.approvalStatus === 'WAITING_HOST' ? '신청' : '신청확정';
-  }
+const normalizeReservationItem = item => {
+  const approvalStatus = item?.approvalStatus ?? 'NONE';
+  const hasExplicitApprovalPermissions =
+    typeof item?.canApprove === 'boolean' ||
+    typeof item?.canReject === 'boolean';
+  const canApprove = hasExplicitApprovalPermissions
+    ? item?.canApprove === true
+    : approvalStatus === 'WAITING_HOST';
+  const canReject = hasExplicitApprovalPermissions
+    ? item?.canReject === true
+    : approvalStatus === 'WAITING_HOST';
+  const suffix = canApprove || canReject ? '신청' : '신청확정';
 
   return {
     id: item?.reservationId ?? `${item?.phoneNumber}-${item?.actionTime}`,
@@ -99,9 +110,10 @@ const normalizeReservationItem = (item, isCanceled = false) => {
     birthYear: item?.birthYear ?? '',
     time: formatActionTime(item?.actionTime, suffix),
     phone: formatPhoneNumber(item?.phoneNumber),
-    isCanceled: Boolean(item?.isCanceled ?? isCanceled),
     isGuest: item?.isGuest ?? item?.isGuestStatus ?? false,
-    approvalStatus: item?.approvalStatus ?? 'WAITING_HOST',
+    canApprove,
+    canReject,
+    needsHostAction: canApprove || canReject,
   };
 };
 
@@ -115,17 +127,50 @@ const buildRatioText = (maleCount, femaleCount) => {
   return `${male}:${female}`;
 };
 
-const ReservationCheck = ({ guesthouseId }) => {
+const getPartyStatusLabel = partyStatus => {
+  switch (partyStatus) {
+    case 'RECRUIT_BEFORE':
+      return '모집 전';
+    case 'RECRUIT':
+      return '모집 중';
+    case 'RECRUIT_BLOCK':
+    case 'RECRUIT_END':
+      return '신청 마감';
+    case 'CANCELLED':
+    case 'CANCELED':
+      return '취소';
+    case 'PARTY_END':
+      return '종료';
+    case 'CLOSED':
+    case 'FINISHED':
+      return '마감';
+    default:
+      return '';
+  }
+};
+
+const ReservationCheck = ({
+  guesthouseId,
+  applicationType,
+  dailyParties,
+  selectedDailyParty,
+  isDailyPartyLoading,
+  initialReservationId,
+  onReservationApproved,
+}) => {
   const navigation = useNavigation();
   const today = useMemo(() => getTodayLocalDate(), []);
-  const formattedToday = useMemo(() => formatHeaderDate(today), [today]);
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSummaryLoading, setIsSummaryLoading] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [reservations, setReservations] = useState([]);
-  const [canceledReservations, setCanceledReservations] = useState([]);
   const [maleCount, setMaleCount] = useState(0);
   const [femaleCount, setFemaleCount] = useState(0);
+  const reservationScrollRef = useRef(null);
+  const listSectionOffsetRef = useRef(null);
+  const targetCardOffsetRef = useRef(null);
+  const scrolledReservationRef = useRef(null);
+  const scrollTimerRef = useRef(null);
 
   // Rejection modal states
   const [rejectModalVisible, setRejectModalVisible] = useState(false);
@@ -135,55 +180,74 @@ const ReservationCheck = ({ guesthouseId }) => {
   const [rejectReasonOpen, setRejectReasonOpen] = useState(false);
   const [isSubmittingReject, setIsSubmittingReject] = useState(false);
 
-  const fetchReservationSummary = useCallback(async (isMounted = true) => {
-    try {
-      setIsLoading(true);
-      const response = await hostMeetApi.getPartyReservationSummary(
-        guesthouseId,
-        today,
-      );
-      const data = response?.data ?? {};
+  const selectedDate = selectedDailyParty?.partyDate ?? today;
+  const formattedSelectedDate = useMemo(
+    () => formatHeaderDate(selectedDate),
+    [selectedDate],
+  );
+  const isAdvanceApplication = applicationType === 'ADVANCE';
+  const selectedPartyStatusLabel = getPartyStatusLabel(
+    selectedDailyParty?.partyStatus,
+  );
 
-      if (!isMounted) return;
+  const resetReservationSummary = useCallback(() => {
+    setReservations([]);
+    setMaleCount(0);
+    setFemaleCount(0);
+  }, []);
 
-      setReservations(
-        Array.isArray(data?.reservations)
-          ? data.reservations.map(item => normalizeReservationItem(item, false))
-          : [],
-      );
-      setCanceledReservations(
-        Array.isArray(data?.canceledReservations)
-          ? data.canceledReservations.map(item => normalizeReservationItem(item, true))
-          : [],
-      );
-      setMaleCount(Number(data?.maleCount) || 0);
-      setFemaleCount(Number(data?.femaleCount) || 0);
-    } catch (error) {
-      if (!isMounted) return;
-
-      setReservations([]);
-      setCanceledReservations([]);
-      setMaleCount(0);
-      setFemaleCount(0);
-      Toast.show({
-        type: 'error',
-        text1: error?.response?.data?.message || '신청 현황을 불러오지 못했어요.',
-        position: 'top',
-        topOffset: MENU_TOAST_TOP_OFFSET,
-      });
-    } finally {
-      if (isMounted) {
-        setIsLoading(false);
+  const fetchReservationSummary = useCallback(
+    async (isMounted = true) => {
+      if (!guesthouseId || !selectedDailyParty?.partyId) {
+        resetReservationSummary();
+        return;
       }
-    }
-  }, [guesthouseId, today]);
+
+      try {
+        setIsSummaryLoading(true);
+        const response = await hostMeetApi.getPartyReservationSummary(
+          guesthouseId,
+          selectedDailyParty.partyDate,
+          selectedDailyParty.partyId,
+        );
+        const data = response?.data ?? {};
+
+        if (!isMounted) {
+          return;
+        }
+
+        setReservations(
+          Array.isArray(data?.reservations)
+            ? data.reservations.map(normalizeReservationItem)
+            : [],
+        );
+        setMaleCount(Number(data?.maleCount) || 0);
+        setFemaleCount(Number(data?.femaleCount) || 0);
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        resetReservationSummary();
+        Toast.show({
+          type: 'error',
+          text1:
+            error?.response?.data?.message || '신청 현황을 불러오지 못했어요.',
+          position: 'top',
+          topOffset: MENU_TOAST_TOP_OFFSET,
+        });
+      } finally {
+        if (isMounted) {
+          setIsSummaryLoading(false);
+        }
+      }
+    },
+    [guesthouseId, resetReservationSummary, selectedDailyParty],
+  );
 
   useEffect(() => {
-    if (!guesthouseId) {
-      setReservations([]);
-      setCanceledReservations([]);
-      setMaleCount(0);
-      setFemaleCount(0);
+    if (!guesthouseId || !selectedDailyParty?.partyId) {
+      resetReservationSummary();
       return;
     }
 
@@ -193,31 +257,86 @@ const ReservationCheck = ({ guesthouseId }) => {
     return () => {
       isMounted = false;
     };
-  }, [guesthouseId, today, fetchReservationSummary]);
+  }, [
+    fetchReservationSummary,
+    guesthouseId,
+    resetReservationSummary,
+    selectedDailyParty,
+  ]);
 
   const summaryCards = useMemo(
     () => [
-      { label: '남자', value: `${maleCount}명` },
-      { label: '여자', value: `${femaleCount}명` },
-      { label: '성비', value: buildRatioText(maleCount, femaleCount) },
+      {label: '남자', value: `${maleCount}명`},
+      {label: '여자', value: `${femaleCount}명`},
+      {label: '성비', value: buildRatioText(maleCount, femaleCount)},
     ],
     [femaleCount, maleCount],
   );
 
   const filteredReservations = useMemo(() => {
     const keyword = searchKeyword.trim();
-    if (!keyword) return reservations;
+    const filtered = keyword
+      ? reservations.filter(item => item.name.includes(keyword))
+      : reservations;
 
-    return reservations.filter(item => item.name.includes(keyword));
-  }, [reservations, searchKeyword]);
+    if (initialReservationId == null) {
+      return filtered;
+    }
+
+    return [...filtered].sort((a, b) => {
+      const aIsTarget =
+        String(a.reservationId) === String(initialReservationId);
+      const bIsTarget =
+        String(b.reservationId) === String(initialReservationId);
+      return Number(bIsTarget) - Number(aIsTarget);
+    });
+  }, [initialReservationId, reservations, searchKeyword]);
 
   const waitingList = useMemo(() => {
-    return filteredReservations.filter(item => item.approvalStatus === 'WAITING_HOST');
+    return filteredReservations.filter(item => item.needsHostAction);
   }, [filteredReservations]);
 
   const confirmedList = useMemo(() => {
-    return filteredReservations.filter(item => item.approvalStatus !== 'WAITING_HOST');
+    return filteredReservations.filter(item => !item.needsHostAction);
   }, [filteredReservations]);
+
+  useEffect(() => {
+    listSectionOffsetRef.current = null;
+    targetCardOffsetRef.current = null;
+    scrolledReservationRef.current = null;
+
+    return () => {
+      if (scrollTimerRef.current) {
+        clearTimeout(scrollTimerRef.current);
+      }
+    };
+  }, [initialReservationId, selectedDailyParty?.partyId]);
+
+  const scrollToNotificationTarget = () => {
+    if (
+      initialReservationId == null ||
+      listSectionOffsetRef.current == null ||
+      targetCardOffsetRef.current == null ||
+      String(scrolledReservationRef.current) === String(initialReservationId)
+    ) {
+      return;
+    }
+
+    if (scrollTimerRef.current) {
+      clearTimeout(scrollTimerRef.current);
+    }
+
+    scrollTimerRef.current = setTimeout(() => {
+      reservationScrollRef.current?.scrollTo({
+        y: Math.max(
+          0,
+          listSectionOffsetRef.current + targetCardOffsetRef.current - 12,
+        ),
+        animated: true,
+      });
+      scrolledReservationRef.current = initialReservationId;
+    }, 100);
+  };
 
   const handleApprove = async (partyId, reservationId) => {
     if (!partyId || !reservationId) {
@@ -231,7 +350,13 @@ const ReservationCheck = ({ guesthouseId }) => {
     }
 
     try {
-      await hostMeetApi.approvePartyReservation(partyId, reservationId, true, '');
+      await hostMeetApi.approvePartyReservation(
+        partyId,
+        reservationId,
+        true,
+        '',
+      );
+      onReservationApproved?.(partyId);
       Toast.show({
         type: 'success',
         text1: '신청이 승인되었습니다.',
@@ -242,7 +367,8 @@ const ReservationCheck = ({ guesthouseId }) => {
     } catch (error) {
       Toast.show({
         type: 'error',
-        text1: error?.response?.data?.message || '신청 승인 중 오류가 발생했습니다.',
+        text1:
+          error?.response?.data?.message || '신청 승인 중 오류가 발생했습니다.',
         position: 'top',
         topOffset: MENU_TOAST_TOP_OFFSET,
       });
@@ -339,11 +465,41 @@ const ReservationCheck = ({ guesthouseId }) => {
     }
   };
 
+  const handleCopyPhone = phoneNumber => {
+    if (!phoneNumber) {
+      return;
+    }
+
+    Clipboard.setString(String(phoneNumber));
+    Toast.show({
+      type: 'success',
+      text1: '연락처가 복사되었습니다.',
+      position: 'top',
+      topOffset: MENU_TOAST_TOP_OFFSET,
+    });
+  };
+
   const renderReservationCard = item => {
-    const isWaiting = item.approvalStatus === 'WAITING_HOST';
+    const isWaiting = item.needsHostAction;
+    const isNotificationTarget =
+      initialReservationId != null &&
+      String(item.reservationId) === String(initialReservationId);
 
     return (
-      <View key={item.id} style={styles.reservationCard}>
+      <View
+        key={item.id}
+        onLayout={
+          isNotificationTarget
+            ? event => {
+                targetCardOffsetRef.current = event.nativeEvent.layout.y;
+                scrollToNotificationTarget();
+              }
+            : undefined
+        }
+        style={[
+          styles.reservationCard,
+          isNotificationTarget && styles.reservationCardHighlighted,
+        ]}>
         <View style={styles.reservationInfo}>
           <View style={styles.nameRow}>
             <Text style={[FONTS.fs_16_semibold, styles.nameText]}>
@@ -376,30 +532,41 @@ const ReservationCheck = ({ guesthouseId }) => {
               {item.time}
             </Text>
             <Text style={[FONTS.fs_12_medium, styles.metaDivider]}>|</Text>
-            <Text style={[FONTS.fs_12_medium, styles.metaText]}>
-              {item.phone}
-            </Text>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              style={styles.phoneCopyButton}
+              onPress={() => handleCopyPhone(item.phone)}
+              accessibilityRole="button"
+              accessibilityLabel={`연락처 ${item.phone}, 복사`}>
+              <Text style={[FONTS.fs_12_medium, styles.metaText]}>
+                {item.phone}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
 
         {isWaiting ? (
           <View style={styles.actionGroup}>
-            <TouchableOpacity
-              activeOpacity={0.8}
-              style={styles.approveButton}
-              onPress={() => handleApprove(item.partyId, item.reservationId)}>
-              <Text style={[FONTS.fs_12_medium, styles.approveButtonText]}>
-                신청 승인
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              activeOpacity={0.8}
-              style={styles.rejectButton}
-              onPress={() => handleOpenRejectModal(item)}>
-              <Text style={[FONTS.fs_12_medium, styles.rejectButtonText]}>
-                반려
-              </Text>
-            </TouchableOpacity>
+            {item.canApprove ? (
+              <TouchableOpacity
+                activeOpacity={0.8}
+                style={styles.approveButton}
+                onPress={() => handleApprove(item.partyId, item.reservationId)}>
+                <Text style={[FONTS.fs_12_medium, styles.approveButtonText]}>
+                  신청 승인
+                </Text>
+              </TouchableOpacity>
+            ) : null}
+            {item.canReject ? (
+              <TouchableOpacity
+                activeOpacity={0.8}
+                style={styles.rejectButton}
+                onPress={() => handleOpenRejectModal(item)}>
+                <Text style={[FONTS.fs_12_medium, styles.rejectButtonText]}>
+                  반려
+                </Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
         ) : (
           <TouchableOpacity
@@ -416,117 +583,164 @@ const ReservationCheck = ({ guesthouseId }) => {
   return (
     <View style={styles.container}>
       <ScrollView
+        ref={reservationScrollRef}
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}>
         <View style={styles.headerRow}>
           <Text style={[FONTS.fs_16_semibold, styles.headerTitle]}>
-            오늘의 파티 신청 현황
+            {isAdvanceApplication ? '선택한 날짜 신청 현황' : '오늘의 신청 현황'}
           </Text>
-          <Text style={[FONTS.fs_14_medium, styles.headerDate]}>
-            {formattedToday}
-          </Text>
+          {selectedDailyParty ? (
+            <Text style={[FONTS.fs_14_medium, styles.headerDate]}>
+              {formattedSelectedDate}
+            </Text>
+          ) : null}
         </View>
 
-        <View style={styles.summaryCard}>
-          {summaryCards.map((item, index) => (
-            <View
-              key={item.label}
-              style={[
-                styles.summaryItem,
-                index !== summaryCards.length - 1 && styles.summaryItemBorder,
-              ]}>
-              <Text style={[FONTS.fs_12_medium, styles.summaryLabel]}>
-                {item.label}
-              </Text>
-              <Text
-                style={[
-                  FONTS.fs_18_semibold,
-                  item.label === '남자'
-                    ? styles.summaryMaleValue
-                    : item.label === '여자'
-                      ? styles.summaryFemaleValue
-                      : styles.summaryRatio,
-                ]}>
-                {item.value}
-              </Text>
-            </View>
-          ))}
-        </View>
-
-        <View style={styles.searchBox}>
-          <SearchIcon width={20} height={20} />
-          <TextInput
-            placeholder="신청자 성함 검색"
-            placeholderTextColor={COLORS.grayscale_400}
-            style={[FONTS.fs_14_medium, styles.searchInput]}
-            value={searchKeyword}
-            onChangeText={setSearchKeyword}
-          />
-        </View>
-
-        <View style={styles.listHeader}>
-          <Text style={[FONTS.fs_16_medium, styles.listTitle]}>신청 명단</Text>
-          <Text style={[FONTS.fs_14_medium, styles.listCount]}>
-            {filteredReservations.length}
-          </Text>
-        </View>
-
-        <TouchableOpacity
-          activeOpacity={0.8}
-          style={styles.sortButton}
-          onPress={() =>
-            navigation.navigate('ReservationCancelList', {
-              guesthouseId,
-              selectedDate: today,
-            })
-          }>
-          <Text style={[FONTS.fs_12_medium, styles.sortButtonText]}>
-            신청 취소 명단 보기 &gt;
-          </Text>
-        </TouchableOpacity>
-
-        {isLoading ? (
-          <View style={styles.feedbackContainer}>
+        {isDailyPartyLoading ? (
+          <View style={styles.dailyPartyFeedback}>
             <ActivityIndicator color={COLORS.primary_orange} />
           </View>
-        ) : filteredReservations.length === 0 ? (
-          <View style={styles.feedbackContainer}>
-            <Text style={[FONTS.fs_14_medium, styles.feedbackText]}>
-              신청 내역이 없어요.
+        ) : dailyParties.length === 0 ? (
+          <View style={styles.emptyPartyCard}>
+            <Text style={[FONTS.fs_14_medium, styles.emptyPartyTitle]}>
+              {isAdvanceApplication
+                ? '현재 신청 관리할 사전 파티가 없어요.'
+                : applicationType === 'SAME_DAY'
+                ? '오늘 진행되는 파티가 없어요.'
+                : '현재 신청 관리할 파티가 없어요.'}
+            </Text>
+            <Text style={[FONTS.fs_12_medium, styles.emptyPartyDescription]}>
+              {isAdvanceApplication
+                ? '파티가 생성되면 날짜별 신청 현황을 확인할 수 있어요.'
+                : '오늘 파티가 생성되면 신청 현황을 확인할 수 있어요.'}
             </Text>
           </View>
         ) : (
-          <View style={styles.listSection}>
-            {waitingList.length > 0 && (
-              <>
-                <Text style={[FONTS.fs_14_semibold, styles.groupTitle]}>승인 대기</Text>
-                {waitingList.map(item => renderReservationCard(item))}
-              </>
+          <>
+            {selectedPartyStatusLabel ? (
+              <View style={styles.selectedDateRow}>
+                <Text style={[FONTS.fs_12_medium, styles.selectedPartyStatus]}>
+                  {selectedPartyStatusLabel}
+                </Text>
+              </View>
+            ) : null}
+
+            <View style={styles.summaryCard}>
+              {summaryCards.map((item, index) => (
+                <View
+                  key={item.label}
+                  style={[
+                    styles.summaryItem,
+                    index !== summaryCards.length - 1 &&
+                      styles.summaryItemBorder,
+                  ]}>
+                  <Text style={[FONTS.fs_12_medium, styles.summaryLabel]}>
+                    {item.label}
+                  </Text>
+                  <Text
+                    style={[
+                      FONTS.fs_18_semibold,
+                      item.label === '남자'
+                        ? styles.summaryMaleValue
+                        : item.label === '여자'
+                        ? styles.summaryFemaleValue
+                        : styles.summaryRatio,
+                    ]}>
+                    {item.value}
+                  </Text>
+                </View>
+              ))}
+            </View>
+
+            <View style={styles.searchBox}>
+              <SearchIcon width={20} height={20} />
+              <TextInput
+                placeholder="신청자 성함 검색"
+                placeholderTextColor={COLORS.grayscale_400}
+                style={[FONTS.fs_14_medium, styles.searchInput]}
+                value={searchKeyword}
+                onChangeText={setSearchKeyword}
+              />
+            </View>
+
+            <View style={styles.listHeader}>
+              <Text style={[FONTS.fs_16_medium, styles.listTitle]}>
+                신청 명단
+              </Text>
+              <Text style={[FONTS.fs_14_medium, styles.listCount]}>
+                {filteredReservations.length}
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              activeOpacity={0.8}
+              style={styles.sortButton}
+              onPress={() =>
+                navigation.navigate('ReservationCancelList', {
+                  guesthouseId,
+                  selectedDate,
+                  partyId: selectedDailyParty?.partyId,
+                })
+              }>
+              <Text style={[FONTS.fs_12_medium, styles.sortButtonText]}>
+                신청 취소 명단 보기 &gt;
+              </Text>
+            </TouchableOpacity>
+
+            {isSummaryLoading ? (
+              <View style={styles.feedbackContainer}>
+                <ActivityIndicator color={COLORS.primary_orange} />
+              </View>
+            ) : filteredReservations.length === 0 ? (
+              <View style={styles.feedbackContainer}>
+                <Text style={[FONTS.fs_14_medium, styles.feedbackText]}>
+                  신청 내역이 없어요.
+                </Text>
+              </View>
+            ) : (
+              <View
+                style={styles.listSection}
+                onLayout={event => {
+                  listSectionOffsetRef.current = event.nativeEvent.layout.y;
+                  scrollToNotificationTarget();
+                }}>
+                {waitingList.length > 0 && (
+                  <>
+                    <Text style={[FONTS.fs_14_semibold, styles.groupTitle]}>
+                      승인 대기
+                    </Text>
+                    {waitingList.map(item => renderReservationCard(item))}
+                  </>
+                )}
+
+                {confirmedList.length > 0 && (
+                  <>
+                    <Text style={[FONTS.fs_14_semibold, styles.groupTitle]}>
+                      확정 완료
+                    </Text>
+                    {confirmedList.map(item => renderReservationCard(item))}
+                  </>
+                )}
+              </View>
             )}
 
-            {confirmedList.length > 0 && (
-              <>
-                <Text style={[FONTS.fs_14_semibold, styles.groupTitle]}>확정 완료</Text>
-                {confirmedList.map(item => renderReservationCard(item))}
-              </>
-            )}
-          </View>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              style={styles.historyButton}
+              onPress={() =>
+                navigation.navigate('PastReservationList', {
+                  guesthouseId,
+                })
+              }>
+              <ClockIcon width={16} height={16} />
+              <Text style={[FONTS.fs_14_semibold, styles.historyButtonText]}>
+                지난 신청 내역 확인하기
+              </Text>
+            </TouchableOpacity>
+          </>
         )}
-
-        <TouchableOpacity
-          activeOpacity={0.8}
-          style={styles.historyButton}
-          onPress={() =>
-            navigation.navigate('PastReservationList', {
-              guesthouseId,
-            })
-          }>
-          <ClockIcon width={16} height={16} />
-          <Text style={[FONTS.fs_14_semibold, styles.historyButtonText]}>
-            지난 신청 내역 확인하기
-          </Text>
-        </TouchableOpacity>
       </ScrollView>
 
       <AlertModal

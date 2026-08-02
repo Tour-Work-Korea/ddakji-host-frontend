@@ -3,11 +3,19 @@ import { StyleSheet } from 'react-native';
 import { COLORS } from '@constants/colors';
 
 export default StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   container: {
     flex: 1,
     backgroundColor: COLORS.grayscale_0,
+  },
+  scrollContent: {
     paddingHorizontal: 12,
     paddingTop: 14,
+    paddingBottom: 40,
   },
   section: {
     marginTop: 20,
@@ -52,11 +60,17 @@ export default StyleSheet.create({
   cancelButtonText: {
     color: COLORS.grayscale_0,
   },
+  cancelButtonDisabled: {
+    backgroundColor: COLORS.grayscale_200,
+  },
+  cancelButtonTextDisabled: {
+    color: COLORS.grayscale_500,
+  },
 
-  exposureRow: {
+  applicationStatusRow: {
     gap: 4,
   },
-  exposureTopRow: {
+  applicationStatusTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -67,32 +81,32 @@ export default StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
-  exposureRightGroup: {
+  applicationStatusRightGroup: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
     flexShrink: 0,
     marginLeft: 8,
   },
-  exposureBadge: {
+  applicationStatusBadge: {
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 4,
     borderWidth: 1,
   },
-  exposureBadgeVisible: {
+  applicationStatusBadgeOpen: {
     borderColor: COLORS.primary_blue,
   },
-  exposureBadgeHidden: {
+  applicationStatusBadgeClosed: {
     borderColor: COLORS.grayscale_300,
   },
-  exposureBadgeTextVisible: {
+  applicationStatusBadgeTextOpen: {
     color: COLORS.primary_blue,
   },
-  exposureBadgeTextHidden: {
+  applicationStatusBadgeTextClosed: {
     color: COLORS.grayscale_400,
   },
-  exposureDescription: {
+  applicationStatusDescription: {
     color: COLORS.grayscale_500,
   },
 
@@ -141,36 +155,22 @@ export default StyleSheet.create({
   applyButtonText: {
     color: COLORS.grayscale_0,
   },
-  divider: {
-    height: 1,
-    backgroundColor: COLORS.grayscale_200,
-    marginVertical: 16,
-  },
-  applyOpenRow: {
-    gap: 4,
-  },
-  applyOpenTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  cancelModalContent: {
     alignItems: 'center',
-    gap: 8,
+    marginTop: 4,
+    marginBottom: 4,
+    gap: 6,
   },
-  applyOpenTitle: {
+  cancelModalApplicant: {
+    color: COLORS.grayscale_900,
+    textAlign: 'center',
+  },
+  cancelModalApplicantCount: {
+    color: COLORS.semantic_red,
+  },
+  cancelModalDescription: {
     color: COLORS.grayscale_700,
-    flex: 1,
-    minWidth: 0,
-  },
-  applyOpenRightGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-    flexShrink: 0,
-    marginLeft: 8,
-  },
-  applyOpenDescription: {
-    color: COLORS.primary_blue,
-  },
-  applyOpenDescriptionDisabled: {
-    color: COLORS.grayscale_400,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });

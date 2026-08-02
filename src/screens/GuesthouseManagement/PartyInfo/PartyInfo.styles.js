@@ -36,33 +36,38 @@ export default StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 16,
-    paddingTop: 28,
-    paddingBottom: 24,
+    paddingTop: 20,
+    paddingBottom: 88,
   },
   cardContainer: {
-    marginBottom: 24,
+    marginBottom: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: COLORS.grayscale_200,
+    borderRadius: 16,
+    backgroundColor: COLORS.grayscale_0,
   },
   card: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'stretch',
   },
   thumbnail: {
-    width: 112,
-    height: 112,
-    borderRadius: 4,
-    marginRight: 16,
+    width: 104,
+    height: 104,
+    borderRadius: 10,
+    marginRight: 14,
     backgroundColor: COLORS.grayscale_100,
   },
   cardContent: {
     flex: 1,
-    paddingTop: 4,
+    minWidth: 0,
   },
   cardTop: {
     flex: 1,
   },
   partyTitle: {
     color: COLORS.grayscale_900,
-    lineHeight: 24,
+    lineHeight: 22,
     marginBottom: 4,
   },
   attendanceRow: {
@@ -73,23 +78,63 @@ export default StyleSheet.create({
     color: COLORS.grayscale_500,
     marginLeft: 6,
   },
+  applicationSetting: {
+    minHeight: 62,
+    marginTop: 10,
+    paddingLeft: 16,
+    paddingRight: 8,
+    paddingVertical: 9,
+    borderRadius: 10,
+    backgroundColor: COLORS.grayscale_100,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  applicationSettingTextWrap: {
+    flex: 1,
+    minWidth: 0,
+    gap: 3,
+  },
+  applicationSettingLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  applicationSettingTitle: {
+    color: COLORS.grayscale_800,
+  },
+  applicationStatusOpen: {
+    color: COLORS.primary_orange,
+  },
+  applicationStatusClosed: {
+    color: COLORS.grayscale_500,
+  },
+  applicationSettingDescription: {
+    color: COLORS.grayscale_500,
+    lineHeight: 16,
+  },
   actionButtonRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 24,
-    justifyContent: 'flex-end',
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: COLORS.grayscale_200,
+    borderRadius: 10,
+    backgroundColor: COLORS.grayscale_0,
+    overflow: 'hidden',
   },
   actionButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.grayscale_100,
-    borderRadius: 100,
-    paddingVertical: 8,
+    paddingVertical: 9,
     paddingHorizontal: 12,
   },
-  actionButtonSpacer: {
-    width: 12,
+  actionDivider: {
+    width: 1,
+    height: 20,
+    backgroundColor: COLORS.grayscale_200,
   },
   actionButtonText: {
     color: COLORS.grayscale_800,
@@ -97,5 +142,22 @@ export default StyleSheet.create({
   },
   actionIcon: {
     marginLeft: 8,
+  },
+  addButton: {
+    alignItems: 'center',
+    backgroundColor: COLORS.primary_blue,
+    flexDirection: 'row',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 100,
+  },
+  addButtonLocation: {
+    position: 'absolute',
+    right: 20,
+    bottom: 20,
+  },
+  addButtonText: {
+    color: COLORS.grayscale_0,
+    marginRight: 10,
   },
 });
