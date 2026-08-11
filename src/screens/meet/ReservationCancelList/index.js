@@ -7,19 +7,15 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Calendar } from 'react-native-calendars';
 import { useRoute } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 
 import Header from '@components/Header';
-import { CALENDAR_COMMON_PROPS, CALENDAR_THEME } from '@constants/calendarConfig';
 import { COLORS } from '@constants/colors';
 import { FONTS } from '@constants/fonts';
 import hostMeetApi from '@utils/api/hostMeetApi';
 import styles from './ReservationCancelList.styles';
 
-import ChevronLeft from '@assets/images/chevron_left_black.svg';
-import ChevronRight from '@assets/images/chevron_right_black.svg';
 import PhoneIcon from '@assets/images/phone_black.svg';
 
 const getTodayLocalDate = () => {
@@ -33,15 +29,6 @@ const getTodayLocalDate = () => {
 const formatDateToMonthDay = localDate => {
   const [, month, day] = localDate.split('-');
   return `${month}/${day}`;
-};
-
-const shiftDate = (baseDate, diffDays) => {
-  const nextDate = new Date(baseDate);
-  nextDate.setDate(nextDate.getDate() + diffDays);
-  const year = nextDate.getFullYear();
-  const month = String(nextDate.getMonth() + 1).padStart(2, '0');
-  const day = String(nextDate.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
 };
 
 const formatActionTime = (value, approvalStatus) => {
@@ -97,21 +84,12 @@ const ReservationCancelList = () => {
   const initialSelectedDate = route?.params?.selectedDate ?? getTodayLocalDate();
   const guesthouseId = route?.params?.guesthouseId ?? null;
   const partyId = route?.params?.partyId ?? null;
-  const [selectedDate, setSelectedDate] = useState(initialSelectedDate);
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const partyTitle = route?.params?.partyTitle ?? '파티 이름 없음';
   const [isLoading, setIsLoading] = useState(false);
   const [reservations, setReservations] = useState([]);
-  const markedDates = {
-    [selectedDate]: {
-      selected: true,
-      selectedColor: COLORS.primary_orange,
-    },
-  };
-  const scopedPartyId =
-    selectedDate === initialSelectedDate ? partyId : null;
 
   useEffect(() => {
-    if (!guesthouseId) {
+    if (!guesthouseId || !partyId) {
       setReservations([]);
       return;
     }
@@ -123,8 +101,8 @@ const ReservationCancelList = () => {
         setIsLoading(true);
         const response = await hostMeetApi.getPartyReservationSummary(
           guesthouseId,
-          selectedDate,
-          scopedPartyId,
+          initialSelectedDate,
+          partyId,
         );
         const data = response?.data ?? {};
 
@@ -157,7 +135,7 @@ const ReservationCancelList = () => {
     return () => {
       isMounted = false;
     };
-  }, [guesthouseId, scopedPartyId, selectedDate]);
+  }, [guesthouseId, initialSelectedDate, partyId]);
 
   const handleCall = async phoneNumber => {
     const digits = String(phoneNumber || '').replace(/[^\d]/g, '');
@@ -201,43 +179,15 @@ const ReservationCancelList = () => {
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}>
-        <View style={styles.dateSelectContainer}>
-          <View style={styles.dateSelectBox}>
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => setSelectedDate(prev => shiftDate(prev, -1))}>
-              <ChevronLeft width={24} height={24} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => setIsCalendarOpen(prev => !prev)}>
-              <Text style={[FONTS.fs_16_medium, styles.dateText]}>
-                {formatDateToMonthDay(selectedDate)}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => setSelectedDate(prev => shiftDate(prev, 1))}>
-              <ChevronRight width={24} height={24} />
-            </TouchableOpacity>
-          </View>
-
-          {isCalendarOpen ? (
-            <View style={styles.calendarContainer}>
-              <Calendar
-                current={selectedDate}
-                {...CALENDAR_COMMON_PROPS}
-                markedDates={markedDates}
-                onDayPress={day => {
-                  setSelectedDate(day.dateString);
-                  setIsCalendarOpen(false);
-                }}
-                theme={CALENDAR_THEME}
-              />
-            </View>
-          ) : null}
+        <View style={styles.partyContextCard}>
+          <Text
+            numberOfLines={1}
+            style={[FONTS.fs_16_semibold, styles.partyContextTitle]}>
+            {partyTitle}
+          </Text>
+          <Text style={[FONTS.fs_14_medium, styles.partyContextDate]}>
+            {formatDateToMonthDay(initialSelectedDate)}
+          </Text>
         </View>
 
         <View style={styles.listHeader}>
@@ -252,6 +202,12 @@ const ReservationCancelList = () => {
         {isLoading ? (
           <View style={styles.feedbackContainer}>
             <ActivityIndicator color={COLORS.primary_orange} />
+          </View>
+        ) : !partyId ? (
+          <View style={styles.feedbackContainer}>
+            <Text style={[FONTS.fs_14_medium, styles.feedbackText]}>
+              파티 정보를 확인할 수 없어요.
+            </Text>
           </View>
         ) : reservations.length === 0 ? (
           <View style={styles.feedbackContainer}>

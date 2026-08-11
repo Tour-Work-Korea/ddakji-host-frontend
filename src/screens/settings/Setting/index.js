@@ -33,7 +33,11 @@ const Settings = () => {
   };
 
   const handleLogout = async () => {
-    await tryLogout();
+    const loggedOut = await tryLogout();
+    if (!loggedOut) {
+      return;
+    }
+
     navigation.reset({
       index: 0,
       routes: [{ name: 'Login' }],
