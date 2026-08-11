@@ -19,19 +19,8 @@ const clearStoredAuth = async () => {
 };
 
 export const forceLogoutForExpiredSession = async ({silent = false} = {}) => {
-  if (!sessionExpiredHandlingPromise) {
-    sessionExpiredHandlingPromise = (async () => {
-      await clearStoredAuth();
-
-      if (!silent) {
-        reset([{name: 'Login', params: {reason: 'refresh_failed'}}]);
-      }
-    })().finally(() => {
-      sessionExpiredHandlingPromise = null;
-    });
-  }
-
-  return sessionExpiredHandlingPromise;
+  log.warn('🚫 forceLogoutForExpiredSession: blocked for host app; keep session active');
+  return false;
 };
 
 export const tryAutoLogin = async () => {
@@ -168,14 +157,17 @@ export const tryLogout = async () => {
     await unmapDeviceToken(accessToken);
     const storedRefresh = await EncryptedStorage.getItem(REFRESH_KEY);
     await authApi.logout(storedRefresh);
+
     await EncryptedStorage.removeItem(REFRESH_KEY);
     const check = await EncryptedStorage.getItem(REFRESH_KEY);
     log.info('🧹 removed refresh?', !check);
   } catch (err) {
-    log.warn('EncryptedStorage 삭제 실패:', err?.message);
-  } finally {
-    useUserStore.getState().clearUser();
+    log.warn('🚫 backend logout failed; keep local session intact:', err?.message);
+    return false;
   }
+
+  useUserStore.getState().clearUser();
+  return true;
 };
 
 export const updateProfile = async role => {

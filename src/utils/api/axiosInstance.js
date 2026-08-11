@@ -144,9 +144,10 @@ api.interceptors.response.use(
 
       isRefreshing = true;
       try {
-        const ok = await tryRefresh(); // ✅ 여기서 호출
+        const ok = await tryRefresh();
         if (!ok) {
-          resolveQueue(new Error('refresh failed'), null);
+          log.warn(`🛑 [${id}] refresh failed; keep current session active for host app`);
+          resolveQueue(null, useUserStore.getState().accessToken ?? null);
           return Promise.reject(err);
         }
 
