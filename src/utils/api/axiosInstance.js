@@ -83,8 +83,8 @@ api.interceptors.response.use(
     const status = err.response?.status;
     const errorData = err.response?.data;
 
-    const isAuthError = status === 401 || status === 403;
-    const isExpectedError = isAuthError || status === 404 || status === 400;
+    const shouldRefresh = status === 401;
+    const isExpectedError = shouldRefresh || status === 403 || status === 404 || status === 400;
 
     if (isExpectedError) {
       log.warn(
@@ -128,7 +128,7 @@ api.interceptors.response.use(
       return Promise.reject(err);
     }
 
-    if (isAuthError && !original._retry) {
+    if (shouldRefresh && !original._retry) {
       log.info(`🔁 [${id}] accessToken expired → refresh flow`);
       original._retry = true;
 
@@ -137,6 +137,7 @@ api.interceptors.response.use(
         return new Promise((resolve, reject) => {
           queue.push({resolve, reject});
         }).then(token => {
+          original.headers = original.headers || {};
           original.headers.Authorization = `Bearer ${token}`;
           return api(original);
         });
@@ -146,13 +147,14 @@ api.interceptors.response.use(
       try {
         const ok = await tryRefresh();
         if (!ok) {
-          log.warn(`🛑 [${id}] refresh failed; keep current session active for host app`);
-          resolveQueue(null, useUserStore.getState().accessToken ?? null);
+          log.warn(`🛑 [${id}] refresh failed; clear auth queue`);
+          resolveQueue(err, null);
           return Promise.reject(err);
         }
 
         const newAccess = useUserStore.getState().accessToken;
         resolveQueue(null, newAccess);
+        original.headers = original.headers || {};
         original.headers.Authorization = `Bearer ${newAccess}`;
         return api(original);
       } catch (e) {

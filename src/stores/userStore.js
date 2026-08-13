@@ -63,6 +63,19 @@ const useUserStore = create(
   ),
 );
 
+export const waitForUserStoreHydration = () => {
+  if (useUserStore.persist.hasHydrated()) {
+    return Promise.resolve();
+  }
+
+  return new Promise(resolve => {
+    const unsubscribe = useUserStore.persist.onFinishHydration(() => {
+      unsubscribe();
+      resolve();
+    });
+  });
+};
+
 if (__DEV__) {
   // accessToken 변경 로깅
   let prevToken = null;
