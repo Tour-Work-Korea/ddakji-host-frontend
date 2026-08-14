@@ -151,6 +151,8 @@ const getPartyStatusLabel = partyStatus => {
 
 const ReservationCheck = ({
   guesthouseId,
+  templateId,
+  partyTitle,
   applicationType,
   dailyParties,
   selectedDailyParty,
@@ -682,6 +684,7 @@ const ReservationCheck = ({
                   guesthouseId,
                   selectedDate,
                   partyId: selectedDailyParty?.partyId,
+                  partyTitle,
                 })
               }>
               <Text style={[FONTS.fs_12_medium, styles.sortButtonText]}>
@@ -732,6 +735,8 @@ const ReservationCheck = ({
               onPress={() =>
                 navigation.navigate('PastReservationList', {
                   guesthouseId,
+                  templateId,
+                  partyTitle,
                 })
               }>
               <ClockIcon width={16} height={16} />

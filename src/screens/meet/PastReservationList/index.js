@@ -106,12 +106,21 @@ const buildRatioText = (maleCount, femaleCount) => {
   return `${male}:${female}`;
 };
 
+const getPartyId = party => party?.partyId ?? party?.id ?? null;
+const getTemplateId = party =>
+  party?.templateId ?? party?.partyTemplateId ?? party?.template?.templateId;
+const getGuesthouseId = party =>
+  party?.guesthouseId ?? party?.guesthouse?.guesthouseId;
+
 const PastReservationList = () => {
   const route = useRoute();
   const today = useMemo(() => getTodayLocalDate(), []);
+  const yesterday = useMemo(() => shiftDate(today, -1), [today]);
   const guesthouseId = route?.params?.guesthouseId ?? null;
+  const templateId = route?.params?.templateId ?? null;
   const partyId = route?.params?.partyId ?? null;
-  const initialSelectedDate = route?.params?.selectedDate ?? today;
+  const partyTitle = route?.params?.partyTitle ?? '파티 이름 없음';
+  const initialSelectedDate = route?.params?.selectedDate ?? yesterday;
   const [selectedDate, setSelectedDate] = useState(initialSelectedDate);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -119,6 +128,10 @@ const PastReservationList = () => {
   const [reservations, setReservations] = useState([]);
   const [maleCount, setMaleCount] = useState(0);
   const [femaleCount, setFemaleCount] = useState(0);
+  const [partyInstances, setPartyInstances] = useState([]);
+  const [isPartyHistoryLoading, setIsPartyHistoryLoading] = useState(
+    Boolean(templateId),
+  );
 
   const markedDates = {
     [selectedDate]: {
@@ -126,12 +139,81 @@ const PastReservationList = () => {
       selectedColor: COLORS.primary_orange,
     },
   };
-  const isTodaySelected = selectedDate === today;
-  const scopedPartyId =
-    selectedDate === initialSelectedDate ? partyId : null;
+  const isLatestPastDate = selectedDate === yesterday;
+  const scopedPartyId = useMemo(() => {
+    if (selectedDate === initialSelectedDate && partyId) {
+      return partyId;
+    }
+
+    return (
+      partyInstances.find(party => party.partyDate === selectedDate)?.partyId ??
+      null
+    );
+  }, [initialSelectedDate, partyId, partyInstances, selectedDate]);
 
   useEffect(() => {
-    if (!guesthouseId) {
+    if (!templateId) {
+      setPartyInstances([]);
+      return;
+    }
+
+    let isMounted = true;
+
+    const fetchPartyHistory = async () => {
+      try {
+        setIsPartyHistoryLoading(true);
+        const response = await hostMeetApi.getAllParties();
+        const data = response?.data;
+        const parties = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.content)
+            ? data.content
+            : Array.isArray(data?.parties)
+              ? data.parties
+              : [];
+
+        if (!isMounted) {
+          return;
+        }
+
+        setPartyInstances(
+          parties
+            .filter(party => {
+              const itemTemplateId = getTemplateId(party);
+              const itemGuesthouseId = getGuesthouseId(party);
+              return (
+                String(itemTemplateId) === String(templateId) &&
+                (itemGuesthouseId == null ||
+                  String(itemGuesthouseId) === String(guesthouseId)) &&
+                getPartyId(party) != null &&
+                typeof party?.partyDate === 'string'
+              );
+            })
+            .map(party => ({
+              partyId: getPartyId(party),
+              partyDate: party.partyDate,
+            })),
+        );
+      } catch (error) {
+        if (isMounted) {
+          setPartyInstances([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsPartyHistoryLoading(false);
+        }
+      }
+    };
+
+    fetchPartyHistory();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [guesthouseId, templateId]);
+
+  useEffect(() => {
+    if (!guesthouseId || !scopedPartyId) {
       setReservations([]);
       setMaleCount(0);
       setFemaleCount(0);
@@ -246,8 +328,14 @@ const PastReservationList = () => {
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}>
-        <View style={styles.dateSelectContainer}>
-          <View style={styles.dateSelectBox}>
+        <View style={styles.partyContextCard}>
+          <Text
+            numberOfLines={1}
+            style={[FONTS.fs_16_semibold, styles.partyContextTitle]}>
+            {partyTitle}
+          </Text>
+
+          <View style={styles.dateNavigationRow}>
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => {
@@ -266,11 +354,11 @@ const PastReservationList = () => {
             </TouchableOpacity>
 
             <TouchableOpacity
-              activeOpacity={isTodaySelected ? 1 : 0.8}
-              disabled={isTodaySelected}
-              style={isTodaySelected && styles.disabledArrowButton}
+              activeOpacity={isLatestPastDate ? 1 : 0.8}
+              disabled={isLatestPastDate}
+              style={isLatestPastDate && styles.disabledArrowButton}
               onPress={() => {
-                if (isTodaySelected) {
+                if (isLatestPastDate) {
                   return;
                 }
                 setSelectedDate(prev => shiftDate(prev, 1));
@@ -279,27 +367,27 @@ const PastReservationList = () => {
               <ChevronRight
                 width={24}
                 height={24}
-                style={isTodaySelected && styles.disabledArrowIcon}
+                style={isLatestPastDate && styles.disabledArrowIcon}
               />
             </TouchableOpacity>
           </View>
-
-          {isCalendarOpen ? (
-            <View style={styles.calendarContainer}>
-              <Calendar
-                current={selectedDate}
-                {...CALENDAR_COMMON_PROPS}
-                markedDates={markedDates}
-                maxDate={today}
-                onDayPress={day => {
-                  setSelectedDate(day.dateString);
-                  setIsCalendarOpen(false);
-                }}
-                theme={CALENDAR_THEME}
-              />
-            </View>
-          ) : null}
         </View>
+
+        {isCalendarOpen ? (
+          <View style={styles.calendarContainer}>
+            <Calendar
+              current={selectedDate}
+              {...CALENDAR_COMMON_PROPS}
+              markedDates={markedDates}
+              maxDate={yesterday}
+              onDayPress={day => {
+                setSelectedDate(day.dateString);
+                setIsCalendarOpen(false);
+              }}
+              theme={CALENDAR_THEME}
+            />
+          </View>
+        ) : null}
 
         <View style={styles.summaryCard}>
           {summaryCards.map((item, index) => (
@@ -345,9 +433,15 @@ const PastReservationList = () => {
           </Text>
         </View>
 
-        {isLoading ? (
+        {isLoading || isPartyHistoryLoading ? (
           <View style={styles.feedbackContainer}>
             <ActivityIndicator color={COLORS.primary_orange} />
+          </View>
+        ) : !scopedPartyId ? (
+          <View style={styles.feedbackContainer}>
+            <Text style={[FONTS.fs_14_medium, styles.feedbackText]}>
+              선택한 날짜에 해당 파티가 없어요.
+            </Text>
           </View>
         ) : filteredReservations.length === 0 ? (
           <View style={styles.feedbackContainer}>

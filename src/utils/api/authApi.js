@@ -1,7 +1,4 @@
-import useUserStore from '@stores/userStore';
 import api from './axiosInstance';
-
-const {setUserRole} = useUserStore.getState();
 
 const authApi = {
   //이메일 인증
@@ -92,11 +89,10 @@ const authApi = {
       return res;
     } catch (err) {
       console.warn(
-        '🧨 [authApi.refreshToken] 실패=>userRole 리셋',
+        '🧨 [authApi.refreshToken] 실패',
         err.response?.status,
         err.response?.data || err.message,
       );
-      setUserRole(null);
 
       throw err;
     }
@@ -131,7 +127,8 @@ const authApi = {
     api.post('/auth/find/password', body, {withAuth: false}),
 
   //로그아웃
-  logout: refreshToken => api.post('/auth/logout', {refreshToken}),
+  logout: refreshToken =>
+    api.post('/auth/logout', {refreshToken}, {withAuth: false}),
 
   //회원 탈퇴
   withdrawal: () => api.post('/auth/user/withdrawal'),

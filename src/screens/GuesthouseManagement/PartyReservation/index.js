@@ -505,6 +505,8 @@ const PartyReservation = ({
             <ReservationCheck
               key={`reservation-${selectedTemplateId}`}
               guesthouseId={guesthouseId}
+              templateId={selectedTemplateId}
+              partyTitle={selectedTemplate?.partyTitle}
               applicationType={effectiveApplicationType}
               dailyParties={dailyParties}
               selectedDailyParty={selectedDailyParty}
