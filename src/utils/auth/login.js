@@ -6,7 +6,7 @@ import useUserStore, {waitForUserStoreHydration} from '@stores/userStore';
 import hostMyApi from '@utils/api/hostMyApi';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
 import {normalizeHostProfile} from '@utils/hostProfile';
-import {log, mask} from '@utils/logger';
+import {log} from '@utils/logger';
 import {reset} from '@utils/navigationService';
 import {syncDeviceToken, unmapDeviceToken} from '@utils/notifications';
 
@@ -14,6 +14,7 @@ const REFRESH_KEY = 'refresh-token';
 const PENDING_LOGOUT_CLEANUP_KEY = 'pending-logout-cleanup';
 const MAX_PENDING_LOGOUT_ATTEMPTS = 5;
 let sessionExpiredHandlingPromise = null;
+let refreshPromise = null;
 
 const clearStoredAuth = async () => {
   await EncryptedStorage.removeItem(REFRESH_KEY);
@@ -135,23 +136,19 @@ export const forceLogoutForExpiredSession = async ({silent = false} = {}) => {
 };
 
 export const tryAutoLogin = async () => {
-  log.info('🚪 tryAutoLogin: start');
   try {
     await waitForUserStoreHydration();
     await retryPendingLogoutCleanup();
 
     const storedRefresh = await EncryptedStorage.getItem(REFRESH_KEY);
-    log.info('🔐 has refreshToken?', !!storedRefresh);
     if (!storedRefresh) {
       await forceLogoutForExpiredSession({silent: true});
       return false;
     }
 
     const ok = await tryRefresh({silent: true});
-    log.info('🚪 tryAutoLogin: refresh result =', ok);
     if (ok) {
       const {userRole, accessToken} = useUserStore.getState();
-      log.info('👤 tryAutoLogin: userRole =', userRole);
       await syncDeviceToken(accessToken);
       if (userRole) {
         await updateProfile(userRole);
@@ -170,17 +167,6 @@ export const storeLoginTokens = async ({
   userRole,
   needVerification,
 }) => {
-  log.info(
-    '✅ login success: accessToken=',
-    mask(accessToken),
-    'refreshToken=',
-    mask(refreshToken),
-    'role=',
-    userRole,
-    'needVerification=',
-    needVerification
-  );
-
   const {setTokens, setUserRole, setIsVerified} = useUserStore.getState();
   setTokens({accessToken});
   setUserRole('HOST');
@@ -190,8 +176,6 @@ export const storeLoginTokens = async ({
   }
 
   await EncryptedStorage.setItem(REFRESH_KEY, refreshToken);
-  const check = await EncryptedStorage.getItem(REFRESH_KEY);
-  log.info('🔐 saved refresh?', !!check);
 
   await syncDeviceToken(accessToken);
   await updateProfile('HOST');
@@ -204,7 +188,6 @@ const storeLoginInfo = async (res, userRole) => {
 };
 
 export const tryLogin = async (email, password, userRole) => {
-  log.info('🔓 tryLogin: role=', userRole);
   try {
     const res = await authApi.login(email, password, userRole);
     await storeLoginInfo(res, userRole);
@@ -221,20 +204,17 @@ export const tryLogin = async (email, password, userRole) => {
     } else {
       await EncryptedStorage.removeItem(REFRESH_KEY);
     }
-    const check = await EncryptedStorage.getItem(REFRESH_KEY);
-    log.info('🧹 removed refresh?', !check);
 
     useUserStore.getState().clearUser();
     throw err;
   }
 };
 
-export const tryRefresh = async ({silent = false} = {}) => {
-  log.info('🔄 tryRefresh: start');
+const performRefresh = async ({silent = false} = {}) => {
   try {
     const storedRefresh = await EncryptedStorage.getItem(REFRESH_KEY);
+
     if (!storedRefresh) {
-      log.warn('🔄 tryRefresh: no refresh token');
       await forceLogoutForExpiredSession({silent});
       return false;
     }
@@ -251,11 +231,9 @@ export const tryRefresh = async ({silent = false} = {}) => {
 
     useUserStore.getState().setTokens({accessToken});
     useUserStore.getState().setUserRole('HOST');
-    log.info('🔄 tryRefresh: new accessToken=', mask(accessToken));
 
     if (refreshTokenUpdated) {
       await EncryptedStorage.setItem(REFRESH_KEY, refreshTokenUpdated);
-      log.info('🔄 tryRefresh: refreshToken rotated');
     }
     return true;
   } catch (error) {
@@ -267,8 +245,21 @@ export const tryRefresh = async ({silent = false} = {}) => {
   }
 };
 
+export const tryRefresh = async (options = {}) => {
+  if (refreshPromise) {
+    return refreshPromise;
+  }
+
+  refreshPromise = performRefresh(options);
+
+  try {
+    return await refreshPromise;
+  } finally {
+    refreshPromise = null;
+  }
+};
+
 export const tryLogout = async () => {
-  log.info('🚪 tryLogout');
   const {accessToken} = useUserStore.getState();
   let storedRefresh = null;
 
@@ -298,8 +289,6 @@ export const tryLogout = async () => {
 
   try {
     await EncryptedStorage.removeItem(REFRESH_KEY);
-    const check = await EncryptedStorage.getItem(REFRESH_KEY);
-    log.info('🧹 removed refresh?', !check);
   } catch (error) {
     log.warn('🧹 remove refresh on logout failed:', error?.message);
   }
