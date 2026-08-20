@@ -19,7 +19,10 @@ import ReservationCancelModal from '@components/modals/HostMy/Guesthouse/Reserva
 import {COLORS} from '@constants/colors';
 import {FONTS} from '@constants/fonts';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
-import {formatLocalDateToDotWithDay} from '@utils/formatDate';
+import {
+  formatLocalDateToDotWithDay,
+  formatLocalTimeToHourMinute,
+} from '@utils/formatDate';
 import {formatPhoneNumber} from '@utils/formatPhoneNumber';
 import InfoIcon from '@assets/images/info_circle_red.svg';
 import Toast from 'react-native-toast-message';
@@ -194,6 +197,9 @@ const normalizeReservation = reservation => {
     serviceName: reservation?.guesthouseName ?? reservation?.serviceName,
     room: reservation?.roomName ?? reservation?.room,
     period,
+    expectedCheckInTimeText: formatLocalTimeToHourMinute(
+      reservation?.expectedCheckInTime,
+    ),
     paymentStatus: reservation?.paymentStatus ?? (status === '취소' ? '환불' : '결제완료'),
     paymentState: reservation?.paymentState ?? (status === '취소' ? '환불' : '결제완료'),
     paymentAmount:
@@ -574,6 +580,12 @@ const ReservationList = ({
           <InfoRow label="인원수" value={reservation.guestCount} />
           <InfoRow label="객실" value={reservation.room} isHighlight />
           <InfoRow label="이용기간" value={reservation.period} isHighlight />
+          {reservation.expectedCheckInTimeText ? (
+            <InfoRow
+              label="예상 체크인"
+              value={reservation.expectedCheckInTimeText}
+            />
+          ) : null}
           {reservation.paymentStatus ? (
             <InfoRow label="결제상태" value={reservation.paymentStatus} isHighlight />
           ) : null}

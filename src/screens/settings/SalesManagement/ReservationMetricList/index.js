@@ -14,7 +14,10 @@ import Loading from '@components/Loading';
 import {COLORS} from '@constants/colors';
 import {FONTS} from '@constants/fonts';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
-import {formatLocalDateToDotWithDay} from '@utils/formatDate';
+import {
+  formatLocalDateToDotWithDay,
+  formatLocalTimeToHourMinute,
+} from '@utils/formatDate';
 
 const YEAR_MONTH_PATTERN = /^\d{4}-\d{2}$/;
 const SECTION_ORDER = ['APPLICATION', 'CONFIRMED', 'COMPLETED', 'CANCELLED'];
@@ -111,6 +114,9 @@ const normalizeReservation = reservation => {
         : reservation?.guestCount,
     room: reservation?.roomName ?? reservation?.room,
     period,
+    expectedCheckInTimeText: formatLocalTimeToHourMinute(
+      reservation?.expectedCheckInTime,
+    ),
     paymentStatus: reservation?.paymentStatus ?? (status === '취소' ? '환불' : '결제완료'),
     paymentAmount:
       reservation?.paymentAmount ??
@@ -254,6 +260,12 @@ const ReservationMetricList = () => {
           <InfoRow label="인원수" value={reservation.guestCount} />
           <InfoRow label="객실" value={reservation.room} isHighlight />
           <InfoRow label="이용기간" value={reservation.period} isHighlight />
+          {reservation.expectedCheckInTimeText ? (
+            <InfoRow
+              label="예상 체크인"
+              value={reservation.expectedCheckInTimeText}
+            />
+          ) : null}
           {reservation.paymentStatus ? (
             <InfoRow label="결제상태" value={reservation.paymentStatus} isHighlight />
           ) : null}
