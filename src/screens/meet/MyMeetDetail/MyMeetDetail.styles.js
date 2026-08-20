@@ -150,6 +150,26 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     flexDirection: 'row',
   },
+  priceOptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.grayscale_200,
+  },
+  priceOptionList: {
+    flex: 1,
+  },
+  priceOptionRowLast: {
+    borderBottomWidth: 0,
+  },
+  priceOptionName: {
+    color: COLORS.grayscale_700,
+  },
+  priceOptionAmount: {
+    color: COLORS.grayscale_900,
+  },
   priceTitle: {
     color: COLORS.grayscale_400,
     marginRight: 40,

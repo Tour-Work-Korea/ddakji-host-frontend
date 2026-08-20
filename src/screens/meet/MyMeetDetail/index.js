@@ -80,12 +80,14 @@ const MyMeetDetail = () => {
     partyEndTime,
     numOfAttendance,
     maxAttendance,
+    chargeType,
     amount, // 숙박객 남자
     femaleAmount, // 숙박객 여자
     maleNonAmount, // 비숙박객 남자
     femaleNonAmount, // 비숙박객 여자
     partyEvents,
     partyImages,
+    priceOptions,
     coordinate, // 백엔드 확장 시 { latitude, longitude } 형태로 받을 것을 가정
   } = detail ?? {};
 
@@ -96,16 +98,46 @@ const MyMeetDetail = () => {
   const checkOutTime = partyEndTime || null;
 
   // 썸네일/갤러리
+  const sortedPartyImages = useMemo(
+    () =>
+      Array.isArray(partyImages)
+        ? [...partyImages].sort((a, b) => {
+          const aOrder = Number(a?.displayOrder);
+          const bOrder = Number(b?.displayOrder);
+          return (Number.isFinite(aOrder) ? aOrder : 0) -
+            (Number.isFinite(bOrder) ? bOrder : 0);
+        })
+        : [],
+    [partyImages],
+  );
+
   const thumbnailSource = useMemo(() => {
-    const th = partyImages?.find(i => i.isThumbnail);
+    const th = sortedPartyImages.find(i => i.isThumbnail);
     if (th?.imageUrl) return {uri: th.imageUrl};
     // 응답에 없다면 첫 이미지
-    if (partyImages?.[0]?.imageUrl) return {uri: partyImages[0].imageUrl};
-  }, [partyImages]);
+    if (sortedPartyImages[0]?.imageUrl) {
+      return {uri: sortedPartyImages[0].imageUrl};
+    }
+  }, [sortedPartyImages]);
 
   const gallery = useMemo(
-    () => partyImages?.map(p => ({uri: p.imageUrl})) ?? [],
-    [partyImages],
+    () => sortedPartyImages.map(p => ({uri: p.imageUrl})),
+    [sortedPartyImages],
+  );
+
+  const sortedPriceOptions = useMemo(
+    () =>
+      Array.isArray(priceOptions)
+        ? [...priceOptions]
+          .filter(option => option?.optionName && option?.amount != null)
+          .sort((a, b) => {
+            const aOrder = Number(a?.displayOrder);
+            const bOrder = Number(b?.displayOrder);
+            return (Number.isFinite(aOrder) ? aOrder : 0) -
+              (Number.isFinite(bOrder) ? bOrder : 0);
+          })
+        : [],
+    [priceOptions],
   );
 
   // 가격(라벨 매핑)
@@ -226,59 +258,82 @@ const MyMeetDetail = () => {
             이벤트금액
           </Text>
 
-          <View style={styles.priceRow}>
-            {/* 숙박객 */}
-            <View style={styles.priceSection}>
-              <Text
-                style={[
-                  FONTS.fs_14_regular,
-                  styles.priceSectionTitle,
-                  {color: COLORS.primary_orange},
-                ]}>
-                숙박객
-              </Text>
-              <View style={styles.priceTextRow}>
+          {chargeType === 'FREE' ? (
+            <Text style={[FONTS.fs_16_semibold, styles.priceText]}>무료</Text>
+          ) : sortedPriceOptions.length > 0 ? (
+            <View style={styles.priceOptionList}>
+              {sortedPriceOptions.map((option, index) => (
+                <View
+                  key={option.id ?? `${option.optionName}-${index}`}
+                  style={[
+                    styles.priceOptionRow,
+                    index === sortedPriceOptions.length - 1 &&
+                      styles.priceOptionRowLast,
+                  ]}>
+                  <Text style={[FONTS.fs_14_medium, styles.priceOptionName]}>
+                    {option.optionName}
+                  </Text>
+                  <Text style={[FONTS.fs_14_semibold, styles.priceOptionAmount]}>
+                    {Number(option.amount).toLocaleString('ko-KR')}원
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <View style={styles.priceRow}>
+              {/* 숙박객 */}
+              <View style={styles.priceSection}>
                 <Text
                   style={[
-                    FONTS.fs_14_medium,
-                    styles.priceText,
-                    {marginBottom: 4},
+                    FONTS.fs_14_regular,
+                    styles.priceSectionTitle,
+                    {color: COLORS.primary_orange},
                   ]}>
-                  여자 {Number(priceBox.guest.female).toLocaleString()}원
+                  숙박객
                 </Text>
-                <Text style={[FONTS.fs_14_medium, styles.priceText]}>
-                  남자 {Number(priceBox.guest.male).toLocaleString()}원
-                </Text>
+                <View style={styles.priceTextRow}>
+                  <Text
+                    style={[
+                      FONTS.fs_14_medium,
+                      styles.priceText,
+                      {marginBottom: 4},
+                    ]}>
+                    여자 {Number(priceBox.guest.female).toLocaleString()}원
+                  </Text>
+                  <Text style={[FONTS.fs_14_medium, styles.priceText]}>
+                    남자 {Number(priceBox.guest.male).toLocaleString()}원
+                  </Text>
+                </View>
               </View>
-            </View>
 
-            <View style={styles.devide} />
+              <View style={styles.devide} />
 
-            {/* 비숙박객 */}
-            <View style={styles.priceSection}>
-              <Text
-                style={[
-                  FONTS.fs_14_regular,
-                  styles.priceSectionTitle,
-                  {color: COLORS.primary_blue},
-                ]}>
-                비숙박객
-              </Text>
-              <View style={styles.priceTextRow}>
+              {/* 비숙박객 */}
+              <View style={styles.priceSection}>
                 <Text
                   style={[
-                    FONTS.fs_14_medium,
-                    styles.priceText,
-                    {marginBottom: 4},
+                    FONTS.fs_14_regular,
+                    styles.priceSectionTitle,
+                    {color: COLORS.primary_blue},
                   ]}>
-                  여자 {Number(priceBox.nonGuest.female).toLocaleString()}원
+                  비숙박객
                 </Text>
-                <Text style={[FONTS.fs_14_medium, styles.priceText]}>
-                  남자 {Number(priceBox.nonGuest.male).toLocaleString()}원
-                </Text>
+                <View style={styles.priceTextRow}>
+                  <Text
+                    style={[
+                      FONTS.fs_14_medium,
+                      styles.priceText,
+                      {marginBottom: 4},
+                    ]}>
+                    여자 {Number(priceBox.nonGuest.female).toLocaleString()}원
+                  </Text>
+                  <Text style={[FONTS.fs_14_medium, styles.priceText]}>
+                    남자 {Number(priceBox.nonGuest.male).toLocaleString()}원
+                  </Text>
+                </View>
               </View>
             </View>
-          </View>
+          )}
         </View>
 
         {/* 지도 */}
@@ -366,8 +421,7 @@ const MyMeetDetail = () => {
               horizontal
               showsHorizontalScrollIndicator={false}
               style={styles.imageScroll}>
-              {(gallery.length ? gallery : [PLACEHOLDER]).map(
-                (photo, index) => (
+              {gallery.map((photo, index) => (
                   <TouchableOpacity
                     key={index}
                     onPress={() => setCurrentImageIndex(index)}>
@@ -379,8 +433,7 @@ const MyMeetDetail = () => {
                       ]}
                     />
                   </TouchableOpacity>
-                ),
-              )}
+                ))}
             </ScrollView>
           </View>
         )}

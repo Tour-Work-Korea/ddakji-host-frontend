@@ -78,6 +78,11 @@ export default StyleSheet.create({
     color: COLORS.grayscale_500,
     marginLeft: 6,
   },
+  priceOptionText: {
+    color: COLORS.grayscale_700,
+    lineHeight: 17,
+    marginTop: 7,
+  },
   applicationSetting: {
     minHeight: 62,
     marginTop: 10,

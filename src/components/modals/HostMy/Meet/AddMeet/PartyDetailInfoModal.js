@@ -34,8 +34,13 @@ const SNACK_TAGS = [
 
 const normalize = initialValues => ({
   detailSchedule: initialValues?.detailSchedule ?? '',
-  snackTagList: Array.isArray(initialValues?.snackTagList) ? initialValues.snackTagList : [],
-  snacks: initialValues?.snacks ?? '',
+  snackTagList: Array.isArray(initialValues?.snackTagList)
+    ? initialValues.snackTagList
+    : [],
+  snacks:
+    initialValues?.snacks ??
+    initialValues?.snackInfo ??
+    '',
   extraInfo: initialValues?.extraInfo ?? '',
 });
 
@@ -67,12 +72,8 @@ const PartyDetailInfoModal = ({
   }, [visible, appliedData, initialValues]);
 
   const isDisabled = useMemo(() => {
-    return !(
-      form.detailSchedule.trim().length > 0 &&
-      Array.isArray(form.snackTagList) &&
-      form.snackTagList.length > 0
-    );
-  }, [form]);
+    return form.detailSchedule.trim().length === 0;
+  }, [form.detailSchedule]);
 
   const handleModalClose = () => {
     if (shouldResetOnClose) {
@@ -120,7 +121,7 @@ const PartyDetailInfoModal = ({
               keyboardShouldPersistTaps="handled">
               <View style={styles.sectionTopRow}>
                 <Text style={[FONTS.fs_16_medium, styles.sectionTitle]}>
-                  파티 세부 일정에 대해 작성해 주세요
+                  콘텐츠 세부 일정에 대해 작성해 주세요
                 </Text>
                 <Text style={[FONTS.fs_12_light, styles.counterText]}>
                   <Text style={styles.counterAccent}>{form.detailSchedule.length}</Text>/{DETAIL_MAX.toLocaleString()}
@@ -144,7 +145,7 @@ const PartyDetailInfoModal = ({
               </TouchableOpacity>
 
                 <Text style={[FONTS.fs_16_medium, styles.sectionTitle, {marginTop: 8}]}>
-                음식 · 음료 제공 여부
+                음식 · 음료 제공 여부 (선택)
               </Text>
               <View style={styles.tagGrid}>
                 {SNACK_TAGS.map(item => {
@@ -168,18 +169,17 @@ const PartyDetailInfoModal = ({
 
               <View style={[styles.sectionTopRow, {marginTop: 20}]}>
                 <Text style={[FONTS.fs_16_medium, styles.sectionTitle]}>
-                  제공량/준비량 관련 안내
+                  제공량/준비량 관련 안내 (선택)
                 </Text>
-                <Text style={[FONTS.fs_12_light, styles.counterText]}>
-                  <Text style={styles.counterAccent}>{form.extraInfo.length}</Text>/{EXTRA_MAX}
+                  <Text style={[FONTS.fs_12_light, styles.counterText]}>
+                  <Text style={styles.counterAccent}>{form.snacks.length}</Text>/{EXTRA_MAX}
                 </Text>
               </View>
               <TextInput
-                value={form.extraInfo}
+                value={form.snacks}
                 onChangeText={text =>
                   setForm(prev => ({
                     ...prev,
-                    extraInfo: text.slice(0, EXTRA_MAX),
                     snacks: text.slice(0, EXTRA_MAX),
                   }))
                 }
@@ -192,7 +192,7 @@ const PartyDetailInfoModal = ({
               <TouchableOpacity
                 style={styles.rewriteButton}
                 onPress={() =>
-                  setForm(prev => ({...prev, extraInfo: '', snacks: ''}))
+                  setForm(prev => ({...prev, snacks: ''}))
                 }>
                 <Text style={[FONTS.fs_12_medium, styles.rewriteText]}>다시쓰기</Text>
               </TouchableOpacity>
