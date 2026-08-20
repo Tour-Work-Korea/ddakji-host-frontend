@@ -10,7 +10,10 @@ import ReservationCancelModal from '@components/modals/HostMy/Guesthouse/Reserva
 import { COLORS } from '@constants/colors';
 import { FONTS } from '@constants/fonts';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
-import { formatLocalDateToDotWithDay } from '@utils/formatDate';
+import {
+  formatLocalDateToDotWithDay,
+  formatLocalTimeToHourMinute,
+} from '@utils/formatDate';
 import { formatPhoneNumber } from '@utils/formatPhoneNumber';
 import Toast from 'react-native-toast-message';
 import styles from './MyGuesthouseReservationDetail.styles';
@@ -191,6 +194,9 @@ const mapReservationDetailToViewData = (reservation = {}) => {
     serviceName: reservation?.guesthouseName ?? reservation?.serviceName,
     room: reservation?.roomName ?? reservation?.room,
     period,
+    expectedCheckInTimeText: formatLocalTimeToHourMinute(
+      reservation?.expectedCheckInTime,
+    ),
     paymentMethod: reservation?.paymentMethod,
     paymentStatus: reservation?.paymentStatus ?? (status === '취소' ? '환불' : '결제완료'),
     paymentState: reservation?.paymentState ?? (status === '취소' ? '환불' : '결제완료'),
@@ -593,6 +599,10 @@ const MyGuesthouseReservationDetail = ({ route }) => {
           <InfoRow label="서비스" value={reservation.serviceName} />
           <InfoRow label="객실" value={reservation.room} highlight />
           <InfoRow label="이용기간" value={reservation.period} highlight />
+          <InfoRow
+            label="예상 체크인"
+            value={reservation.expectedCheckInTimeText}
+          />
         </View>
 
         {requestsText ? (
