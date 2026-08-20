@@ -32,10 +32,11 @@ const MAX_IMAGES = 10;
 const TITLE_MAX = 50;
 const TAG_MAX = 200;
 const CONTENT_TYPE_OPTIONS = [
-  {value: 'POTLUCK', label: '포틀럭'},
+  {value: 'POTLUCK', label: '포틀럭 파티'},
   {value: 'DINNER_PARTY', label: '디너파티'},
   {value: 'BOOK', label: '독서'},
   {value: 'WALK', label: '산책'},
+  {value: 'PROGRAM', label: '프로그램'},
 ];
 
 const stripDuplicatesByUrl = (arr = []) => {
@@ -224,7 +225,7 @@ const PartyTitleIntroModal = ({
             <View style={styles.modalContainer}>
             <View style={styles.header}>
               <Text style={[FONTS.fs_20_semibold, styles.modalTitle]}>
-                파티 제목 및 소개
+                콘텐츠 제목 및 소개
               </Text>
               <TouchableOpacity onPress={handleModalClose} style={styles.closeButton}>
                 <XBtn width={24} height={24} />
@@ -237,13 +238,13 @@ const PartyTitleIntroModal = ({
                 paddingBottom: keyboardHeight + 96,
               }}
               keyboardShouldPersistTaps="handled">
-              <Text style={[FONTS.fs_16_medium, styles.label, {marginBottom: 8}]}>파티 제목</Text>
+              <Text style={[FONTS.fs_16_medium, styles.label, {marginBottom: 8}]}>콘텐츠 제목</Text>
               <TextInput
                 value={form.partyTitle}
                 onChangeText={text =>
                   setForm(prev => ({...prev, partyTitle: text.slice(0, TITLE_MAX)}))
                 }
-                placeholder="파티 제목을 입력해주세요."
+                placeholder="콘텐츠 제목을 입력해주세요."
                 placeholderTextColor={COLORS.grayscale_400}
                 style={[FONTS.fs_14_regular, styles.roundInput]}
                 maxLength={TITLE_MAX}

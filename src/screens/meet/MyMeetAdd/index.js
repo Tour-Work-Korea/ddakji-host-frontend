@@ -55,6 +55,7 @@ const MyMeetAdd = () => {
     isGuest: false,
     chargeType: 'FREE',
     amount: null,
+    priceOptions: [],
     femaleAmount: null,
     maleNonAmount: null,
     femaleNonAmount: null,
@@ -135,9 +136,18 @@ const MyMeetAdd = () => {
       return enforceSingleThumbnail(
         stripDuplicatesByUrl(
           images
-            .map(item => ({
+            .map((item, index) => ({item, index}))
+            .sort((a, b) => {
+              const aOrder = Number(a.item?.displayOrder);
+              const bOrder = Number(b.item?.displayOrder);
+              const normalizedA = Number.isFinite(aOrder) ? aOrder : a.index;
+              const normalizedB = Number.isFinite(bOrder) ? bOrder : b.index;
+              return normalizedA - normalizedB;
+            })
+            .map(({item}, index) => ({
               imageUrl: item?.imageUrl ?? item?.partyImageUrl ?? '',
               isThumbnail: !!item?.isThumbnail,
+              displayOrder: index,
             }))
             .filter(item => item.imageUrl),
         ),
@@ -151,14 +161,43 @@ const MyMeetAdd = () => {
 
         if (!isMounted) return;
 
+        const normalizedPriceOptions = Array.isArray(data?.priceOptions)
+          ? data.priceOptions
+            .map((option, index) => ({
+              ...(option?.id != null ? {id: option.id} : {}),
+              optionName: option?.optionName ?? '',
+              amount: option?.amount ?? '',
+              displayOrder: Number.isFinite(Number(option?.displayOrder))
+                ? Number(option.displayOrder)
+                : index,
+            }))
+            .sort((a, b) => a.displayOrder - b.displayOrder)
+            .map((option, index) => ({...option, displayOrder: index}))
+          : [];
+
+        if (
+          normalizedPriceOptions.length === 0 &&
+          (data?.chargeType === 'PAID' || Number(data?.amount) > 0)
+        ) {
+          normalizedPriceOptions.push({
+            optionName: '기본 참가비',
+            amount: data?.amount ?? '',
+            displayOrder: 0,
+          });
+        }
+
         setParty(prev => ({
           ...prev,
           partyTitle: data?.partyTitle ?? '',
           tags: data?.partyTags ?? data?.tags ?? '',
           partyImages: normalizePartyImages(data?.partyImages),
-          contentType: ['POTLUCK', 'DINNER_PARTY', 'BOOK', 'WALK'].includes(
-            data?.contentType,
-          )
+          contentType: [
+            'POTLUCK',
+            'DINNER_PARTY',
+            'BOOK',
+            'WALK',
+            'PROGRAM',
+          ].includes(data?.contentType)
             ? data.contentType
             : prev.contentType,
           guesthouseId:
@@ -176,8 +215,13 @@ const MyMeetAdd = () => {
           maxAttendees: data?.maxAttendees ?? data?.maxAttendance ?? prev.maxAttendees,
           isGuest: data?.isGuest ?? prev.isGuest,
           chargeType:
-            data?.chargeType ?? (Number(data?.amount) > 0 ? 'PAID' : 'FREE'),
-          amount: data?.amount ?? prev.amount,
+            data?.chargeType ??
+            (Number(data?.amount) > 0 || normalizedPriceOptions.length > 0
+              ? 'PAID'
+              : 'FREE'),
+          amount:
+            data?.amount ?? normalizedPriceOptions[0]?.amount ?? prev.amount,
+          priceOptions: normalizedPriceOptions,
           femaleAmount: data?.femaleAmount ?? prev.femaleAmount,
           maleNonAmount: data?.maleNonAmount ?? prev.maleNonAmount,
           femaleNonAmount: data?.femaleNonAmount ?? prev.femaleNonAmount,
@@ -207,11 +251,19 @@ const MyMeetAdd = () => {
               }))
               : [],
           detailSchedule: data?.detailSchedule ?? data?.partySchedule ?? '',
-          snackTagList: Array.isArray(data?.snackTagList)
-            ? data.snackTagList
-            : Array.isArray(data?.snackTags)
-              ? data.snackTags
-              : [],
+          snackTagList: (
+            Array.isArray(data?.snackTagList)
+              ? data.snackTagList
+              : Array.isArray(data?.snackTags)
+                ? data.snackTags
+                : []
+          )
+            .map(tag =>
+              typeof tag === 'string'
+                ? tag
+                : tag?.key ?? tag?.name ?? tag?.value ?? '',
+            )
+            .filter(Boolean),
           snacks: data?.snacks ?? data?.snackInfo ?? '',
           extraInfo: data?.extraInfo ?? '',
           rules: Array.isArray(data?.rules)
@@ -292,6 +344,9 @@ const MyMeetAdd = () => {
         isGuest: payload.isGuest ?? prev.isGuest,
         chargeType: payload.chargeType ?? prev.chargeType,
         amount: payload.amount ?? prev.amount,
+        priceOptions: Array.isArray(payload.priceOptions)
+          ? payload.priceOptions
+          : prev.priceOptions,
         femaleAmount: payload.femaleAmount ?? prev.femaleAmount,
         maleNonAmount: payload.maleNonAmount ?? prev.maleNonAmount,
         femaleNonAmount: payload.femaleNonAmount ?? prev.femaleNonAmount,
@@ -405,7 +460,9 @@ const MyMeetAdd = () => {
     Array.isArray(party.partyImages) &&
     party.partyImages.length >= 1 &&
     exactlyOneThumbnail(party.partyImages) &&
-    ['POTLUCK', 'DINNER_PARTY', 'BOOK', 'WALK'].includes(party.contentType);
+    ['POTLUCK', 'DINNER_PARTY', 'BOOK', 'WALK', 'PROGRAM'].includes(
+      party.contentType,
+    );
   const isBasicDone =
     Number(party.guesthouseId) > 0 &&
     isNonEmpty(party.partyStartTime) &&
@@ -414,13 +471,19 @@ const MyMeetAdd = () => {
     Number(party.minAttendees) > 0 &&
     Number(party.maxAttendees) >= Number(party.minAttendees) &&
     ['FREE', 'PAID'].includes(party.chargeType) &&
-    (party.chargeType === 'FREE' || Number(party.amount) > 0);
+    (party.chargeType === 'FREE' || (
+      Array.isArray(party.priceOptions) &&
+      party.priceOptions.length > 0 &&
+      party.priceOptions.every(option =>
+        isNonEmpty(option?.optionName) && Number(option?.amount) > 0,
+      ) &&
+      new Set(party.priceOptions.map(option => option.optionName.trim())).size ===
+        party.priceOptions.length
+    ));
   const isAnnouncementsDone =
     Array.isArray(party.partyAnnouncements) && party.partyAnnouncements.length > 0;
   const isEventDone = Array.isArray(party.partyEvents) && party.partyEvents.length > 0;
-  const isDetailDone =
-    isNonEmpty(party.detailSchedule) &&
-    (Array.isArray(party.snackTagList) && party.snackTagList.length > 0);
+  const isDetailDone = isNonEmpty(party.detailSchedule);
   const isRulesDone = Array.isArray(party.rules) && party.rules.length > 0;
   const isWayDone =
     isNonEmpty(party.meetingPlace) ||
@@ -438,9 +501,10 @@ const MyMeetAdd = () => {
     const base = {
       // 파티 제목 및 소개
       partyTitle: (party.partyTitle ?? '').trim(),
-      partyImages: (party.partyImages || []).map(img => ({
+      partyImages: (party.partyImages || []).map((img, index) => ({
         imageUrl: img.imageUrl,
         isThumbnail: !!img.isThumbnail,
+        displayOrder: index,
       })),
       partyTags: isNonEmpty(party.tags) ? String(party.tags).trim() : undefined,
       contentType: party.contentType,
@@ -455,6 +519,13 @@ const MyMeetAdd = () => {
       isGuest: !!party.isGuest,
       chargeType: party.chargeType,
       amount: party.chargeType === 'FREE' ? 0 : Number(party.amount),
+      priceOptions: party.chargeType === 'PAID'
+        ? party.priceOptions.map((option, index) => ({
+          optionName: option.optionName.trim(),
+          amount: Number(option.amount),
+          displayOrder: index,
+        }))
+        : undefined,
       femaleAmount: party.femaleAmount !== null && party.femaleAmount !== undefined ? Number(party.femaleAmount) : undefined,
       maleNonAmount: party.maleNonAmount !== null && party.maleNonAmount !== undefined ? Number(party.maleNonAmount) : undefined,
       femaleNonAmount: party.femaleNonAmount !== null && party.femaleNonAmount !== undefined ? Number(party.femaleNonAmount) : undefined,
@@ -478,7 +549,9 @@ const MyMeetAdd = () => {
 
       // 상세 안내(페이지)
       detailSchedule: isNonEmpty(party.detailSchedule) ? party.detailSchedule : undefined,
-      snackTagList: Array.isArray(party.snackTagList) && party.snackTagList.length ? party.snackTagList : undefined,
+      snackTagList: Array.isArray(party.snackTagList)
+        ? party.snackTagList
+        : [],
       snacks: isNonEmpty(party.snacks) ? party.snacks : undefined,
       extraInfo: isNonEmpty(party.extraInfo) ? party.extraInfo : undefined,
 
@@ -506,7 +579,7 @@ const MyMeetAdd = () => {
     Object.entries(base).forEach(([k, v]) => {
       if (v === undefined || v === null) return;
       if (typeof v === 'string' && v.trim() === '') return;
-      if (Array.isArray(v) && v.length === 0) return;
+      if (Array.isArray(v) && v.length === 0 && k !== 'snackTagList') return;
       pruned[k] = v;
     });
 
@@ -518,9 +591,10 @@ const MyMeetAdd = () => {
     partyTitle: party.partyTitle,
     partyTags: party.tags,
     description: party.description ?? '',
-    partyImages: (party.partyImages || []).map(img => ({
+    partyImages: (party.partyImages || []).map((img, index) => ({
       imageUrl: img.imageUrl,
       isThumbnail: !!img.isThumbnail,
+      displayOrder: index,
     })),
     events: (party.partyEvents || []).map(event => ({
       eventName: event?.eventName ?? '',
@@ -567,7 +641,7 @@ const MyMeetAdd = () => {
       }
       Toast.show({
         type: 'success',
-        text1: `파티가 ${isEditMode ? '수정' : '등록'}되었습니다!`,
+        text1: `콘텐츠가 ${isEditMode ? '수정' : '등록'}되었습니다!`,
         position: 'top',
         visibilityTime: 1200,
       });
@@ -617,7 +691,7 @@ const MyMeetAdd = () => {
   if (loading) {
     return (
       <View style={styles.container}>
-        <Header title={isEditMode ? '파티 수정' : '파티 등록'} />
+        <Header title={isEditMode ? '콘텐츠 수정' : '콘텐츠 등록'} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="small" color="#FF6A13" />
         </View>
@@ -627,12 +701,12 @@ const MyMeetAdd = () => {
 
   return (
     <View style={styles.container}>
-      <Header title={isEditMode ? '파티 수정' : '파티 등록'} />
+      <Header title={isEditMode ? '콘텐츠 수정' : '콘텐츠 등록'} />
 
       <View style={styles.scrollContent}>
         <View style={styles.bodyContainer}>
           {renderSectionRow({
-            title: '파티 제목 및 소개',
+            title: '콘텐츠 제목 및 소개',
             description: '',
             required: true,
             done: isTitleIntroDone,
@@ -657,7 +731,7 @@ const MyMeetAdd = () => {
 
           {renderSectionRow({
             title: '상세 안내',
-            description: '상세 일정 · 음식 제공 여부',
+            description: '상세 일정 · 음식/음료 정보(선택)',
             required: true,
             done: isDetailDone,
             onPress: () => setDetailModalVisible(true),
@@ -766,6 +840,7 @@ const MyMeetAdd = () => {
           isGuest: party.isGuest,
           chargeType: party.chargeType,
           amount: party.amount,
+          priceOptions: party.priceOptions,
           femaleAmount: party.femaleAmount,
           maleNonAmount: party.maleNonAmount,
           femaleNonAmount: party.femaleNonAmount,

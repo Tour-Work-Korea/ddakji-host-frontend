@@ -84,7 +84,7 @@ const ReservationCancelList = () => {
   const initialSelectedDate = route?.params?.selectedDate ?? getTodayLocalDate();
   const guesthouseId = route?.params?.guesthouseId ?? null;
   const partyId = route?.params?.partyId ?? null;
-  const partyTitle = route?.params?.partyTitle ?? '파티 이름 없음';
+  const partyTitle = route?.params?.partyTitle ?? '콘텐츠 이름 없음';
   const [isLoading, setIsLoading] = useState(false);
   const [reservations, setReservations] = useState([]);
 
@@ -206,7 +206,7 @@ const ReservationCancelList = () => {
         ) : !partyId ? (
           <View style={styles.feedbackContainer}>
             <Text style={[FONTS.fs_14_medium, styles.feedbackText]}>
-              파티 정보를 확인할 수 없어요.
+              콘텐츠 정보를 확인할 수 없어요.
             </Text>
           </View>
         ) : reservations.length === 0 ? (

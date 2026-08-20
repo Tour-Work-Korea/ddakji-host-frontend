@@ -19,7 +19,7 @@ import styles from './NotificationCenter.styles';
 const FILTER_CHIPS = [
   { key: 'all', label: '전체' },
   { key: 'roomReservation', label: '객실 예약' },
-  { key: 'partyReservation', label: '파티 신청' },
+  { key: 'partyReservation', label: '콘텐츠 신청' },
   { key: 'staff', label: '스탭' },
   { key: 'settlement', label: '정산' },
   { key: 'notice', label: '공지사항' },
@@ -140,7 +140,7 @@ const buildNotificationTitle = item => {
     ? `${dateLabel} · ${item.partyTitle}`
     : item.partyTitle;
 
-  return `${titlePrefix || '[파티]'} ${partyLabel}`;
+  return `${titlePrefix || '[콘텐츠]'} ${partyLabel}`;
 };
 
 const mapNotificationItem = item => ({
