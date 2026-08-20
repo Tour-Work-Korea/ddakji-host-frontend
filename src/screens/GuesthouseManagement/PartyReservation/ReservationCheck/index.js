@@ -34,7 +34,7 @@ const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 const MENU_TOAST_TOP_OFFSET = Platform.OS === 'ios' ? 220 : 190;
 
 const REJECT_REASON_OPTIONS = [
-  '파티 정원 초과',
+  '콘텐츠 정원 초과',
   '숙소 내부 사정',
   '예약 조건 미충족',
   '직접 입력',
@@ -608,15 +608,15 @@ const ReservationCheck = ({
           <View style={styles.emptyPartyCard}>
             <Text style={[FONTS.fs_14_medium, styles.emptyPartyTitle]}>
               {isAdvanceApplication
-                ? '현재 신청 관리할 사전 파티가 없어요.'
+                ? '현재 신청 관리할 사전 콘텐츠가 없어요.'
                 : applicationType === 'SAME_DAY'
-                ? '오늘 진행되는 파티가 없어요.'
-                : '현재 신청 관리할 파티가 없어요.'}
+                ? '오늘 진행되는 콘텐츠가 없어요.'
+                : '현재 신청 관리할 콘텐츠가 없어요.'}
             </Text>
             <Text style={[FONTS.fs_12_medium, styles.emptyPartyDescription]}>
               {isAdvanceApplication
-                ? '파티가 생성되면 날짜별 신청 현황을 확인할 수 있어요.'
-                : '오늘 파티가 생성되면 신청 현황을 확인할 수 있어요.'}
+                ? '콘텐츠가 생성되면 날짜별 신청 현황을 확인할 수 있어요.'
+                : '오늘 콘텐츠가 생성되면 신청 현황을 확인할 수 있어요.'}
             </Text>
           </View>
         ) : (

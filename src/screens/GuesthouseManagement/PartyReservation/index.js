@@ -368,7 +368,7 @@ const PartyReservation = ({
       {!isTemplateLoading && selectedTemplate ? (
         <View style={styles.partySelector}>
           <Text style={[FONTS.fs_12_medium, styles.sectionLabel]}>
-            현재 관리 중인 파티
+            현재 관리 중인 콘텐츠
           </Text>
           <TouchableOpacity
             activeOpacity={0.8}
@@ -382,7 +382,7 @@ const PartyReservation = ({
               <Text
                 numberOfLines={1}
                 style={[FONTS.fs_16_semibold, styles.selectedPartyTitle]}>
-                {selectedTemplate?.partyTitle || '파티를 선택해주세요'}
+                {selectedTemplate?.partyTitle || '콘텐츠를 선택해주세요'}
               </Text>
               {effectiveApplicationType ? (
                 <View style={styles.applicationTypeBadge}>
@@ -472,10 +472,10 @@ const PartyReservation = ({
       ) : !selectedTemplate ? (
         <View style={styles.emptyContainer}>
           <Text style={[FONTS.fs_16_semibold, styles.emptyTitle]}>
-            신청을 받는 파티가 없습니다
+            신청을 받는 콘텐츠가 없습니다
           </Text>
           <Text style={[FONTS.fs_14_regular, styles.emptyDescription]}>
-            파티 정보에서 참여 신청을 켜면{'\n'}신청 현황과 날짜별 설정을
+            콘텐츠 정보에서 참여 신청을 켜면{'\n'}신청 현황과 날짜별 설정을
             관리할 수 있어요.
           </Text>
         </View>
@@ -540,10 +540,10 @@ const PartyReservation = ({
                 <View style={styles.modalHandle} />
                 <View style={styles.modalHeader}>
                   <Text style={[FONTS.fs_18_semibold, styles.modalTitle]}>
-                    관리할 파티 선택
+                    관리할 콘텐츠 선택
                   </Text>
                   <Text style={[FONTS.fs_12_medium, styles.modalDescription]}>
-                    신청을 받고 있는 파티만 표시돼요
+                    신청을 받고 있는 콘텐츠만 표시돼요
                   </Text>
                 </View>
 
@@ -573,7 +573,7 @@ const PartyReservation = ({
                             styles.partyOptionText,
                             isSelected && styles.partyOptionTextSelected,
                           ]}>
-                          {template.partyTitle || '파티 이름 없음'}
+                          {template.partyTitle || '콘텐츠 이름 없음'}
                         </Text>
                         {isSelected ? (
                           <CheckIcon width={20} height={20} />

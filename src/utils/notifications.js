@@ -365,7 +365,7 @@ export const resolveNotificationTarget = notification => {
       value: 'GuesthouseManagement',
       params: {
         guesthouseId: fallbackGuesthouseId,
-        initialTab: '파티 관리',
+        initialTab: '콘텐츠 관리',
         reservationId,
         partyId,
         templateId,

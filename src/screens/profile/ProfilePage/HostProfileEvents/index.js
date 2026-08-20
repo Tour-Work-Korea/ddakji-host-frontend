@@ -187,7 +187,7 @@ const HostProfileEvents = ({guesthouseId}) => {
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.5}
         ListHeaderComponent={
-          <Text style={[FONTS.fs_14_semibold, styles.sectionTitle]}>게하 파티</Text>
+          <Text style={[FONTS.fs_14_semibold, styles.sectionTitle]}>게하 콘텐츠</Text>
         }
         ListEmptyComponent={
           loading ? (
@@ -197,7 +197,7 @@ const HostProfileEvents = ({guesthouseId}) => {
           ) : (
             <View style={styles.emptyWrap}>
               <Text style={[FONTS.fs_14_regular, styles.emptyText]}>
-                표시할 게하 파티가 없습니다.
+                표시할 게하 콘텐츠가 없습니다.
               </Text>
             </View>
           )

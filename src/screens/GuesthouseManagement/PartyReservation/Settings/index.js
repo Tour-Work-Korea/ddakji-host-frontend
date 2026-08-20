@@ -82,7 +82,7 @@ const Settings = ({
         setDailyParty({
           ...partyData,
           templateId: selectedTemplateId,
-          partyTitle: selectedTemplate?.partyTitle || '파티 이름 없음',
+          partyTitle: selectedTemplate?.partyTitle || '콘텐츠 이름 없음',
         });
         setMaxCapacity(Number(partyData?.maxAttendance) || 20);
 
@@ -146,7 +146,7 @@ const Settings = ({
     normalizedPartyStatus === 'DELETED';
   const canApply =
     isTemplateApplyOpen && normalizedPartyStatus === 'RECRUIT';
-  const partyTitle = dailyParty?.partyTitle || '파티 이름 없음';
+  const partyTitle = dailyParty?.partyTitle || '콘텐츠 이름 없음';
   const applicationStatusLabel = canApply ? '신청 가능' : '신청 마감';
   const applicationStatusDescription = canApply
     ? '현재 선택한 날짜의 참여 신청을 받고 있어요.'
@@ -162,7 +162,7 @@ const Settings = ({
     if (!partyId) {
       Toast.show({
         type: 'error',
-        text1: '신청 상태를 변경할 파티 정보가 없어요.',
+        text1: '신청 상태를 변경할 콘텐츠 정보가 없어요.',
         position: 'top',
         topOffset: MENU_TOAST_TOP_OFFSET,
       });
@@ -216,7 +216,7 @@ const Settings = ({
       setCancelModalVisible(false);
       Toast.show({
         type: 'error',
-        text1: '취소할 파티 정보가 없어요.',
+        text1: '취소할 콘텐츠 정보가 없어요.',
         position: 'top',
         topOffset: MENU_TOAST_TOP_OFFSET,
       });
@@ -229,7 +229,7 @@ const Settings = ({
       onUpdateDailyParty?.({partyStatus: 'CANCELED'});
       Toast.show({
         type: 'success',
-        text1: '선택한 날짜의 파티가 취소되었어요.',
+        text1: '선택한 날짜의 콘텐츠 일정이 취소되었어요.',
         position: 'top',
         topOffset: MENU_TOAST_TOP_OFFSET,
       });
@@ -237,7 +237,7 @@ const Settings = ({
       setCancelModalVisible(false);
       Toast.show({
         type: 'error',
-        text1: '파티 취소 중 오류가 발생했어요.',
+        text1: '콘텐츠 일정 취소 중 오류가 발생했어요.',
         position: 'top',
         topOffset: MENU_TOAST_TOP_OFFSET,
       });
@@ -250,7 +250,7 @@ const Settings = ({
     if (!partyId) {
       Toast.show({
         type: 'error',
-        text1: '인원을 변경할 파티 정보가 없어요.',
+        text1: '인원을 변경할 콘텐츠 정보가 없어요.',
         position: 'top',
         topOffset: MENU_TOAST_TOP_OFFSET,
       });
@@ -287,11 +287,11 @@ const Settings = ({
           <View style={styles.cancelTitleRow}>
             <Text style={[FONTS.fs_16_medium, styles.cancelTitle]}>
               {selectedDailyParty?.partyDate
-                ? `${selectedDailyParty.partyDate} 파티 취소`
-                : '파티 취소'}
+                ? `${selectedDailyParty.partyDate} 일정 취소`
+                : '일정 취소'}
             </Text>
             <Text style={[FONTS.fs_12_medium, styles.cancelDescription]}>
-              선택한 날짜의 파티를 진행할 수 없는 경우 사용하세요. 모든
+              선택한 날짜의 콘텐츠를 진행할 수 없는 경우 사용하세요. 모든
               예약자에게 즉시 알림이 발송됩니다.
             </Text>
           </View>
@@ -312,8 +312,8 @@ const Settings = ({
               isPartyCanceled && styles.cancelButtonTextDisabled,
             ]}>
             {isPartyCanceled
-              ? '취소된 파티'
-              : '선택한 날짜 파티 취소하기'}
+              ? '취소된 일정'
+              : '선택한 날짜 일정 취소하기'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -380,7 +380,7 @@ const Settings = ({
 
       <View style={styles.section}>
         <Text style={[FONTS.fs_14_semibold, styles.sectionTitle]}>
-          선택한 날짜 파티 최대 인원
+          선택한 날짜 콘텐츠 최대 인원
         </Text>
 
         <View style={styles.sectionCard}>
@@ -426,7 +426,7 @@ const Settings = ({
 
       <AlertModal
         visible={cancelModalVisible}
-        title="정말로 선택한 날짜의 파티를 취소하시겠어요?"
+        title="정말로 선택한 날짜의 콘텐츠 일정을 취소하시겠어요?"
         customContent={
           <View style={styles.cancelModalContent}>
             <Text style={[FONTS.fs_14_medium, styles.cancelModalApplicant]}>
