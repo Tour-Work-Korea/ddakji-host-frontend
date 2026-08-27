@@ -2,7 +2,6 @@ import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   FlatList,
-  Platform,
   Pressable,
   Text,
   TextInput,
@@ -13,7 +12,7 @@ import {useNavigation} from '@react-navigation/native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import Header from '@components/Header';
-import IosNoticeBannerAd from '@components/ads/IosNoticeBannerAd';
+import HomeBannerAd from '@components/ads/HomeBannerAd';
 import {COLORS} from '@constants/colors';
 import {FONTS} from '@constants/fonts';
 import adminApi from '@utils/api/adminApi';
@@ -271,7 +270,7 @@ const NoticeList = () => {
         style={styles.scrollView}
         contentContainerStyle={[
           styles.listContentContainer,
-          Platform.OS === 'ios' && {paddingBottom: insets.bottom + 84},
+          {paddingBottom: insets.bottom + 84},
         ]}
         ListEmptyComponent={renderEmpty}
         ListFooterComponent={renderFooter}
@@ -281,11 +280,9 @@ const NoticeList = () => {
         keyboardShouldPersistTaps="handled"
       />
 
-      {Platform.OS === 'ios' ? (
-        <View style={styles.fixedAdContainer}>
-          <IosNoticeBannerAd />
-        </View>
-      ) : null}
+      <View style={styles.fixedAdContainer}>
+        <HomeBannerAd />
+      </View>
     </View>
   );
 };

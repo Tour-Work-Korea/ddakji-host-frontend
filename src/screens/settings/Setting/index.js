@@ -187,12 +187,12 @@ const Settings = () => {
         <View style={styles.detailContainer}>
           <Text style={styles.detailText}>상호명 : 워커웨이</Text>
           <Text style={styles.detailText}>사업자등록번호: 888-25-02003</Text>
-          <Text style={styles.detailText}>연락처: 010-4637-5989</Text>
+          <Text style={styles.detailText}>연락처: 010-4123-0075</Text>
           <Text style={styles.detailText}>
             통신판매번호: 2025-서울양천-0825
           </Text>
           <Text style={styles.detailText}>주소: 제주시 연동 263-13 레지던스이타스3</Text>
-          <Text style={styles.detailText}>대표자 : 이하늘, 정재원</Text>
+          <Text style={styles.detailText}>대표자 : 이하늘</Text>
         </View>
       </View>
       <AlertModal
