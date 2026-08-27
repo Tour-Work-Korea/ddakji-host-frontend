@@ -233,6 +233,13 @@ export default StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 120,
   },
+  noticeSectionWithAd: {
+    marginBottom: 16,
+  },
+  homeAdContainer: {
+    alignItems: 'center',
+    marginBottom: 120,
+  },
   sectionTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',

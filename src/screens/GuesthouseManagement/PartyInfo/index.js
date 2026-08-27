@@ -62,6 +62,7 @@ const PartyInfo = ({ guesthouseId }) => {
   const [parties, setParties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deleteTargetId, setDeleteTargetId] = useState(null);
+  const [applyToggleTarget, setApplyToggleTarget] = useState(null);
   const [updatingTemplateIds, setUpdatingTemplateIds] = useState([]);
 
   const fetchParties = useCallback(async () => {
@@ -121,6 +122,17 @@ const PartyInfo = ({ guesthouseId }) => {
     setDeleteTargetId(templateId);
   };
 
+  const handleOpenApplyToggleModal = (templateId, nextValue) => {
+    if (
+      templateId == null ||
+      updatingTemplateIds.some(id => String(id) === String(templateId))
+    ) {
+      return;
+    }
+
+    setApplyToggleTarget({templateId, nextValue});
+  };
+
   const handleToggleApplyOpen = async (templateId, nextValue) => {
     if (
       templateId == null ||
@@ -178,6 +190,16 @@ const PartyInfo = ({ guesthouseId }) => {
       setDeleteTargetId(null);
       Alert.alert('오류', '삭제 중 문제가 발생했습니다.');
     }
+  };
+
+  const confirmApplyToggle = () => {
+    if (!applyToggleTarget) {
+      return;
+    }
+
+    const {templateId, nextValue} = applyToggleTarget;
+    setApplyToggleTarget(null);
+    handleToggleApplyOpen(templateId, nextValue);
   };
 
   if (loading) {
@@ -296,7 +318,7 @@ const PartyInfo = ({ guesthouseId }) => {
           <Switch
             value={isApplyOpen}
             onValueChange={nextValue =>
-              handleToggleApplyOpen(item.templateId, nextValue)
+              handleOpenApplyToggleModal(item.templateId, nextValue)
             }
             disabled={isUpdating}
             trackColor={{
@@ -331,6 +353,26 @@ const PartyInfo = ({ guesthouseId }) => {
         </Text>
         <PlusIcon width={24} height={24} />
       </TouchableOpacity>
+
+      <AlertModal
+        visible={applyToggleTarget !== null}
+        title={
+          applyToggleTarget?.nextValue
+            ? '참여 신청을 받을까요?'
+            : '참여 신청을 받지 않을까요?'
+        }
+        message={
+          applyToggleTarget?.nextValue
+            ? '게스트가 콘텐츠를 확인하고 참여 신청할 수 있어요.'
+            : '콘텐츠 정보는 계속 노출되지만 신규 참여 신청은 받을 수 없어요.'
+        }
+        buttonText={applyToggleTarget?.nextValue ? '신청 받기' : '신청 마감하기'}
+        buttonText2="돌아가기"
+        color={COLORS.primary_orange}
+        onPress={confirmApplyToggle}
+        onPress2={() => setApplyToggleTarget(null)}
+        onRequestClose={() => setApplyToggleTarget(null)}
+      />
 
       <AlertModal
         visible={deleteTargetId !== null}

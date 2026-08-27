@@ -15,7 +15,6 @@ import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
 import {
   formatLocalDateToDot,
   formatLocalDateToDotWithDay,
-  formatLocalTimeToHourMinute,
 } from '@utils/formatDate';
 import styles from './ReservationCalendar.styles';
 
@@ -106,9 +105,6 @@ const normalizeReservation = (reservation = {}) => {
     guestName,
     guestGender,
     genderLabel: getGenderLabel(guestGender),
-    expectedCheckInTimeText: formatLocalTimeToHourMinute(
-      reservation?.expectedCheckInTime,
-    ),
   };
 };
 
@@ -347,11 +343,6 @@ const ReservationDayCard = ({guesthouseId, targetDate, onNavigate}) => {
                         reservation.checkOutDate,
                       )} (${nights}박)`}
                     </Text>
-                    {reservation.expectedCheckInTimeText ? (
-                      <Text style={[FONTS.fs_14_regular, styles.expectedCheckInText]}>
-                        예상 체크인 {reservation.expectedCheckInTimeText}
-                      </Text>
-                    ) : null}
                   </TouchableOpacity>
                 );
               }}
