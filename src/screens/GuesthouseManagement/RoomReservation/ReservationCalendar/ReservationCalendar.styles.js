@@ -217,9 +217,6 @@ export default StyleSheet.create({
   periodText: {
     color: COLORS.grayscale_600,
   },
-  expectedCheckInText: {
-    color: COLORS.grayscale_700,
-  },
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',
