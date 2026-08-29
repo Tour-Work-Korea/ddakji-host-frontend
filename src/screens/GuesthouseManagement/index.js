@@ -388,6 +388,25 @@ const GuesthouseManagement = () => {
             <ChevronDownIcon width={16} height={16} />
           )}
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.integratedCalendarButton}
+          activeOpacity={0.8}
+          onPress={() =>
+            navigation.navigate('IntegratedCalendar', {
+              guesthouseId: effectiveGuesthouseId,
+              guesthouseName: businessName,
+            })
+          }>
+          <Text
+            style={[
+              FONTS.fs_14_semibold,
+              styles.integratedCalendarButtonText,
+            ]}
+            numberOfLines={1}>
+            통합 캘린더
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView

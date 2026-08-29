@@ -52,6 +52,7 @@ import {
   StoreRegisterEditForm,
   StoreRegisterComplete,
   GuesthouseManagement,
+  IntegratedCalendar,
   ReservationMethodSettings,
   MyMeetList,
   MyMeetDetail,
@@ -181,6 +182,10 @@ const RootNavigation = () => {
         <Stack.Screen
           name="GuesthouseManagement"
           component={GuesthouseManagement}
+        />
+        <Stack.Screen
+          name="IntegratedCalendar"
+          component={IntegratedCalendar}
         />
         <Stack.Screen
           name="ReservationMethodSettings"
