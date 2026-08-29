@@ -11,14 +11,20 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import {Calendar} from 'react-native-calendars';
 
 import {FONTS} from '@constants/fonts';
 import {COLORS} from '@constants/colors';
+import {
+  CALENDAR_COMMON_PROPS,
+  CALENDAR_THEME,
+} from '@constants/calendarConfig';
 import TimePickerModal from '@components/modals/TimePickerModal';
 import {formatLocalTimeToKorean12Hour} from '@utils/formatDate';
 
 import XBtn from '@assets/images/x_gray.svg';
 import CheckWhite from '@assets/images/check_white.svg';
+import CalendarIcon from '@assets/images/calendar_gray.svg';
 import ClockIcon from '@assets/images/clock_gray.svg';
 import PlusIcon from '@assets/images/plus_gray.svg';
 import PlusOrangeIcon from '@assets/images/plus_orange.svg';
@@ -35,6 +41,7 @@ const normalize = initialValues => {
 
   return {
     guesthouseId: initialValues?.guesthouseId ?? null,
+    eventDate: initialValues?.eventDate ?? null,
     partyStartTime: initialValues?.partyStartTime || '20:00:00',
     partyEndTime: initialValues?.partyEndTime || '20:00:00',
     applicationType: ['SAME_DAY', 'ADVANCE'].includes(
@@ -52,6 +59,28 @@ const normalize = initialValues => {
     maleNonAmount: initialValues?.maleNonAmount ?? 0,
     femaleNonAmount: initialValues?.femaleNonAmount ?? 0,
   };
+};
+
+const formatDateKey = date => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const formatEventDate = dateKey => {
+  if (!dateKey) {
+    return '날짜를 선택해주세요';
+  }
+
+  const [year, month, day] = dateKey.split('-').map(Number);
+  const dayLabel = ['일', '월', '화', '수', '목', '금', '토'][
+    new Date(year, month - 1, day).getDay()
+  ];
+  return `${year}.${String(month).padStart(2, '0')}.${String(day).padStart(
+    2,
+    '0',
+  )} (${dayLabel})`;
 };
 
 const normalizePriceOptions = (priceOptions, fallbackAmount = '') => {
@@ -128,10 +157,13 @@ const PartyBasicsModal = ({
   onSelect,
   shouldResetOnClose,
   initialValues,
+  showEventDate = false,
+  showApplicationPeriod = true,
 }) => {
   const [form, setForm] = useState(normalize(initialValues));
   const [appliedData, setAppliedData] = useState(null);
   const [timePickerType, setTimePickerType] = useState(null);
+  const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
 
   useEffect(() => {
     if (!visible) return;
@@ -152,18 +184,20 @@ const PartyBasicsModal = ({
     return !(
       !!form.partyStartTime &&
       !!form.partyEndTime &&
+      (!showEventDate || !!form.eventDate) &&
       ['SAME_DAY', 'ADVANCE'].includes(form.applicationType) &&
       Number(form.minAttendees) > 0 &&
       Number(form.maxAttendees) >= Number(form.minAttendees) &&
       ['FREE', 'PAID'].includes(form.chargeType) &&
       (form.chargeType === 'FREE' || hasValidPriceOptions)
     );
-  }, [form]);
+  }, [form, showEventDate]);
 
   const handleModalClose = () => {
     if (shouldResetOnClose) {
       setForm(appliedData || normalize(initialValues));
     }
+    setIsDatePickerVisible(false);
     onClose?.();
   };
 
@@ -254,7 +288,37 @@ const PartyBasicsModal = ({
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             automaticallyAdjustKeyboardInsets>
-            <Text style={[FONTS.fs_16_medium, styles.label]}>진행 시간</Text>
+            {showEventDate ? (
+              <>
+                <Text style={[FONTS.fs_16_medium, styles.label]}>진행 날짜</Text>
+                <TouchableOpacity
+                  style={styles.dateInput}
+                  activeOpacity={0.72}
+                  accessibilityRole="button"
+                  accessibilityLabel="이벤트 진행 날짜 선택"
+                  onPress={() => setIsDatePickerVisible(true)}>
+                  <Text
+                    style={[
+                      FONTS.fs_14_medium,
+                      form.eventDate
+                        ? styles.dateInputText
+                        : styles.dateInputPlaceholder,
+                    ]}>
+                    {formatEventDate(form.eventDate)}
+                  </Text>
+                  <CalendarIcon width={22} height={22} />
+                </TouchableOpacity>
+              </>
+            ) : null}
+
+            <Text
+              style={[
+                FONTS.fs_16_medium,
+                styles.label,
+                showEventDate && styles.sectionLabel,
+              ]}>
+              진행 시간
+            </Text>
             <View style={styles.timeRow}>
               {['partyStartTime', 'partyEndTime'].map(key => (
                 <TouchableOpacity
@@ -269,29 +333,44 @@ const PartyBasicsModal = ({
               ))}
             </View>
 
-            <Text style={[FONTS.fs_16_medium, styles.label, styles.sectionLabel]}>
-              신청 기간
-            </Text>
-            <View style={styles.radioGroup}>
-              <RadioOption
-                style={styles.applicationTypeOption}
-                textStyle={FONTS.fs_14_medium}
-                selected={form.applicationType === 'SAME_DAY'}
-                label="당일 신청만 가능"
-                onPress={() =>
-                  setForm(prev => ({...prev, applicationType: 'SAME_DAY'}))
-                }
-              />
-              <RadioOption
-                style={styles.applicationTypeOption}
-                textStyle={FONTS.fs_14_medium}
-                selected={form.applicationType === 'ADVANCE'}
-                label="사전 신청 가능 (7일 전부터 신청 가능)"
-                onPress={() =>
-                  setForm(prev => ({...prev, applicationType: 'ADVANCE'}))
-                }
-              />
-            </View>
+            {showApplicationPeriod ? (
+              <>
+                <Text
+                  style={[
+                    FONTS.fs_16_medium,
+                    styles.label,
+                    styles.sectionLabel,
+                  ]}>
+                  신청 기간
+                </Text>
+                <View style={styles.radioGroup}>
+                  <RadioOption
+                    style={styles.applicationTypeOption}
+                    textStyle={FONTS.fs_14_medium}
+                    selected={form.applicationType === 'SAME_DAY'}
+                    label="당일 신청만 가능"
+                    onPress={() =>
+                      setForm(prev => ({
+                        ...prev,
+                        applicationType: 'SAME_DAY',
+                      }))
+                    }
+                  />
+                  <RadioOption
+                    style={styles.applicationTypeOption}
+                    textStyle={FONTS.fs_14_medium}
+                    selected={form.applicationType === 'ADVANCE'}
+                    label="사전 신청 가능 (7일 전부터 신청 가능)"
+                    onPress={() =>
+                      setForm(prev => ({
+                        ...prev,
+                        applicationType: 'ADVANCE',
+                      }))
+                    }
+                  />
+                </View>
+              </>
+            ) : null}
 
             <Text style={[FONTS.fs_16_medium, styles.label, styles.sectionLabel]}>
               참여 인원
@@ -448,6 +527,58 @@ const PartyBasicsModal = ({
             setTimePickerType(null);
           }}
         />
+
+        <Modal
+          visible={isDatePickerVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setIsDatePickerVisible(false)}>
+          <View style={styles.datePickerOverlay}>
+            <Pressable
+              style={StyleSheet.absoluteFill}
+              onPress={() => setIsDatePickerVisible(false)}
+            />
+            <View style={styles.datePickerCard}>
+              <View style={styles.datePickerHeader}>
+                <Text style={[FONTS.fs_18_semibold, styles.datePickerTitle]}>
+                  진행 날짜 선택
+                </Text>
+                <TouchableOpacity
+                  style={styles.datePickerCloseButton}
+                  onPress={() => setIsDatePickerVisible(false)}>
+                  <XBtn width={22} height={22} />
+                </TouchableOpacity>
+              </View>
+              <Calendar
+                {...CALENDAR_COMMON_PROPS}
+                current={form.eventDate || formatDateKey(new Date())}
+                minDate={formatDateKey(new Date())}
+                markedDates={
+                  form.eventDate
+                    ? {
+                        [form.eventDate]: {
+                          selected: true,
+                          selectedColor: COLORS.primary_orange,
+                        },
+                      }
+                    : {}
+                }
+                onDayPress={day => {
+                  setForm(prev => ({...prev, eventDate: day.dateString}));
+                  setIsDatePickerVisible(false);
+                }}
+                theme={{
+                  ...CALENDAR_THEME,
+                  selectedDayBackgroundColor: COLORS.primary_orange,
+                  selectedDayTextColor: COLORS.grayscale_0,
+                  textDayFontFamily: FONTS.fs_14_medium.fontFamily,
+                  textMonthFontFamily: FONTS.fs_16_semibold.fontFamily,
+                  textDayHeaderFontFamily: FONTS.fs_12_medium.fontFamily,
+                }}
+              />
+            </View>
+          </View>
+        </Modal>
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -496,6 +627,23 @@ const styles = StyleSheet.create({
   timeRow: {
     flexDirection: 'row',
     gap: 12,
+  },
+  dateInput: {
+    height: 50,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: COLORS.grayscale_200,
+    borderRadius: 12,
+    backgroundColor: COLORS.grayscale_0,
+  },
+  dateInputText: {
+    color: COLORS.grayscale_900,
+  },
+  dateInputPlaceholder: {
+    color: COLORS.grayscale_400,
   },
   timeInput: {
     flex: 1,
@@ -566,6 +714,32 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 24,
     alignItems: 'flex-end',
+  },
+  datePickerOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    backgroundColor: COLORS.modal_background,
+  },
+  datePickerCard: {
+    padding: 18,
+    borderRadius: 20,
+    backgroundColor: COLORS.grayscale_0,
+  },
+  datePickerHeader: {
+    height: 36,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  datePickerTitle: {
+    color: COLORS.grayscale_900,
+  },
+  datePickerCloseButton: {
+    position: 'absolute',
+    right: 0,
+    padding: 4,
   },
   submitButton: {
     paddingHorizontal: 12,

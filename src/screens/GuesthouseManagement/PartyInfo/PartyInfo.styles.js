@@ -47,6 +47,10 @@ export default StyleSheet.create({
     borderRadius: 16,
     backgroundColor: COLORS.grayscale_0,
   },
+  endedCardContainer: {
+    borderColor: COLORS.grayscale_200,
+    backgroundColor: COLORS.grayscale_100,
+  },
   card: {
     flexDirection: 'row',
     alignItems: 'stretch',
@@ -58,6 +62,16 @@ export default StyleSheet.create({
     marginRight: 14,
     backgroundColor: COLORS.grayscale_100,
   },
+  thumbnailPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  thumbnailPlaceholderText: {
+    color: COLORS.grayscale_400,
+  },
+  endedThumbnail: {
+    opacity: 0.5,
+  },
   cardContent: {
     flex: 1,
     minWidth: 0,
@@ -65,10 +79,57 @@ export default StyleSheet.create({
   cardTop: {
     flex: 1,
   },
+  contentTypeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
+  },
+  dateEventBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+    backgroundColor: COLORS.secondary_blue,
+  },
+  dateEventBadgeText: {
+    color: COLORS.primary_blue,
+  },
+  endedTypeBadge: {
+    backgroundColor: COLORS.grayscale_200,
+  },
+  endedTypeBadgeText: {
+    color: COLORS.grayscale_500,
+  },
+  testBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+    backgroundColor: COLORS.grayscale_100,
+  },
+  testBadgeText: {
+    color: COLORS.grayscale_500,
+  },
+  endedBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+    backgroundColor: COLORS.grayscale_200,
+  },
+  endedBadgeText: {
+    color: COLORS.grayscale_600,
+  },
   partyTitle: {
     color: COLORS.grayscale_900,
     lineHeight: 22,
     marginBottom: 4,
+  },
+  endedPartyTitle: {
+    color: COLORS.grayscale_600,
+  },
+  eventScheduleText: {
+    marginBottom: 6,
+    color: COLORS.grayscale_600,
+    lineHeight: 17,
   },
   attendanceRow: {
     flexDirection: 'row',

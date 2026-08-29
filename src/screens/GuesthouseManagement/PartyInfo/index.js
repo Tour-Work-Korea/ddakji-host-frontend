@@ -17,6 +17,15 @@ import { FONTS } from '@constants/fonts';
 import { COLORS } from '@constants/colors';
 import AlertModal from '@components/modals/AlertModal';
 import hostMeetApi from '@utils/api/hostMeetApi';
+import {
+  ensureEndedLocalDateEventSample,
+  removeLocalDateEvent,
+  updateLocalDateEvent,
+} from '@utils/localDateEventStorage';
+import {
+  formatLocalDateToDotWithDay,
+  formatLocalTimeToKorean12Hour,
+} from '@utils/formatDate';
 import styles from './PartyInfo.styles';
 
 import PeopleIcon from '@assets/images/people_gray.svg';
@@ -25,6 +34,59 @@ import TrashIcon from '@assets/images/delete_gray.svg';
 import PlusIcon from '@assets/images/plus_white.svg';
 
 const MENU_TOAST_TOP_OFFSET = Platform.OS === 'ios' ? 220 : 190;
+
+const getPartyKey = party => party?.localEventId ?? party?.templateId;
+
+const getPartyImageUrl = party => {
+  if (party?.partyImageUrl) {
+    return party.partyImageUrl;
+  }
+
+  const images = Array.isArray(party?.partyImages) ? party.partyImages : [];
+  return (
+    images.find(image => image?.isThumbnail)?.imageUrl ??
+    images[0]?.imageUrl ??
+    ''
+  );
+};
+
+const getDateEventScheduleText = party => {
+  const dateKey = String(
+    party?.partyStartDateTime ?? party?.eventDate ?? '',
+  ).split('T')[0];
+  if (!dateKey) {
+    return '';
+  }
+
+  const startTime = formatLocalTimeToKorean12Hour(party?.partyStartTime);
+  return `${formatLocalDateToDotWithDay(dateKey)} · ${startTime}`;
+};
+
+const isEndedDateEvent = party => {
+  if (party?.scheduleType !== 'DATE_EVENT') {
+    return false;
+  }
+  if (party?.eventStatus === 'ENDED') {
+    return true;
+  }
+
+  const dateKey = String(
+    party?.partyStartDateTime ?? party?.eventDate ?? '',
+  ).split('T')[0];
+  const endTime = party?.partyEndTime;
+  if (!dateKey || !endTime) {
+    return false;
+  }
+
+  const endDateTime = new Date(`${dateKey}T${endTime}`);
+  return !Number.isNaN(endDateTime.getTime()) && endDateTime <= new Date();
+};
+
+const moveEndedEventsToBottom = parties =>
+  [...parties].sort(
+    (first, second) =>
+      Number(isEndedDateEvent(first)) - Number(isEndedDateEvent(second)),
+  );
 
 const getPriceOptionText = party => {
   if (party?.chargeType === 'FREE') {
@@ -66,8 +128,13 @@ const PartyInfo = ({ guesthouseId }) => {
   const [updatingTemplateIds, setUpdatingTemplateIds] = useState([]);
 
   const fetchParties = useCallback(async () => {
+    let localEvents = [];
     try {
       setLoading(true);
+      if (__DEV__) {
+        localEvents = await ensureEndedLocalDateEventSample(guesthouseId);
+      }
+
       const response = await hostMeetApi.getMyParties();
       const rawParties = response?.data;
       const allParties = Array.isArray(rawParties)
@@ -93,10 +160,10 @@ const PartyInfo = ({ guesthouseId }) => {
           }
         }),
       );
-      setParties(resolvedParties);
+      setParties(moveEndedEventsToBottom([...localEvents, ...resolvedParties]));
     } catch (error) {
       console.log('Error fetching parties:', error);
-      setParties([]);
+      setParties(moveEndedEventsToBottom(localEvents));
     } finally {
       setLoading(false);
     }
@@ -111,43 +178,80 @@ const PartyInfo = ({ guesthouseId }) => {
   );
 
   const handleRegister = () => {
-    navigation.navigate('MyMeetAdd', { guesthouseId });
+    navigation.navigate('MyMeetTypeSelect', {guesthouseId});
   };
 
-  const handleEdit = templateId => {
-    navigation.navigate('MyMeetAdd', { templateId, guesthouseId });
+  const handleEdit = party => {
+    if (party?.isLocalTestEvent) {
+      navigation.navigate('MyMeetAdd', {
+        localEventId: party.localEventId,
+        guesthouseId,
+        scheduleType: 'DATE_EVENT',
+      });
+      return;
+    }
+    navigation.navigate('MyMeetAdd', {
+      templateId: party.templateId,
+      guesthouseId,
+    });
   };
 
-  const handleDelete = templateId => {
-    setDeleteTargetId(templateId);
+  const handleDelete = party => {
+    setDeleteTargetId({
+      id: getPartyKey(party),
+      isLocal: Boolean(party?.isLocalTestEvent),
+    });
   };
 
-  const handleOpenApplyToggleModal = (templateId, nextValue) => {
+  const handleReuse = party => {
+    if (!party?.isLocalTestEvent) {
+      return;
+    }
+
+    navigation.navigate('MyMeetAdd', {
+      reuseLocalEventId: party.localEventId,
+      guesthouseId,
+      scheduleType: 'DATE_EVENT',
+    });
+  };
+
+  const handleOpenApplyToggleModal = (party, nextValue) => {
+    const partyId = getPartyKey(party);
     if (
-      templateId == null ||
-      updatingTemplateIds.some(id => String(id) === String(templateId))
+      partyId == null ||
+      updatingTemplateIds.some(id => String(id) === String(partyId))
     ) {
       return;
     }
 
-    setApplyToggleTarget({templateId, nextValue});
+    setApplyToggleTarget({
+      partyId,
+      nextValue,
+      isLocal: Boolean(party?.isLocalTestEvent),
+    });
   };
 
-  const handleToggleApplyOpen = async (templateId, nextValue) => {
+  const handleToggleApplyOpen = async (partyId, nextValue, isLocal) => {
     if (
-      templateId == null ||
-      updatingTemplateIds.some(id => String(id) === String(templateId))
+      partyId == null ||
+      updatingTemplateIds.some(id => String(id) === String(partyId))
     ) {
       return;
     }
 
-    setUpdatingTemplateIds(prev => [...prev, templateId]);
+    setUpdatingTemplateIds(prev => [...prev, partyId]);
 
     try {
-      await hostMeetApi.updatePartyApplicationOpen(templateId, nextValue);
+      if (isLocal) {
+        await updateLocalDateEvent(guesthouseId, partyId, {
+          isApplyOpen: nextValue,
+        });
+      } else {
+        await hostMeetApi.updatePartyApplicationOpen(partyId, nextValue);
+      }
       setParties(prev =>
         prev.map(party =>
-          String(party.templateId) === String(templateId)
+          String(getPartyKey(party)) === String(partyId)
             ? {...party, isApplyOpen: nextValue, isApply: nextValue}
             : party,
         ),
@@ -171,7 +275,7 @@ const PartyInfo = ({ guesthouseId }) => {
       });
     } finally {
       setUpdatingTemplateIds(prev =>
-        prev.filter(id => String(id) !== String(templateId)),
+        prev.filter(id => String(id) !== String(partyId)),
       );
     }
   };
@@ -182,7 +286,11 @@ const PartyInfo = ({ guesthouseId }) => {
     }
 
     try {
-      await hostMeetApi.deleteParty(deleteTargetId);
+      if (deleteTargetId.isLocal) {
+        await removeLocalDateEvent(guesthouseId, deleteTargetId.id);
+      } else {
+        await hostMeetApi.deleteParty(deleteTargetId.id);
+      }
       setDeleteTargetId(null);
       fetchParties();
     } catch (error) {
@@ -197,9 +305,9 @@ const PartyInfo = ({ guesthouseId }) => {
       return;
     }
 
-    const {templateId, nextValue} = applyToggleTarget;
+    const {partyId, nextValue, isLocal} = applyToggleTarget;
     setApplyToggleTarget(null);
-    handleToggleApplyOpen(templateId, nextValue);
+    handleToggleApplyOpen(partyId, nextValue, isLocal);
   };
 
   if (loading) {
@@ -227,30 +335,95 @@ const PartyInfo = ({ guesthouseId }) => {
 
   const renderItem = ({ item }) => {
     const isApplyOpen = Boolean(item?.isApplyOpen ?? item?.isApply);
+    const isDateEvent = item?.scheduleType === 'DATE_EVENT';
+    const isEnded = isEndedDateEvent(item);
     const priceOptionText = getPriceOptionText(item);
+    const partyImageUrl = getPartyImageUrl(item);
+    const partyKey = getPartyKey(item);
     const isUpdating = updatingTemplateIds.some(
-      id => String(id) === String(item.templateId),
+      id => String(id) === String(partyKey),
     );
 
     return (
-      <View style={styles.cardContainer}>
+      <View
+        style={[
+          styles.cardContainer,
+          isEnded && styles.endedCardContainer,
+        ]}>
         <View style={styles.card}>
-          <Image
-            source={{ uri: item.partyImageUrl }}
-            style={styles.thumbnail}
-            resizeMode="cover"
-          />
+          {partyImageUrl ? (
+            <Image
+              source={{uri: partyImageUrl}}
+              style={[styles.thumbnail, isEnded && styles.endedThumbnail]}
+              resizeMode="cover"
+            />
+          ) : (
+            <View
+              style={[
+                styles.thumbnail,
+                styles.thumbnailPlaceholder,
+                isEnded && styles.endedThumbnail,
+              ]}>
+              <Text style={[FONTS.fs_12_medium, styles.thumbnailPlaceholderText]}>
+                이벤트
+              </Text>
+            </View>
+          )}
           <View style={styles.cardContent}>
             <View style={styles.cardTop}>
+              {isDateEvent ? (
+                <View style={styles.contentTypeRow}>
+                  <View
+                    style={[
+                      styles.dateEventBadge,
+                      isEnded && styles.endedTypeBadge,
+                    ]}>
+                    <Text
+                      style={[
+                        FONTS.fs_12_semibold,
+                        styles.dateEventBadgeText,
+                        isEnded && styles.endedTypeBadgeText,
+                      ]}>
+                      이벤트
+                    </Text>
+                  </View>
+                  {item.isLocalTestEvent ? (
+                    <View style={styles.testBadge}>
+                      <Text
+                        style={[FONTS.fs_12_medium, styles.testBadgeText]}>
+                        테스트
+                      </Text>
+                    </View>
+                  ) : null}
+                  {isEnded ? (
+                    <View style={styles.endedBadge}>
+                      <Text style={[FONTS.fs_12_semibold, styles.endedBadgeText]}>
+                        종료
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+              ) : null}
               <Text
-                style={[FONTS.fs_16_semibold, styles.partyTitle]}
+                style={[
+                  FONTS.fs_16_semibold,
+                  styles.partyTitle,
+                  isEnded && styles.endedPartyTitle,
+                ]}
                 numberOfLines={2}>
                 {item.partyTitle}
               </Text>
+              {isDateEvent ? (
+                <Text
+                  style={[FONTS.fs_12_medium, styles.eventScheduleText]}
+                  numberOfLines={2}>
+                  {getDateEventScheduleText(item)}
+                </Text>
+              ) : null}
               <View style={styles.attendanceRow}>
                 <PeopleIcon width={14} height={14} />
                 <Text style={[FONTS.fs_12_medium, styles.attendanceText]}>
-                  최대인원 {item.maxAttendance}명
+                  최대인원 {item.maxAttendance ?? item.maxAttendees}명
                 </Text>
               </View>
               {priceOptionText ? (
@@ -268,9 +441,9 @@ const PartyInfo = ({ guesthouseId }) => {
           <TouchableOpacity
             style={styles.actionButton}
             activeOpacity={0.8}
-            onPress={() => handleEdit(item.templateId)}>
+            onPress={() => (isEnded ? handleReuse(item) : handleEdit(item))}>
             <Text style={[FONTS.fs_14_medium, styles.actionButtonText]}>
-              수정
+              {isEnded ? '다시 등록' : '수정'}
             </Text>
             <PencilIcon width={18} height={18} />
           </TouchableOpacity>
@@ -280,7 +453,7 @@ const PartyInfo = ({ guesthouseId }) => {
           <TouchableOpacity
             style={styles.actionButton}
             activeOpacity={0.8}
-            onPress={() => handleDelete(item.templateId)}>
+            onPress={() => handleDelete(item)}>
             <Text style={[FONTS.fs_14_medium, styles.actionButtonText]}>
               삭제
             </Text>
@@ -288,46 +461,51 @@ const PartyInfo = ({ guesthouseId }) => {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.applicationSetting}>
-          <View style={styles.applicationSettingTextWrap}>
-            <View style={styles.applicationSettingLabelRow}>
-              <Text
-                style={[FONTS.fs_14_semibold, styles.applicationSettingTitle]}>
-                참여 신청
-              </Text>
+        {!isDateEvent ? (
+          <View style={styles.applicationSetting}>
+            <View style={styles.applicationSettingTextWrap}>
+              <View style={styles.applicationSettingLabelRow}>
+                <Text
+                  style={[
+                    FONTS.fs_14_semibold,
+                    styles.applicationSettingTitle,
+                  ]}>
+                  참여 신청
+                </Text>
+                <Text
+                  style={[
+                    FONTS.fs_12_semibold,
+                    isApplyOpen
+                      ? styles.applicationStatusOpen
+                      : styles.applicationStatusClosed,
+                  ]}>
+                  {isApplyOpen ? '신청 받는 중' : '정보만 노출'}
+                </Text>
+              </View>
               <Text
                 style={[
-                  FONTS.fs_12_semibold,
-                  isApplyOpen
-                    ? styles.applicationStatusOpen
-                    : styles.applicationStatusClosed,
+                  FONTS.fs_12_medium,
+                  styles.applicationSettingDescription,
                 ]}>
-                {isApplyOpen ? '신청 받는 중' : '정보만 노출'}
+                {isApplyOpen
+                  ? '게스트가 콘텐츠를 확인하고 참여 신청할 수 있어요.'
+                  : '콘텐츠 정보만 보여주고 신규 신청은 받지 않아요.'}
               </Text>
             </View>
-            <Text
-              style={[
-                FONTS.fs_12_medium,
-                styles.applicationSettingDescription,
-              ]}>
-              {isApplyOpen
-                ? '게스트가 콘텐츠를 확인하고 참여 신청할 수 있어요.'
-                : '콘텐츠 정보만 보여주고 신규 신청은 받지 않아요.'}
-            </Text>
+            <Switch
+              value={isApplyOpen}
+              onValueChange={nextValue =>
+                handleOpenApplyToggleModal(item, nextValue)
+              }
+              disabled={isUpdating}
+              trackColor={{
+                false: COLORS.grayscale_300,
+                true: COLORS.primary_orange,
+              }}
+              thumbColor={COLORS.grayscale_0}
+            />
           </View>
-          <Switch
-            value={isApplyOpen}
-            onValueChange={nextValue =>
-              handleOpenApplyToggleModal(item.templateId, nextValue)
-            }
-            disabled={isUpdating}
-            trackColor={{
-              false: COLORS.grayscale_300,
-              true: COLORS.primary_orange,
-            }}
-            thumbColor={COLORS.grayscale_0}
-          />
-        </View>
+        ) : null}
       </View>
     );
   };
@@ -337,7 +515,7 @@ const PartyInfo = ({ guesthouseId }) => {
       <FlatList
         data={parties}
         keyExtractor={(item, index) =>
-          item.templateId ? String(item.templateId) : String(index)
+          getPartyKey(item) ? String(getPartyKey(item)) : String(index)
         }
         contentContainerStyle={styles.listContent}
         renderItem={renderItem}
