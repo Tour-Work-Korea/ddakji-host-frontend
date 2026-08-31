@@ -1,4 +1,6 @@
 
+source 'https://github.com/CocoaPods/Specs.git'
+
 install! 'cocoapods', :disable_input_output_paths => true
 
 # Resolve react_native_pods.rb with node to allow for hoisting
