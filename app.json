@@ -2,6 +2,7 @@
   "name": "ddakjiHostApp",
   "displayName": "Ddakji Host",
   "react-native-google-mobile-ads": {
+    "android_app_id": "ca-app-pub-6098454400067335~9363904603",
     "ios_app_id": "ca-app-pub-6098454400067335~9484239434"
   }
 }

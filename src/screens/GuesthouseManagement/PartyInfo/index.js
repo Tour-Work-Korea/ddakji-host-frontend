@@ -26,11 +26,43 @@ import PlusIcon from '@assets/images/plus_white.svg';
 
 const MENU_TOAST_TOP_OFFSET = Platform.OS === 'ios' ? 220 : 190;
 
+const getPriceOptionText = party => {
+  if (party?.chargeType === 'FREE') {
+    return '무료';
+  }
+
+  const options = Array.isArray(party?.priceOptions)
+    ? [...party.priceOptions]
+      .sort((a, b) => {
+        const aOrder = Number(a?.displayOrder);
+        const bOrder = Number(b?.displayOrder);
+        return (Number.isFinite(aOrder) ? aOrder : 0) -
+          (Number.isFinite(bOrder) ? bOrder : 0);
+      })
+      .filter(option => option?.optionName && Number(option?.amount) >= 0)
+    : [];
+
+  if (options.length > 0) {
+    return options
+      .map(
+        option =>
+          `${option.optionName} ${Number(option.amount).toLocaleString('ko-KR')}원`,
+      )
+      .join(' · ');
+  }
+
+  const fallbackAmount = Number(party?.amount);
+  return Number.isFinite(fallbackAmount) && fallbackAmount > 0
+    ? `기본 참가비 ${fallbackAmount.toLocaleString('ko-KR')}원`
+    : '';
+};
+
 const PartyInfo = ({ guesthouseId }) => {
   const navigation = useNavigation();
   const [parties, setParties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deleteTargetId, setDeleteTargetId] = useState(null);
+  const [applyToggleTarget, setApplyToggleTarget] = useState(null);
   const [updatingTemplateIds, setUpdatingTemplateIds] = useState([]);
 
   const fetchParties = useCallback(async () => {
@@ -90,6 +122,17 @@ const PartyInfo = ({ guesthouseId }) => {
     setDeleteTargetId(templateId);
   };
 
+  const handleOpenApplyToggleModal = (templateId, nextValue) => {
+    if (
+      templateId == null ||
+      updatingTemplateIds.some(id => String(id) === String(templateId))
+    ) {
+      return;
+    }
+
+    setApplyToggleTarget({templateId, nextValue});
+  };
+
   const handleToggleApplyOpen = async (templateId, nextValue) => {
     if (
       templateId == null ||
@@ -112,8 +155,8 @@ const PartyInfo = ({ guesthouseId }) => {
       Toast.show({
         type: 'success',
         text1: nextValue
-          ? '이제 파티 참여 신청을 받을 수 있어요.'
-          : '이제 파티 정보만 보여줘요.',
+          ? '이제 콘텐츠 참여 신청을 받을 수 있어요.'
+          : '이제 콘텐츠 정보만 보여줘요.',
         position: 'top',
         topOffset: MENU_TOAST_TOP_OFFSET,
       });
@@ -122,7 +165,7 @@ const PartyInfo = ({ guesthouseId }) => {
         type: 'error',
         text1:
           error?.response?.data?.message ||
-          '파티 신청 설정 변경 중 오류가 발생했어요.',
+          '콘텐츠 신청 설정 변경 중 오류가 발생했어요.',
         position: 'top',
         topOffset: MENU_TOAST_TOP_OFFSET,
       });
@@ -149,6 +192,16 @@ const PartyInfo = ({ guesthouseId }) => {
     }
   };
 
+  const confirmApplyToggle = () => {
+    if (!applyToggleTarget) {
+      return;
+    }
+
+    const {templateId, nextValue} = applyToggleTarget;
+    setApplyToggleTarget(null);
+    handleToggleApplyOpen(templateId, nextValue);
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -161,11 +214,11 @@ const PartyInfo = ({ guesthouseId }) => {
     return (
       <View style={styles.emptyContainer}>
         <Text style={[FONTS.fs_20_medium, styles.emptyText]}>
-          게스트하우스의 특별한 파티를{'\n'}게딱지에 소개해보세요!
+          게스트하우스의 특별한 콘텐츠를{'\n'}게딱지에 소개해보세요!
         </Text>
         <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
           <Text style={[FONTS.fs_14_medium, styles.registerButtonText]}>
-            파티 등록하기
+            콘텐츠 등록하기
           </Text>
         </TouchableOpacity>
       </View>
@@ -174,6 +227,7 @@ const PartyInfo = ({ guesthouseId }) => {
 
   const renderItem = ({ item }) => {
     const isApplyOpen = Boolean(item?.isApplyOpen ?? item?.isApply);
+    const priceOptionText = getPriceOptionText(item);
     const isUpdating = updatingTemplateIds.some(
       id => String(id) === String(item.templateId),
     );
@@ -199,6 +253,13 @@ const PartyInfo = ({ guesthouseId }) => {
                   최대인원 {item.maxAttendance}명
                 </Text>
               </View>
+              {priceOptionText ? (
+                <Text
+                  style={[FONTS.fs_12_medium, styles.priceOptionText]}
+                  numberOfLines={2}>
+                  {priceOptionText}
+                </Text>
+              ) : null}
             </View>
           </View>
         </View>
@@ -250,14 +311,14 @@ const PartyInfo = ({ guesthouseId }) => {
                 styles.applicationSettingDescription,
               ]}>
               {isApplyOpen
-                ? '게스트가 파티를 확인하고 참여 신청할 수 있어요.'
-                : '파티 정보만 보여주고 신규 신청은 받지 않아요.'}
+                ? '게스트가 콘텐츠를 확인하고 참여 신청할 수 있어요.'
+                : '콘텐츠 정보만 보여주고 신규 신청은 받지 않아요.'}
             </Text>
           </View>
           <Switch
             value={isApplyOpen}
             onValueChange={nextValue =>
-              handleToggleApplyOpen(item.templateId, nextValue)
+              handleOpenApplyToggleModal(item.templateId, nextValue)
             }
             disabled={isUpdating}
             trackColor={{
@@ -288,15 +349,35 @@ const PartyInfo = ({ guesthouseId }) => {
         activeOpacity={0.8}
         onPress={handleRegister}>
         <Text style={[FONTS.fs_14_medium, styles.addButtonText]}>
-          파티 등록하기
+          콘텐츠 등록하기
         </Text>
         <PlusIcon width={24} height={24} />
       </TouchableOpacity>
 
       <AlertModal
+        visible={applyToggleTarget !== null}
+        title={
+          applyToggleTarget?.nextValue
+            ? '참여 신청을 받을까요?'
+            : '참여 신청을 받지 않을까요?'
+        }
+        message={
+          applyToggleTarget?.nextValue
+            ? '게스트가 콘텐츠를 확인하고 참여 신청할 수 있어요.'
+            : '콘텐츠 정보는 계속 노출되지만 신규 참여 신청은 받을 수 없어요.'
+        }
+        buttonText={applyToggleTarget?.nextValue ? '신청 받기' : '신청 마감하기'}
+        buttonText2="돌아가기"
+        color={COLORS.primary_orange}
+        onPress={confirmApplyToggle}
+        onPress2={() => setApplyToggleTarget(null)}
+        onRequestClose={() => setApplyToggleTarget(null)}
+      />
+
+      <AlertModal
         visible={deleteTargetId !== null}
         title="삭제 확인"
-        message="정말로 이 파티를 삭제하시겠습니까?"
+        message="정말로 이 콘텐츠를 삭제하시겠습니까?"
         buttonText="삭제"
         buttonText2="취소"
         onPress={confirmDelete}

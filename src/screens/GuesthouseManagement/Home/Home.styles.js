@@ -217,6 +217,10 @@ export default StyleSheet.create({
     color: COLORS.grayscale_700,
     marginBottom: 4,
   },
+  expectedCheckInText: {
+    color: COLORS.grayscale_700,
+    marginBottom: 4,
+  },
   reservationButton: {
     position: 'absolute',
     right: 16,

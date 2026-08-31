@@ -163,7 +163,7 @@ const PartyAnnouncementsModal = ({
                         ),
                       )
                     }
-                    placeholder="예) 본 파티는 숙박객만 참가가능합니다."
+                    placeholder="예) 본 콘텐츠는 숙박객만 참가 가능합니다."
                     placeholderTextColor={COLORS.grayscale_400}
                     style={[FONTS.fs_14_regular, styles.announcementInput]}
                     maxLength={ANNOUNCEMENT_MAX}

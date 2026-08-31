@@ -119,7 +119,7 @@ const PastReservationList = () => {
   const guesthouseId = route?.params?.guesthouseId ?? null;
   const templateId = route?.params?.templateId ?? null;
   const partyId = route?.params?.partyId ?? null;
-  const partyTitle = route?.params?.partyTitle ?? '파티 이름 없음';
+  const partyTitle = route?.params?.partyTitle ?? '콘텐츠 이름 없음';
   const initialSelectedDate = route?.params?.selectedDate ?? yesterday;
   const [selectedDate, setSelectedDate] = useState(initialSelectedDate);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -440,7 +440,7 @@ const PastReservationList = () => {
         ) : !scopedPartyId ? (
           <View style={styles.feedbackContainer}>
             <Text style={[FONTS.fs_14_medium, styles.feedbackText]}>
-              선택한 날짜에 해당 파티가 없어요.
+              선택한 날짜에 해당 콘텐츠가 없어요.
             </Text>
           </View>
         ) : filteredReservations.length === 0 ? (

@@ -106,6 +106,7 @@ const styles = StyleSheet.create({
   },
   pendingActionButton: {
     flex: 1,
+    paddingHorizontal: 0,
     marginRight: 4,
   },
   pendingActionButtonLast: {

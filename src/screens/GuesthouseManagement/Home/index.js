@@ -13,6 +13,7 @@ import AlertModal from '@components/modals/AlertModal';
 import ReservationCancelModal from '@components/modals/HostMy/Guesthouse/ReservationCancelModal';
 import Toast from 'react-native-toast-message';
 import styles from './Home.styles';
+import { formatLocalTimeToHourMinute } from '@utils/formatDate';
 
 import ChevronRightIcon from '@assets/images/chevron_right_gray.svg';
 import PhoneIcon from '@assets/images/phone_black.svg';
@@ -498,6 +499,17 @@ const Home = ({ reservationMethod = 'closed', pendingReservationPolicyRequest, g
                   {formatDateWithNights(reservation.checkInDate, reservation.checkOutDate)}
                 </Text>
               )}
+
+              {formatLocalTimeToHourMinute(reservation.expectedCheckInTime) ? (
+                <Text
+                  style={[
+                    FONTS.fs_12_medium,
+                    styles.expectedCheckInText,
+                  ]}>
+                  예상 체크인{' '}
+                  {formatLocalTimeToHourMinute(reservation.expectedCheckInTime)}
+                </Text>
+              ) : null}
 
               {selectedTab === 'TODAY_STAYING' ? (
                 <View style={styles.phoneButtonWrapper}>

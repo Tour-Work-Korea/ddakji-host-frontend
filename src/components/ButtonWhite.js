@@ -76,7 +76,7 @@ const ButtonWhite = ({
 const styles = StyleSheet.create({
   button: {
     backgroundColor: COLORS.grayscale_200,
-    paddingVertical: 10,
+    paddingVertical: 0,
     paddingHorizontal: 20,
     flexDirection: 'row',
     height: 40,

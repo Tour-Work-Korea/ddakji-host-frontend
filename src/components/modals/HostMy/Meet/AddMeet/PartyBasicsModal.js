@@ -21,7 +21,9 @@ import XBtn from '@assets/images/x_gray.svg';
 import CheckWhite from '@assets/images/check_white.svg';
 import ClockIcon from '@assets/images/clock_gray.svg';
 import PlusIcon from '@assets/images/plus_gray.svg';
+import PlusOrangeIcon from '@assets/images/plus_orange.svg';
 import MinusIcon from '@assets/images/minus_gray.svg';
+import DeleteIcon from '@assets/images/delete_gray.svg';
 import DisabledRadioButton from '@assets/images/radio_button_disabled.svg';
 import EnabledRadioButton from '@assets/images/radio_button_enabled.svg';
 
@@ -45,10 +47,32 @@ const normalize = initialValues => {
     isGuest: initialValues?.isGuest ?? true,
     chargeType,
     amount: chargeType === 'PAID' ? amount : 0,
+    priceOptions: normalizePriceOptions(initialValues?.priceOptions, amount),
     femaleAmount: initialValues?.femaleAmount ?? 0,
     maleNonAmount: initialValues?.maleNonAmount ?? 0,
     femaleNonAmount: initialValues?.femaleNonAmount ?? 0,
   };
+};
+
+const normalizePriceOptions = (priceOptions, fallbackAmount = '') => {
+  const normalized = Array.isArray(priceOptions)
+    ? priceOptions
+      .map((option, index) => ({
+        ...(option?.id != null ? {id: option.id} : {}),
+        optionName: String(option?.optionName ?? '').trim(),
+        amount: option?.amount ?? '',
+        displayOrder: Number.isFinite(Number(option?.displayOrder))
+          ? Number(option.displayOrder)
+          : index,
+      }))
+      .filter(option => option.optionName || option.amount !== '')
+      .sort((a, b) => a.displayOrder - b.displayOrder)
+      .map((option, index) => ({...option, displayOrder: index}))
+    : [];
+
+  return normalized.length > 0
+    ? normalized
+    : [{optionName: '기본 참가비', amount: fallbackAmount || '', displayOrder: 0}];
 };
 
 const PillSubmitButton = ({disabled, onPress}) => (
@@ -85,23 +109,6 @@ const formatWithComma = (num) => {
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 };
 
-const PriceInput = ({value, onChange}) => (
-  <View style={styles.priceInputContainer}>
-    <TextInput
-      style={styles.priceInput}
-      keyboardType="numeric"
-      value={formatWithComma(value)}
-      onChangeText={text => {
-        const cleaned = text.replace(/[^0-9]/g, '');
-        onChange(cleaned);
-      }}
-      placeholder="참가비를 입력해주세요"
-      placeholderTextColor={COLORS.grayscale_300}
-    />
-    <Text style={[FONTS.fs_14_medium, styles.priceUnit]}>원</Text>
-  </View>
-);
-
 const RadioOption = ({selected, label, onPress, style, textStyle}) => (
   <TouchableOpacity style={[styles.radioOption, style]} onPress={onPress}>
     {selected ? (
@@ -132,6 +139,16 @@ const PartyBasicsModal = ({
   }, [visible, appliedData, initialValues]);
 
   const isDisabled = useMemo(() => {
+    const normalizedNames = form.priceOptions.map(option =>
+      option.optionName.trim(),
+    );
+    const hasValidPriceOptions =
+      form.priceOptions.length > 0 &&
+      form.priceOptions.every(
+        option => option.optionName.trim() && Number(option.amount) > 0,
+      ) &&
+      new Set(normalizedNames).size === normalizedNames.length;
+
     return !(
       !!form.partyStartTime &&
       !!form.partyEndTime &&
@@ -139,7 +156,7 @@ const PartyBasicsModal = ({
       Number(form.minAttendees) > 0 &&
       Number(form.maxAttendees) >= Number(form.minAttendees) &&
       ['FREE', 'PAID'].includes(form.chargeType) &&
-      (form.chargeType === 'FREE' || Number(form.amount) > 0)
+      (form.chargeType === 'FREE' || hasValidPriceOptions)
     );
   }, [form]);
 
@@ -152,9 +169,58 @@ const PartyBasicsModal = ({
 
   const handleConfirm = () => {
     if (isDisabled) return;
-    setAppliedData(form);
-    onSelect?.(form);
+    const priceOptions = form.priceOptions.map((option, index) => ({
+      ...(option.id != null ? {id: option.id} : {}),
+      optionName: option.optionName.trim(),
+      amount: Number(option.amount),
+      displayOrder: index,
+    }));
+    const nextForm = {
+      ...form,
+      amount: form.chargeType === 'PAID' ? priceOptions[0].amount : 0,
+      priceOptions,
+    };
+    setAppliedData(nextForm);
+    onSelect?.(nextForm);
     onClose?.();
+  };
+
+  const updatePriceOption = (index, key, value) => {
+    setForm(prev => ({
+      ...prev,
+      priceOptions: prev.priceOptions.map((option, optionIndex) =>
+        optionIndex === index ? {...option, [key]: value} : option,
+      ),
+    }));
+  };
+
+  const addPriceOption = () => {
+    setForm(prev => ({
+      ...prev,
+      priceOptions: [
+        ...prev.priceOptions,
+        {
+          optionName: '',
+          amount: '',
+          displayOrder: prev.priceOptions.length,
+        },
+      ],
+    }));
+  };
+
+  const removePriceOption = index => {
+    setForm(prev => ({
+      ...prev,
+      priceOptions:
+        prev.priceOptions.length === 1
+          ? [{optionName: '기본 참가비', amount: '', displayOrder: 0}]
+          : prev.priceOptions
+            .filter((_, optionIndex) => optionIndex !== index)
+            .map((option, optionIndex) => ({
+              ...option,
+              displayOrder: optionIndex,
+            })),
+    }));
   };
 
   const step = (key, direction, min = 1, max = 99) => {
@@ -188,7 +254,7 @@ const PartyBasicsModal = ({
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             automaticallyAdjustKeyboardInsets>
-            <Text style={[FONTS.fs_16_medium, styles.label]}>파티 시간</Text>
+            <Text style={[FONTS.fs_16_medium, styles.label]}>진행 시간</Text>
             <View style={styles.timeRow}>
               {['partyStartTime', 'partyEndTime'].map(key => (
                 <TouchableOpacity
@@ -295,16 +361,76 @@ const PartyBasicsModal = ({
                   setForm(prev => ({
                     ...prev,
                     chargeType: 'PAID',
-                    amount: Number(prev.amount) > 0 ? prev.amount : '',
+                    priceOptions: normalizePriceOptions(
+                      prev.priceOptions,
+                      prev.amount,
+                    ),
                   }))
                 }
               />
             </View>
             {form.chargeType === 'PAID' ? (
-              <PriceInput
-                value={form.amount}
-                onChange={v => setForm(prev => ({...prev, amount: v}))}
-              />
+              <View style={styles.priceOptionsCard}>
+                <View style={styles.priceColumnHeader}>
+                  <Text style={[FONTS.fs_12_medium, styles.priceColumnName]}>
+                    항목 이름
+                  </Text>
+                  <Text style={[FONTS.fs_12_medium, styles.priceColumnAmount]}>
+                    금액
+                  </Text>
+                  <View style={styles.priceColumnAction} />
+                </View>
+                {form.priceOptions.map((option, index) => (
+                  <View
+                    key={option.id ?? `price-option-${index}`}
+                    style={styles.priceOptionRow}>
+                    <TextInput
+                      value={option.optionName}
+                      onChangeText={value =>
+                        updatePriceOption(index, 'optionName', value)
+                      }
+                      placeholder="옵션명을 입력해주세요"
+                      placeholderTextColor={COLORS.grayscale_300}
+                      style={[FONTS.fs_14_medium, styles.optionNameInput]}
+                    />
+                    <TextInput
+                      value={formatWithComma(option.amount)}
+                      onChangeText={text =>
+                        updatePriceOption(
+                          index,
+                          'amount',
+                          text.replace(/[^0-9]/g, ''),
+                        )
+                      }
+                      placeholder="0"
+                      placeholderTextColor={COLORS.grayscale_300}
+                      keyboardType="numeric"
+                      style={[FONTS.fs_14_medium, styles.optionAmountInput]}
+                    />
+                    <Text style={[FONTS.fs_14_medium, styles.priceUnit]}>원</Text>
+                    <TouchableOpacity
+                      style={styles.deleteOptionButton}
+                      onPress={() => removePriceOption(index)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${option.optionName || `가격 옵션 ${index + 1}`} 삭제`}>
+                      <DeleteIcon width={22} height={22} />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+                <TouchableOpacity style={styles.addOptionButton} onPress={addPriceOption}>
+                  <PlusOrangeIcon width={22} height={22} />
+                  <Text style={[FONTS.fs_16_semibold, styles.addOptionText]}>
+                    요금 항목 추가
+                  </Text>
+                </TouchableOpacity>
+                <View style={styles.priceInfoDivider} />
+                <View style={styles.priceInfoRow}>
+                  <Text style={[FONTS.fs_14_medium, styles.priceInfoIcon]}>ⓘ</Text>
+                  <Text style={[FONTS.fs_12_medium, styles.priceInfoText]}>
+                    다양한 대상이나 조건에 맞춰 요금을 다르게 설정할 수 있습니다.
+                  </Text>
+                </View>
+              </View>
             ) : null}
           </ScrollView>
 
@@ -456,24 +582,98 @@ const styles = StyleSheet.create({
   submitButtonText: {
     color: COLORS.grayscale_0,
   },
-  priceInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  priceOptionsCard: {
     marginTop: 14,
-  },
-  priceInput: {
-    flex: 1,
-    ...FONTS.fs_14_medium,
-    color: COLORS.grayscale_900,
+    padding: 16,
     borderWidth: 1,
     borderColor: COLORS.grayscale_200,
-    borderRadius: 24,
+    borderRadius: 16,
+    backgroundColor: COLORS.grayscale_0,
+  },
+  priceColumnHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    gap: 10,
+  },
+  priceColumnName: {
+    flex: 1.2,
+    color: COLORS.grayscale_500,
+  },
+  priceColumnAmount: {
+    flex: 1,
+    color: COLORS.grayscale_500,
+  },
+  priceColumnAction: {
+    width: 48,
+  },
+  priceOptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
+  optionNameInput: {
+    flex: 1.2,
+    color: COLORS.grayscale_900,
+    borderWidth: 1,
+    borderColor: COLORS.primary_orange,
+    borderRadius: 10,
     height: 48,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
+  },
+  optionAmountInput: {
+    flex: 1,
+    color: COLORS.grayscale_900,
+    borderWidth: 1,
+    borderColor: COLORS.primary_orange,
+    borderRadius: 10,
+    height: 48,
+    paddingHorizontal: 12,
+    textAlign: 'right',
+  },
+  deleteOptionButton: {
+    width: 28,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addOptionButton: {
+    height: 52,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: COLORS.primary_orange,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  addOptionText: {
+    color: COLORS.primary_orange,
+  },
+  priceInfoDivider: {
+    height: 1,
+    backgroundColor: COLORS.grayscale_200,
+    marginTop: 16,
+    marginBottom: 14,
+  },
+  priceInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  priceInfoIcon: {
+    color: COLORS.grayscale_500,
+    marginRight: 6,
+    lineHeight: 18,
+  },
+  priceInfoText: {
+    flex: 1,
+    color: COLORS.grayscale_500,
+    lineHeight: 18,
   },
   priceUnit: {
     color: COLORS.grayscale_600,
-    marginLeft: 12,
   },
   chargeTypeRow: {
     flexDirection: 'row',

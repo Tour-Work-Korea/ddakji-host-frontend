@@ -589,7 +589,7 @@ const MyMeetPreview = () => {
               style={[FONTS.fs_20_semibold, styles.titleText]}
               numberOfLines={2}
               ellipsizeMode="tail">
-              {partyTitle || '파티 제목'}
+              {partyTitle || '콘텐츠 제목'}
             </Text>
           </View>
 

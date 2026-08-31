@@ -25,7 +25,7 @@ import ClockIcon from '@assets/images/clock_gray.svg';
 
 const MODAL_HEIGHT = Math.round(Dimensions.get('window').height * 0.9);
 const CONTENT_CATEGORY_OPTIONS = [
-  { value: 'POTLUCK', label: '포틀럭' },
+  { value: 'POTLUCK', label: '포틀럭 파티' },
   { value: 'BOOK', label: '독서' },
   { value: 'DINNER_PARTY', label: '디너파티' },
   { value: 'PROGRAM', label: '프로그램' },

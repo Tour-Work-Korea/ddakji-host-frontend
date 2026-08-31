@@ -12,7 +12,10 @@ import {useNavigation} from '@react-navigation/native';
 import {COLORS} from '@constants/colors';
 import {FONTS} from '@constants/fonts';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
-import {formatLocalDateToDot, formatLocalDateToDotWithDay} from '@utils/formatDate';
+import {
+  formatLocalDateToDot,
+  formatLocalDateToDotWithDay,
+} from '@utils/formatDate';
 import styles from './ReservationCalendar.styles';
 
 const {width: screenWidth} = Dimensions.get('window');

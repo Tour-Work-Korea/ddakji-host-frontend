@@ -12,6 +12,7 @@ import {
 import { FONTS } from '@constants/fonts';
 import { COLORS } from '@constants/colors';
 import Avatar from '@components/Avatar';
+import HomeBannerAd from '@components/ads/HomeBannerAd';
 import useUserStore from '@stores/userStore';
 import adminApi from '@utils/api/adminApi';
 import { updateProfile } from '@utils/auth/login';
@@ -30,11 +31,11 @@ import InstaEventImg from '@assets/images/home/insta_event_img.png';
 import styles from './HostHome.styles';
 
 const businessInfo = [
-  { label: '대표자', value: '이하늘, 정재원' },
+  { label: '대표자', value: '이하늘' },
   { label: '주소', value: '제주시 연동 263-13 레지던스아트3' },
   { label: '사업자등록번호', value: '888-25-02003' },
   { label: '통신판매번호', value: '2025-서울양천-0825' },
-  { label: '연락처', value: '010-4637-5989' },
+  { label: '연락처', value: '010-4123-0075' },
 ];
 
 const PROMOTION_FORM_URL =
@@ -90,7 +91,7 @@ const HostHome = () => {
           : Array.isArray(data?.items)
             ? data.items
             : [];
-        const mappedItems = items.map(mapNoticeSummary).slice(0, 2);
+        const mappedItems = items.map(mapNoticeSummary).slice(0, 3);
 
         if (!isMounted) {
           return;
@@ -346,7 +347,8 @@ const HostHome = () => {
           </View>
         )}
 
-        <View style={styles.noticeSection}>
+        <View
+          style={[styles.noticeSection, styles.noticeSectionWithAd]}>
           <TouchableOpacity
             style={styles.sectionTitleRow}
             activeOpacity={0.8}
@@ -386,6 +388,10 @@ const HostHome = () => {
               </TouchableOpacity>
             ))}
           </View>
+        </View>
+
+        <View style={styles.homeAdContainer}>
+          <HomeBannerAd />
         </View>
 
         <View style={styles.businessSection}>
