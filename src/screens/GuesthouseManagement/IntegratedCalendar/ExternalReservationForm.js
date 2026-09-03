@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 
 import {COLORS} from '@constants/colors';
-import {EXTERNAL_RESERVATION_SOURCES} from '@constants/externalReservationSources';
 import {FONTS} from '@constants/fonts';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
 
@@ -77,9 +76,7 @@ const normalizeRoom = room => ({
   roomType: room?.roomType ?? '',
   baseCapacity: Number(room?.roomCapacity ?? 1),
   minCapacity: Number(room?.roomMinCapacity ?? 1),
-  maxCapacity: Number(
-    room?.roomMaxCapacity ?? room?.roomCapacity ?? 1,
-  ),
+  maxCapacity: Number(room?.roomMaxCapacity ?? room?.roomCapacity ?? 1),
   capacity: Number(room?.roomMaxCapacity ?? room?.roomCapacity ?? 1),
 });
 
@@ -97,7 +94,8 @@ const Stepper = ({value, unit, onDecrease, onIncrease}) => (
       <Text style={[FONTS.fs_20_medium, styles.stepperButtonText]}>−</Text>
     </TouchableOpacity>
     <Text style={[FONTS.fs_16_semibold, styles.stepperValue]}>
-      {value}{unit}
+      {value}
+      {unit}
     </Text>
     <TouchableOpacity
       style={styles.stepperButton}
@@ -113,8 +111,8 @@ const ExternalReservationForm = ({
   checkInDate,
   initialRoomId,
   initialReservation,
+  bookingChannels,
   roomAvailability,
-  externalReservations,
   onCancel,
   onSave,
 }) => {
@@ -123,9 +121,12 @@ const ExternalReservationForm = ({
   const [selectedRoomId, setSelectedRoomId] = useState(null);
   const [selectedSource, setSelectedSource] = useState(
     () =>
-      EXTERNAL_RESERVATION_SOURCES.find(
-        source => source.value === initialReservation?.source,
-      ) ?? EXTERNAL_RESERVATION_SOURCES[0],
+      bookingChannels.find(
+        source =>
+          String(source.channelId) === String(initialReservation?.channelId) ||
+          source.value ===
+            (initialReservation?.channelKey ?? initialReservation?.source),
+      ) ?? bookingChannels[0],
   );
   const [nights, setNights] = useState(() =>
     getNightsBetween(
@@ -133,8 +134,8 @@ const ExternalReservationForm = ({
       initialReservation?.checkOutDate,
     ),
   );
-  const [guestCount, setGuestCount] = useState(
-    () => Number(initialReservation?.guestCount ?? 1),
+  const [guestCount, setGuestCount] = useState(() =>
+    Number(initialReservation?.guestCount ?? 1),
   );
   const [guestName, setGuestName] = useState(
     () => initialReservation?.guestName ?? '',
@@ -148,12 +149,27 @@ const ExternalReservationForm = ({
   const [isCapacityLoading, setIsCapacityLoading] = useState(false);
 
   useEffect(() => {
+    const matchingChannel = bookingChannels.find(
+      channel =>
+        String(channel.channelId) === String(initialReservation?.channelId) ||
+        channel.value ===
+          (initialReservation?.channelKey ?? initialReservation?.source),
+    );
+    setSelectedSource(
+      current => matchingChannel ?? current ?? bookingChannels[0],
+    );
+  }, [bookingChannels, initialReservation]);
+
+  useEffect(() => {
     let isMounted = true;
 
     const fetchRooms = async () => {
       if (roomAvailability.length > 0) {
         const availableRooms = roomAvailability.filter(
-          room => !isRoomUnavailable(room),
+          room =>
+            !isRoomUnavailable(room) ||
+            (initialReservation &&
+              String(room.roomId) === String(initialReservation.roomId)),
         );
         const preferredRoom = availableRooms.find(
           room => String(room.roomId) === String(initialRoomId),
@@ -205,18 +221,20 @@ const ExternalReservationForm = ({
     return () => {
       isMounted = false;
     };
-  }, [guesthouseId, initialRoomId, roomAvailability]);
+  }, [guesthouseId, initialReservation, initialRoomId, roomAvailability]);
 
   const selectedRoom = useMemo(
     () => rooms.find(room => String(room.roomId) === String(selectedRoomId)),
     [rooms, selectedRoomId],
   );
   const selectedDateCapacity =
-    selectedRoom?.remainingCapacity > 0
+    selectedRoom?.roomType !== 'DORMITORY' && !selectedRoom?.isClosed
+      ? selectedRoom?.maxCapacity
+      : selectedRoom?.remainingCapacity > 0
       ? selectedRoom.remainingCapacity
       : selectedRoom?.capacity > 0
-        ? selectedRoom.capacity
-        : 99;
+      ? selectedRoom.capacity
+      : 99;
   const checkOutDate = addDays(checkInDate, nights);
   const maxGuestCount = stayCapacity ?? selectedDateCapacity;
   const minGuestCount =
@@ -226,6 +244,7 @@ const ExternalReservationForm = ({
   const isPhoneValid = isValidPhoneNumber(guestPhone);
   const canSave =
     Boolean(selectedRoomId) &&
+    Boolean(selectedSource?.channelId) &&
     guestCount >= minGuestCount &&
     isPhoneValid &&
     stayCapacity != null &&
@@ -257,24 +276,16 @@ const ExternalReservationForm = ({
           : payload?.inventories ?? [];
         const isDormitory = selectedRoom?.roomType === 'DORMITORY';
         const capacities = inventories.map(inventory => {
-          const matchingExternalReservations = externalReservations.filter(
-            reservation => {
-              const isMatchingRoom =
-                String(reservation?.roomId) === String(selectedRoomId);
-              const isStaying =
-                reservation?.checkInDate <= inventory.date &&
-                reservation?.checkOutDate > inventory.date;
-              return isMatchingRoom && isStaying;
-            },
-          );
-          const serverAvailableCapacity = Number(
-            inventory?.availableBeds ?? 0,
-          );
+          const serverAvailableCapacity = Number(inventory?.availableBeds ?? 0);
+          const isEditingSameRoom =
+            initialReservation &&
+            String(initialReservation.roomId) === String(selectedRoomId);
           const isPrivateRoomUnavailable =
             !isDormitory &&
+            !isEditingSameRoom &&
             (Number(inventory?.reservedBeds ?? 0) > 0 ||
               serverAvailableCapacity === 0 ||
-              matchingExternalReservations.length > 0);
+              inventory?.isClosed === true);
 
           if (
             inventory?.isClosed ||
@@ -288,19 +299,18 @@ const ExternalReservationForm = ({
             return selectedRoom?.capacity ?? 0;
           }
 
-          const externalReservedCapacity = matchingExternalReservations.reduce(
-            (total, reservation) =>
-              total + Number(reservation?.guestCount ?? 0),
-            0,
-          );
-
           return Math.max(
             0,
-            serverAvailableCapacity - externalReservedCapacity,
+            serverAvailableCapacity +
+              (isEditingSameRoom
+                ? Number(initialReservation.guestCount ?? 0)
+                : 0),
           );
         });
         const nextCapacity =
-          capacities.length > 0 ? Math.min(...capacities) : selectedDateCapacity;
+          capacities.length > 0
+            ? Math.min(...capacities)
+            : selectedDateCapacity;
 
         if (isMounted) {
           setStayCapacity(nextCapacity);
@@ -323,8 +333,8 @@ const ExternalReservationForm = ({
     };
   }, [
     checkInDate,
-    externalReservations,
     guesthouseId,
+    initialReservation,
     nights,
     selectedDateCapacity,
     selectedRoom?.capacity,
@@ -350,8 +360,7 @@ const ExternalReservationForm = ({
     setIsSaving(true);
     try {
       await onSave({
-        source: selectedSource.value,
-        sourceLabel: selectedSource.label,
+        channelId: selectedSource.channelId,
         roomId: selectedRoom.roomId,
         roomName: selectedRoom.roomName,
         roomType: selectedRoom.roomType,
@@ -389,11 +398,12 @@ const ExternalReservationForm = ({
 
           <Text style={[FONTS.fs_14_semibold, styles.label]}>예약 경로</Text>
           <View style={styles.sourceOptionList}>
-            {EXTERNAL_RESERVATION_SOURCES.map(source => {
-              const isSelected = selectedSource.value === source.value;
+            {bookingChannels.map(source => {
+              const isSelected =
+                String(selectedSource?.channelId) === String(source.channelId);
               return (
                 <TouchableOpacity
-                  key={source.value}
+                  key={String(source.channelId)}
                   style={[
                     styles.optionChip,
                     isSelected && {
@@ -414,6 +424,11 @@ const ExternalReservationForm = ({
                 </TouchableOpacity>
               );
             })}
+            {bookingChannels.length === 0 ? (
+              <Text style={[FONTS.fs_12_medium, styles.emptyText]}>
+                사용할 수 있는 예약 채널이 없어요.
+              </Text>
+            ) : null}
           </View>
 
           <Text style={[FONTS.fs_14_semibold, styles.label]}>객실</Text>
@@ -430,7 +445,11 @@ const ExternalReservationForm = ({
               {rooms.map(room => {
                 const isSelected =
                   String(selectedRoomId) === String(room.roomId);
-                const isUnavailable = isRoomUnavailable(room);
+                const isCurrentReservationRoom =
+                  initialReservation &&
+                  String(room.roomId) === String(initialReservation.roomId);
+                const isUnavailable =
+                  isRoomUnavailable(room) && !isCurrentReservationRoom;
                 return (
                   <TouchableOpacity
                     key={String(room.roomId)}
@@ -458,8 +477,8 @@ const ExternalReservationForm = ({
                         ? room.roomType === 'DORMITORY'
                           ? ` · 잔여 ${room.remainingCapacity}베드`
                           : isUnavailable
-                            ? ' · 마감'
-                            : ' · 가능'
+                          ? ' · 마감'
+                          : ' · 가능'
                         : ''}
                     </Text>
                     {room.roomType !== 'DORMITORY' ? (
@@ -485,14 +504,18 @@ const ExternalReservationForm = ({
           <Text style={[FONTS.fs_14_semibold, styles.label]}>숙박 날짜</Text>
           <View style={styles.dateRow}>
             <View style={styles.dateBox}>
-              <Text style={[FONTS.fs_12_medium, styles.dateCaption]}>체크인</Text>
+              <Text style={[FONTS.fs_12_medium, styles.dateCaption]}>
+                체크인
+              </Text>
               <Text style={[FONTS.fs_14_semibold, styles.dateValue]}>
                 {formatDateLabel(checkInDate)}
               </Text>
             </View>
             <Text style={[FONTS.fs_16_medium, styles.dateArrow]}>→</Text>
             <View style={styles.dateBox}>
-              <Text style={[FONTS.fs_12_medium, styles.dateCaption]}>체크아웃</Text>
+              <Text style={[FONTS.fs_12_medium, styles.dateCaption]}>
+                체크아웃
+              </Text>
               <Text style={[FONTS.fs_14_semibold, styles.dateValue]}>
                 {formatDateLabel(checkOutDate)}
               </Text>
@@ -520,10 +543,10 @@ const ExternalReservationForm = ({
             {isCapacityLoading
               ? '숙박 기간의 남은 인원을 확인하고 있어요.'
               : maxGuestCount > 0
-                ? selectedRoom?.roomType === 'DORMITORY'
-                  ? `숙박 기간 전체에서 최대 ${maxGuestCount}베드까지 가능해요.`
-                  : '등록하면 해당 객실은 숙박 기간 동안 마감돼요.'
-                : '선택한 기간에는 남은 자리가 없어요.'}
+              ? selectedRoom?.roomType === 'DORMITORY'
+                ? `숙박 기간 전체에서 최대 ${maxGuestCount}베드까지 가능해요.`
+                : '등록하면 해당 객실은 숙박 기간 동안 마감돼요.'
+              : '선택한 기간에는 남은 자리가 없어요.'}
           </Text>
 
           <Text style={[FONTS.fs_14_semibold, styles.label]}>
@@ -556,7 +579,7 @@ const ExternalReservationForm = ({
             onChangeText={setGuestName}
             placeholder="예약자명 (선택)"
             placeholderTextColor={COLORS.grayscale_400}
-            maxLength={30}
+            maxLength={100}
           />
           <TextInput
             style={[
@@ -585,7 +608,7 @@ const ExternalReservationForm = ({
             placeholderTextColor={COLORS.grayscale_400}
             multiline
             textAlignVertical="top"
-            maxLength={200}
+            maxLength={2000}
           />
         </ScrollView>
 
@@ -613,8 +636,8 @@ const ExternalReservationForm = ({
                   ? '수정 중'
                   : '등록 중'
                 : initialReservation
-                  ? '예약 수정'
-                  : '예약 등록'}
+                ? '예약 수정'
+                : '예약 등록'}
             </Text>
           </TouchableOpacity>
         </View>

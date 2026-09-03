@@ -54,13 +54,23 @@ const isReservationForRoom = (reservation, room) => {
   return reservation?.roomName === room?.roomName;
 };
 
-const normalizeDdakjiReservation = reservation => ({
+const normalizeIntegratedReservation = reservation => ({
   ...reservation,
   id: reservation?.reservationId ?? reservation?.id,
   reservationId: reservation?.reservationId ?? reservation?.id,
+  unifiedReservationId:
+    reservation?.unifiedReservationId ??
+    `${reservation?.sourceType ?? 'DDAKJI'}:${
+      reservation?.reservationId ?? reservation?.id
+    }`,
   roomId: getReservationRoomId(reservation),
-  source: 'DDAKJI',
-  sourceLabel: '게딱지',
+  sourceType: reservation?.sourceType ?? 'DDAKJI',
+  source:
+    reservation?.sourceType === 'EXTERNAL' ? reservation?.channelKey : 'DDAKJI',
+  sourceLabel:
+    reservation?.sourceType === 'EXTERNAL'
+      ? reservation?.channelLabel ?? '외부'
+      : '게딱지',
   guestName:
     reservation?.guestName ??
     reservation?.userName ??
@@ -74,18 +84,36 @@ const normalizeDdakjiReservation = reservation => ({
   guestCount: Number(reservation?.guestCount ?? 0),
 });
 
+const normalizeCalendarRoom = room => ({
+  ...room,
+  roomId: room?.roomId ?? room?.id,
+  roomName: room?.roomName ?? room?.name ?? '객실',
+  roomType: room?.roomType ?? '',
+  capacity: Number(room?.roomMaxCapacity ?? room?.roomCapacity ?? 1),
+  remainingCapacity:
+    room?.availableQuantity == null
+      ? null
+      : Math.max(0, Number(room.availableQuantity)),
+  isClosed:
+    room?.manuallyClosed === true ||
+    room?.isClosed === true ||
+    room?.available === false,
+  isReserved: room?.available === false,
+});
+
 const IntegratedReservationDayModal = ({
   guesthouseId,
   targetDate,
-  externalReservations,
   roomAvailability,
+  refreshKey,
   onAdd,
   onClose,
   onEditExternal,
   onDeleteExternal,
 }) => {
   const navigation = useNavigation();
-  const [ddakjiReservations, setDdakjiReservations] = useState([]);
+  const [dayReservations, setDayReservations] = useState([]);
+  const [dayRooms, setDayRooms] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(DETAIL_TABS.ROOMS);
   const [selectedRoomFilter, setSelectedRoomFilter] = useState(null);
@@ -98,37 +126,43 @@ const IntegratedReservationDayModal = ({
   useEffect(() => {
     let isMounted = true;
 
-    const fetchDdakjiReservations = async () => {
+    const fetchReservations = async () => {
       if (!guesthouseId || !targetDate) {
-        setDdakjiReservations([]);
+        setDayReservations([]);
+        setDayRooms([]);
         setIsLoading(false);
         return;
       }
 
       setIsLoading(true);
       try {
-        const response = await hostGuesthouseApi.searchGuesthouseReservations({
+        const response = await hostGuesthouseApi.getIntegratedCalendarDate(
           guesthouseId,
           targetDate,
-          status: 'CONFIRMED',
-          page: 0,
-          size: 100,
-        });
+        );
         const payload = response?.data?.data ?? response?.data ?? {};
-        const list =
-          payload?.reservations ??
-          payload?.content ??
-          (Array.isArray(payload) ? payload : null) ??
-          [];
+        const list = [
+          ...(payload?.confirmedReservations ?? []),
+          ...(payload?.completedReservations ?? []),
+          ...(payload?.pendingHostReservations ?? []),
+          ...(payload?.cancelledReservations ?? []),
+        ];
 
         if (isMounted) {
-          setDdakjiReservations(
-            Array.isArray(list) ? list.map(normalizeDdakjiReservation) : [],
-          );
+          setDayReservations(list.map(normalizeIntegratedReservation));
+          setDayRooms((payload?.rooms ?? []).map(normalizeCalendarRoom));
         }
       } catch (error) {
         if (isMounted) {
-          setDdakjiReservations([]);
+          setDayReservations([]);
+          setDayRooms([]);
+          Toast.show({
+            type: 'error',
+            text1:
+              error?.response?.data?.message ??
+              '예약 상세를 불러오지 못했습니다.',
+            position: 'top',
+          });
         }
       } finally {
         if (isMounted) {
@@ -137,21 +171,18 @@ const IntegratedReservationDayModal = ({
       }
     };
 
-    fetchDdakjiReservations();
+    fetchReservations();
 
     return () => {
       isMounted = false;
     };
-  }, [guesthouseId, targetDate]);
+  }, [guesthouseId, refreshKey, targetDate]);
 
-  const reservations = useMemo(() => {
-    const matchingExternalReservations = externalReservations.filter(
-      reservation =>
-        reservation?.checkInDate <= targetDate &&
-        reservation?.checkOutDate > targetDate,
-    );
-    return [...ddakjiReservations, ...matchingExternalReservations];
-  }, [ddakjiReservations, externalReservations, targetDate]);
+  const reservations = dayReservations;
+  const availableRooms = dayRooms.length > 0 ? dayRooms : roomAvailability;
+  const availabilityReliable = availableRooms.every(
+    room => room.remainingCapacity != null,
+  );
 
   const filteredReservations = useMemo(() => {
     if (!selectedRoomFilter) {
@@ -164,7 +195,7 @@ const IntegratedReservationDayModal = ({
   }, [reservations, selectedRoomFilter]);
 
   const roomStatusSummary = useMemo(() => {
-    const availableCount = roomAvailability.filter(room => {
+    const availableCount = availableRooms.filter(room => {
       const isDormitory = room.roomType === 'DORMITORY';
       return !(
         room.isClosed ||
@@ -175,12 +206,12 @@ const IntegratedReservationDayModal = ({
 
     return {
       availableCount,
-      closedCount: roomAvailability.length - availableCount,
+      closedCount: availableRooms.length - availableCount,
     };
-  }, [roomAvailability]);
+  }, [availableRooms]);
 
   const handlePressReservation = reservation => {
-    if (reservation.source !== 'DDAKJI') {
+    if (reservation.sourceType === 'EXTERNAL') {
       setSelectedExternalReservation(reservation);
       setIsDeleteConfirmVisible(false);
       return;
@@ -192,10 +223,9 @@ const IntegratedReservationDayModal = ({
       reservation: {
         ...reservation,
         room: reservation.roomName,
-        period: `${reservation.checkInDate} ~ ${reservation.checkOutDate} (${getNights(
-          reservation.checkInDate,
-          reservation.checkOutDate,
-        )}박)`,
+        period: `${reservation.checkInDate} ~ ${
+          reservation.checkOutDate
+        } (${getNights(reservation.checkInDate, reservation.checkOutDate)}박)`,
       },
     });
   };
@@ -225,7 +255,7 @@ const IntegratedReservationDayModal = ({
 
     setIsDeleting(true);
     try {
-      await onDeleteExternal(selectedExternalReservation.id);
+      await onDeleteExternal(selectedExternalReservation);
       setSelectedExternalReservation(null);
       setIsDeleteConfirmVisible(false);
     } finally {
@@ -272,14 +302,13 @@ const IntegratedReservationDayModal = ({
               styles.tabText,
               activeTab === DETAIL_TABS.ROOMS && styles.tabTextSelected,
             ]}>
-            객실 현황 {roomAvailability.length}
+            객실 현황 {availableRooms.length}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[
             styles.tabButton,
-            activeTab === DETAIL_TABS.RESERVATIONS &&
-              styles.tabButtonSelected,
+            activeTab === DETAIL_TABS.RESERVATIONS && styles.tabButtonSelected,
           ]}
           activeOpacity={0.75}
           accessibilityRole="tab"
@@ -295,8 +324,7 @@ const IntegratedReservationDayModal = ({
             style={[
               FONTS.fs_14_medium,
               styles.tabText,
-              activeTab === DETAIL_TABS.RESERVATIONS &&
-                styles.tabTextSelected,
+              activeTab === DETAIL_TABS.RESERVATIONS && styles.tabTextSelected,
             ]}>
             예약 내역{' '}
             {selectedRoomFilter
@@ -313,11 +341,12 @@ const IntegratedReservationDayModal = ({
               객실 현황
             </Text>
             <Text style={[FONTS.fs_12_medium, styles.availabilitySummary]}>
-              가능 {roomStatusSummary.availableCount} · 마감{' '}
-              {roomStatusSummary.closedCount}
+              {availabilityReliable
+                ? `가능 ${roomStatusSummary.availableCount} · 마감 ${roomStatusSummary.closedCount}`
+                : '과거 재고 미제공'}
             </Text>
           </View>
-          {roomAvailability.length === 0 ? (
+          {availableRooms.length === 0 ? (
             <View style={styles.center}>
               <Text style={[FONTS.fs_14_medium, styles.emptyText]}>
                 등록된 객실이 없어요
@@ -327,24 +356,27 @@ const IntegratedReservationDayModal = ({
             <ScrollView
               style={styles.availabilityScroll}
               contentContainerStyle={styles.availabilityContent}
-              showsVerticalScrollIndicator={roomAvailability.length > 6}>
-              {roomAvailability.map((room, index) => {
+              showsVerticalScrollIndicator={availableRooms.length > 6}>
+              {availableRooms.map((room, index) => {
                 const isDormitory = room.roomType === 'DORMITORY';
+                const isAvailabilityUnknown = room.remainingCapacity == null;
                 const isSoldOut =
                   room.isClosed ||
                   room.remainingCapacity === 0 ||
                   (!isDormitory && room.isReserved);
-                const statusText = isDormitory
+                const statusText = isAvailabilityUnknown
+                  ? '재고 미제공'
+                  : isDormitory
                   ? `잔여 ${room.remainingCapacity}베드`
                   : isSoldOut
-                    ? '마감'
-                    : '가능';
+                  ? '마감'
+                  : '가능';
                 return (
                   <TouchableOpacity
                     key={String(room.roomId)}
                     style={[
                       styles.availabilityRow,
-                      index === roomAvailability.length - 1 &&
+                      index === availableRooms.length - 1 &&
                         styles.availabilityRowLast,
                     ]}
                     activeOpacity={0.72}
@@ -360,12 +392,14 @@ const IntegratedReservationDayModal = ({
                     }}>
                     <View style={styles.availabilityRoomInfo}>
                       <Text
-                        style={[FONTS.fs_14_medium, styles.availabilityRoomName]}
+                        style={[
+                          FONTS.fs_14_medium,
+                          styles.availabilityRoomName,
+                        ]}
                         numberOfLines={1}>
                         {room.roomName}
                       </Text>
-                      <Text
-                        style={[FONTS.fs_12_medium, styles.roomTypeText]}>
+                      <Text style={[FONTS.fs_12_medium, styles.roomTypeText]}>
                         {isDormitory ? '도미토리' : '일반 객실'}
                       </Text>
                     </View>
@@ -394,190 +428,197 @@ const IntegratedReservationDayModal = ({
         </View>
       ) : (
         <View style={styles.listContainer}>
-        <View style={styles.roomFilterContainer}>
-          <TouchableOpacity
-            style={styles.roomFilterSelector}
-            activeOpacity={0.72}
-            accessibilityRole="button"
-            accessibilityState={{expanded: isRoomFilterOpen}}
-            onPress={() => setIsRoomFilterOpen(value => !value)}>
-            <Text
-              style={[FONTS.fs_14_medium, styles.roomFilterSelectorText]}
-              numberOfLines={1}>
-              {selectedRoomFilter
-                ? `${selectedRoomFilter.roomName} · ${filteredReservations.length}건`
-                : `전체 객실 · ${reservations.length}건`}
-            </Text>
-            <Text style={[FONTS.fs_14_medium, styles.roomFilterArrow]}>
-              {isRoomFilterOpen ? '⌃' : '⌄'}
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.roomFilterContainer}>
+            <TouchableOpacity
+              style={styles.roomFilterSelector}
+              activeOpacity={0.72}
+              accessibilityRole="button"
+              accessibilityState={{expanded: isRoomFilterOpen}}
+              onPress={() => setIsRoomFilterOpen(value => !value)}>
+              <Text
+                style={[FONTS.fs_14_medium, styles.roomFilterSelectorText]}
+                numberOfLines={1}>
+                {selectedRoomFilter
+                  ? `${selectedRoomFilter.roomName} · ${filteredReservations.length}건`
+                  : `전체 객실 · ${reservations.length}건`}
+              </Text>
+              <Text style={[FONTS.fs_14_medium, styles.roomFilterArrow]}>
+                {isRoomFilterOpen ? '⌃' : '⌄'}
+              </Text>
+            </TouchableOpacity>
 
-          {isRoomFilterOpen ? (
-            <ScrollView
-              style={styles.roomFilterOptions}
-              nestedScrollEnabled
-              showsVerticalScrollIndicator={roomAvailability.length > 4}>
-              <TouchableOpacity
-                style={[
-                  styles.roomFilterOption,
-                  !selectedRoomFilter && styles.roomFilterOptionSelected,
-                ]}
-                activeOpacity={0.72}
-                accessibilityRole="button"
-                onPress={() => {
-                  setSelectedRoomFilter(null);
-                  setIsRoomFilterOpen(false);
-                }}>
-                <Text
-                  style={[
-                    FONTS.fs_14_medium,
-                    styles.roomFilterOptionText,
-                    !selectedRoomFilter && styles.roomFilterOptionTextSelected,
-                  ]}
-                  numberOfLines={1}>
-                  전체 객실
-                </Text>
-                <Text style={[FONTS.fs_12_medium, styles.roomFilterCount]}>
-                  {reservations.length}건
-                </Text>
-              </TouchableOpacity>
-              {roomAvailability.map(room => {
-                const isSelected =
-                  String(selectedRoomFilter?.roomId) === String(room.roomId);
-                const reservationCount = reservations.filter(reservation =>
-                  isReservationForRoom(reservation, room),
-                ).length;
-                return (
-                  <TouchableOpacity
-                    key={String(room.roomId)}
-                    style={[
-                      styles.roomFilterOption,
-                      isSelected && styles.roomFilterOptionSelected,
-                    ]}
-                    activeOpacity={0.72}
-                    accessibilityRole="button"
-                    onPress={() => {
-                      setSelectedRoomFilter({
-                        roomId: room.roomId,
-                        roomName: room.roomName,
-                      });
-                      setIsRoomFilterOpen(false);
-                    }}>
-                    <Text
-                      style={[
-                        FONTS.fs_14_medium,
-                        styles.roomFilterOptionText,
-                        isSelected && styles.roomFilterOptionTextSelected,
-                      ]}
-                      numberOfLines={1}>
-                      {room.roomName}
-                    </Text>
-                    <Text
-                      style={[FONTS.fs_12_medium, styles.roomFilterCount]}>
-                      {reservationCount}건
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          ) : null}
-        </View>
-        {isLoading ? (
-          <View style={styles.center}>
-            <ActivityIndicator color={COLORS.primary_orange} size="small" />
-          </View>
-        ) : filteredReservations.length === 0 ? (
-          <View style={styles.center}>
-            <Text style={[FONTS.fs_14_medium, styles.emptyText]}>
-              {selectedRoomFilter
-                ? '해당 객실의 예약이 없어요'
-                : '확정된 예약이 없어요'}
-            </Text>
-          </View>
-        ) : (
-          <FlatList
-            data={filteredReservations}
-            keyExtractor={(item, index) =>
-              `${item.source}-${String(item.id ?? index)}`
-            }
-            contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-            renderItem={({item}) => {
-              const externalSource = getExternalReservationSource(item.source);
-              const nights = getNights(item.checkInDate, item.checkOutDate);
-
-              return (
+            {isRoomFilterOpen ? (
+              <ScrollView
+                style={styles.roomFilterOptions}
+                nestedScrollEnabled
+                showsVerticalScrollIndicator={availableRooms.length > 4}>
                 <TouchableOpacity
-                  style={styles.reservationItem}
-                  activeOpacity={0.75}
-                  onPress={() => handlePressReservation(item)}>
-                  <View style={styles.reservationTopRow}>
-                    <View
+                  style={[
+                    styles.roomFilterOption,
+                    !selectedRoomFilter && styles.roomFilterOptionSelected,
+                  ]}
+                  activeOpacity={0.72}
+                  accessibilityRole="button"
+                  onPress={() => {
+                    setSelectedRoomFilter(null);
+                    setIsRoomFilterOpen(false);
+                  }}>
+                  <Text
+                    style={[
+                      FONTS.fs_14_medium,
+                      styles.roomFilterOptionText,
+                      !selectedRoomFilter &&
+                        styles.roomFilterOptionTextSelected,
+                    ]}
+                    numberOfLines={1}>
+                    전체 객실
+                  </Text>
+                  <Text style={[FONTS.fs_12_medium, styles.roomFilterCount]}>
+                    {reservations.length}건
+                  </Text>
+                </TouchableOpacity>
+                {availableRooms.map(room => {
+                  const isSelected =
+                    String(selectedRoomFilter?.roomId) === String(room.roomId);
+                  const reservationCount = reservations.filter(reservation =>
+                    isReservationForRoom(reservation, room),
+                  ).length;
+                  return (
+                    <TouchableOpacity
+                      key={String(room.roomId)}
                       style={[
-                        styles.sourceBadge,
-                        externalSource
-                          ? {backgroundColor: externalSource.backgroundColor}
-                          : styles.ddakjiSourceBadge,
-                      ]}>
+                        styles.roomFilterOption,
+                        isSelected && styles.roomFilterOptionSelected,
+                      ]}
+                      activeOpacity={0.72}
+                      accessibilityRole="button"
+                      onPress={() => {
+                        setSelectedRoomFilter({
+                          roomId: room.roomId,
+                          roomName: room.roomName,
+                        });
+                        setIsRoomFilterOpen(false);
+                      }}>
                       <Text
                         style={[
-                          FONTS.fs_12_medium,
-                          externalSource
-                            ? {color: externalSource.textColor}
-                            : styles.ddakjiSourceText,
-                        ]}>
-                        {item.sourceLabel}
+                          FONTS.fs_14_medium,
+                          styles.roomFilterOptionText,
+                          isSelected && styles.roomFilterOptionTextSelected,
+                        ]}
+                        numberOfLines={1}>
+                        {room.roomName}
                       </Text>
-                    </View>
-                    <Text
-                      style={[FONTS.fs_14_semibold, styles.guestName]}
-                      numberOfLines={1}>
-                      {item.guestName || '예약자명 미입력'}
-                    </Text>
-                  </View>
-
-                  <Text
-                    style={[FONTS.fs_14_medium, styles.roomText]}
-                    numberOfLines={1}>
-                    {item.roomName}
-                    {item.guestCount > 0 ? ` · ${item.guestCount}명` : ''}
-                  </Text>
-                  <Text style={[FONTS.fs_12_medium, styles.periodText]}>
-                    {String(item.checkInDate).replaceAll('-', '.')} ~{' '}
-                    {String(item.checkOutDate).replaceAll('-', '.')} ({nights}박)
-                  </Text>
-                  {item.guestPhone ? (
-                    <TouchableOpacity
-                      style={styles.phoneRow}
-                      activeOpacity={0.7}
-                      accessibilityRole="button"
-                      accessibilityLabel={`${item.guestPhone} 복사`}
-                      onPress={event =>
-                        handleCopyPhone(item.guestPhone, event)
-                      }>
-                      <Text style={[FONTS.fs_12_medium, styles.phoneText]}>
-                        {item.guestPhone}
-                      </Text>
-                      <Text style={[FONTS.fs_12_medium, styles.copyText]}>
-                        복사
+                      <Text
+                        style={[FONTS.fs_12_medium, styles.roomFilterCount]}>
+                        {reservationCount}건
                       </Text>
                     </TouchableOpacity>
-                  ) : null}
-                  {item.memo ? (
-                    <View style={styles.memoBox}>
+                  );
+                })}
+              </ScrollView>
+            ) : null}
+          </View>
+          {isLoading ? (
+            <View style={styles.center}>
+              <ActivityIndicator color={COLORS.primary_orange} size="small" />
+            </View>
+          ) : filteredReservations.length === 0 ? (
+            <View style={styles.center}>
+              <Text style={[FONTS.fs_14_medium, styles.emptyText]}>
+                {selectedRoomFilter
+                  ? '해당 객실의 예약이 없어요'
+                  : '확정된 예약이 없어요'}
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={filteredReservations}
+              keyExtractor={(item, index) =>
+                item.unifiedReservationId ??
+                `${item.sourceType}-${String(item.id ?? index)}`
+              }
+              contentContainerStyle={styles.listContent}
+              showsVerticalScrollIndicator={false}
+              renderItem={({item}) => {
+                const externalSource = getExternalReservationSource(
+                  item.source,
+                  item.channelColorKey,
+                  item.sourceLabel,
+                );
+                const nights = getNights(item.checkInDate, item.checkOutDate);
+
+                return (
+                  <TouchableOpacity
+                    style={styles.reservationItem}
+                    activeOpacity={0.75}
+                    onPress={() => handlePressReservation(item)}>
+                    <View style={styles.reservationTopRow}>
+                      <View
+                        style={[
+                          styles.sourceBadge,
+                          externalSource
+                            ? {backgroundColor: externalSource.backgroundColor}
+                            : styles.ddakjiSourceBadge,
+                        ]}>
+                        <Text
+                          style={[
+                            FONTS.fs_12_medium,
+                            externalSource
+                              ? {color: externalSource.textColor}
+                              : styles.ddakjiSourceText,
+                          ]}>
+                          {item.sourceLabel}
+                        </Text>
+                      </View>
                       <Text
-                        style={[FONTS.fs_12_medium, styles.memoText]}
-                        numberOfLines={2}>
-                        {item.memo}
+                        style={[FONTS.fs_14_semibold, styles.guestName]}
+                        numberOfLines={1}>
+                        {item.guestName || '예약자명 미입력'}
                       </Text>
                     </View>
-                  ) : null}
-                </TouchableOpacity>
-              );
-            }}
-          />
-        )}
+
+                    <Text
+                      style={[FONTS.fs_14_medium, styles.roomText]}
+                      numberOfLines={1}>
+                      {item.roomName}
+                      {item.guestCount > 0 ? ` · ${item.guestCount}명` : ''}
+                    </Text>
+                    <Text style={[FONTS.fs_12_medium, styles.periodText]}>
+                      {String(item.checkInDate).replaceAll('-', '.')} ~{' '}
+                      {String(item.checkOutDate).replaceAll('-', '.')} ({nights}
+                      박)
+                    </Text>
+                    {item.guestPhone ? (
+                      <TouchableOpacity
+                        style={styles.phoneRow}
+                        activeOpacity={0.7}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${item.guestPhone} 복사`}
+                        onPress={event =>
+                          handleCopyPhone(item.guestPhone, event)
+                        }>
+                        <Text style={[FONTS.fs_12_medium, styles.phoneText]}>
+                          {item.guestPhone}
+                        </Text>
+                        <Text style={[FONTS.fs_12_medium, styles.copyText]}>
+                          복사
+                        </Text>
+                      </TouchableOpacity>
+                    ) : null}
+                    {item.memo ? (
+                      <View style={styles.memoBox}>
+                        <Text
+                          style={[FONTS.fs_12_medium, styles.memoText]}
+                          numberOfLines={2}>
+                          {item.memo}
+                        </Text>
+                      </View>
+                    ) : null}
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          )}
         </View>
       )}
 
@@ -605,10 +646,10 @@ const IntegratedReservationDayModal = ({
             {isDeleteConfirmVisible ? (
               <>
                 <Text style={[FONTS.fs_18_semibold, styles.actionModalTitle]}>
-                  예약을 삭제할까요?
+                  예약을 취소할까요?
                 </Text>
                 <Text style={[FONTS.fs_14_medium, styles.actionModalMessage]}>
-                  삭제하면 해당 기간의 객실 재고가 다시 복구돼요.
+                  취소하면 남은 숙박일의 객실 재고가 다시 복구돼요.
                 </Text>
                 <View style={styles.actionModalButtonRow}>
                   <TouchableOpacity
@@ -636,14 +677,17 @@ const IntegratedReservationDayModal = ({
                     disabled={isDeleting}
                     onPress={handleDeleteExternalReservation}>
                     {isDeleting ? (
-                      <ActivityIndicator color={COLORS.grayscale_0} size="small" />
+                      <ActivityIndicator
+                        color={COLORS.grayscale_0}
+                        size="small"
+                      />
                     ) : (
                       <Text
                         style={[
                           FONTS.fs_14_semibold,
                           styles.actionModalDeleteConfirmText,
                         ]}>
-                        삭제
+                        예약 취소
                       </Text>
                     )}
                   </TouchableOpacity>
@@ -659,6 +703,8 @@ const IntegratedReservationDayModal = ({
                         backgroundColor:
                           getExternalReservationSource(
                             selectedExternalReservation?.source,
+                            selectedExternalReservation?.channelColorKey,
+                            selectedExternalReservation?.sourceLabel,
                           )?.backgroundColor ?? COLORS.grayscale_100,
                       },
                     ]}>
@@ -669,6 +715,8 @@ const IntegratedReservationDayModal = ({
                           color:
                             getExternalReservationSource(
                               selectedExternalReservation?.source,
+                              selectedExternalReservation?.channelColorKey,
+                              selectedExternalReservation?.sourceLabel,
                             )?.textColor ?? COLORS.grayscale_700,
                         },
                       ]}>
@@ -688,7 +736,8 @@ const IntegratedReservationDayModal = ({
                     ? ` · ${selectedExternalReservation.guestCount}명`
                     : ''}
                 </Text>
-                <Text style={[FONTS.fs_12_medium, styles.actionModalPeriodText]}>
+                <Text
+                  style={[FONTS.fs_12_medium, styles.actionModalPeriodText]}>
                   {String(selectedExternalReservation?.checkInDate).replaceAll(
                     '-',
                     '.',
@@ -722,14 +771,14 @@ const IntegratedReservationDayModal = ({
                     ]}
                     activeOpacity={0.72}
                     accessibilityRole="button"
-                    accessibilityLabel="외부 예약 삭제"
+                    accessibilityLabel="외부 예약 취소"
                     onPress={() => setIsDeleteConfirmVisible(true)}>
                     <Text
                       style={[
                         FONTS.fs_14_semibold,
                         styles.actionModalDeleteText,
                       ]}>
-                      예약 삭제
+                      예약 취소
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -738,10 +787,7 @@ const IntegratedReservationDayModal = ({
                   activeOpacity={0.7}
                   onPress={closeReservationActionModal}>
                   <Text
-                    style={[
-                      FONTS.fs_14_medium,
-                      styles.actionModalCloseText,
-                    ]}>
+                    style={[FONTS.fs_14_medium, styles.actionModalCloseText]}>
                     닫기
                   </Text>
                 </TouchableOpacity>

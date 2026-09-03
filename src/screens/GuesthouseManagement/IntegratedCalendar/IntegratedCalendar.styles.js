@@ -148,38 +148,6 @@ export default StyleSheet.create({
     borderRadius: 5,
     justifyContent: 'center',
   },
-  availabilityBadge: {
-    width: '92%',
-    minHeight: 20,
-    marginTop: 5,
-    paddingHorizontal: 3,
-    paddingVertical: 2,
-    borderRadius: 5,
-    justifyContent: 'center',
-  },
-  availableBadge: {
-    backgroundColor: COLORS.grayscale_100,
-  },
-  lowAvailabilityBadge: {
-    backgroundColor: COLORS.grayscale_100,
-  },
-  soldOutBadge: {
-    backgroundColor: COLORS.secondary_red,
-  },
-  availabilityBadgeText: {
-    fontSize: 10,
-    textAlign: 'center',
-    includeFontPadding: false,
-  },
-  availableBadgeText: {
-    color: COLORS.grayscale_600,
-  },
-  lowAvailabilityBadgeText: {
-    color: COLORS.grayscale_600,
-  },
-  soldOutBadgeText: {
-    color: COLORS.semantic_red,
-  },
   externalReservationBadge: {
     marginTop: 3,
   },
