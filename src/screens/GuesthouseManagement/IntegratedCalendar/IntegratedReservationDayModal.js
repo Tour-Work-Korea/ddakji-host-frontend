@@ -22,6 +22,7 @@ import {
 import {FONTS} from '@constants/fonts';
 import hostGuesthouseApi from '@utils/api/hostGuesthouseApi';
 import {formatLocalDateToDotWithDay} from '@utils/formatDate';
+import {formatPhoneNumber} from '@utils/formatPhoneNumber';
 import PlusIcon from '@assets/images/plus_white.svg';
 
 const DETAIL_TABS = {
@@ -82,6 +83,9 @@ const normalizeIntegratedReservation = reservation => ({
   checkOutDate:
     reservation?.checkOutDate?.split?.('T')?.[0] ?? reservation?.checkOutDate,
   guestCount: Number(reservation?.guestCount ?? 0),
+  guestPhone: formatPhoneNumber(
+    reservation?.guestPhone ?? reservation?.userPhone ?? reservation?.phone,
+  ),
 });
 
 const normalizeCalendarRoom = room => ({

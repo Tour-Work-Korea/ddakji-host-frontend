@@ -300,9 +300,14 @@ const ExternalReservationForm = ({
           const isEditingSameRoom =
             initialReservation &&
             String(initialReservation.roomId) === String(selectedRoomId);
+          const inventoryDate = inventory?.date;
+          const isOriginallyOccupiedDate =
+            isEditingSameRoom &&
+            inventoryDate >= initialReservation.checkInDate &&
+            inventoryDate < initialReservation.checkOutDate;
           const isPrivateRoomUnavailable =
             !isDormitory &&
-            !isEditingSameRoom &&
+            !isOriginallyOccupiedDate &&
             (toFiniteNumber(inventory?.reservedBeds, 0) > 0 ||
               serverAvailableCapacity === 0 ||
               inventory?.isClosed === true);
@@ -322,7 +327,7 @@ const ExternalReservationForm = ({
           return Math.max(
             0,
             serverAvailableCapacity +
-              (isEditingSameRoom
+              (isOriginallyOccupiedDate
                 ? toFiniteNumber(initialReservation.guestCount, 0)
                 : 0),
           );

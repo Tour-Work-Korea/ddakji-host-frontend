@@ -54,6 +54,9 @@ const createClientGeneratedId = () =>
     .toString(36)
     .slice(2, 10)}`;
 
+const normalizeOptionalText = value => String(value ?? '').trim();
+const normalizePhoneDigits = value => String(value ?? '').replace(/\D/g, '');
+
 const normalizeRoom = room => ({
   roomId: room?.roomId ?? room?.id ?? null,
   roomName: room?.roomName ?? room?.name ?? '객실',
@@ -203,6 +206,37 @@ const IntegratedCalendar = () => {
     [calendarDays, reservationFormCheckInDate],
   );
 
+  const openExternalReservationForm = ({reservation = null, roomId = null}) => {
+    setEditingExternalReservation(reservation);
+    setCreateRequestId(reservation ? null : createClientGeneratedId());
+    setPreferredExternalRoomId(roomId);
+    setIsAddReservationVisible(true);
+  };
+
+  const handleOpenExternalReservationEdit = async reservation => {
+    try {
+      const response = await hostGuesthouseApi.getExternalReservation(
+        guesthouseId,
+        reservation.reservationId ?? reservation.id,
+      );
+      const latestReservation = {
+        ...reservation,
+        ...getApiPayload(response),
+      };
+
+      openExternalReservationForm({
+        reservation: latestReservation,
+        roomId: latestReservation.roomId ?? null,
+      });
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: getApiError(error).message,
+        position: 'top',
+      });
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
 
@@ -286,20 +320,56 @@ const IntegratedCalendar = () => {
     const isEditing = Boolean(editingExternalReservation);
     try {
       if (isEditing) {
+        const updatePayload = {
+          version: editingExternalReservation.version,
+        };
+        if (
+          String(editingExternalReservation.channelId) !==
+          String(reservation.channelId)
+        ) {
+          updatePayload.channelId = reservation.channelId;
+        }
+        if (
+          String(editingExternalReservation.roomId) !==
+          String(reservation.roomId)
+        ) {
+          updatePayload.roomId = reservation.roomId;
+        }
+        if (
+          editingExternalReservation.checkOutDate !== reservation.checkOutDate
+        ) {
+          updatePayload.checkOutDate = reservation.checkOutDate;
+        }
+        if (
+          Number(editingExternalReservation.guestCount) !==
+          Number(reservation.guestCount)
+        ) {
+          updatePayload.guestCount = reservation.guestCount;
+        }
+        if (
+          normalizeOptionalText(editingExternalReservation.guestName) !==
+          reservation.guestName
+        ) {
+          updatePayload.guestName = reservation.guestName || null;
+        }
+        if (
+          normalizePhoneDigits(editingExternalReservation.guestPhone) !==
+          normalizePhoneDigits(reservation.guestPhone)
+        ) {
+          updatePayload.guestPhone = reservation.guestPhone || null;
+        }
+        if (
+          normalizeOptionalText(editingExternalReservation.memo) !==
+          reservation.memo
+        ) {
+          updatePayload.memo = reservation.memo || null;
+        }
+
         await hostGuesthouseApi.updateExternalReservation(
           guesthouseId,
           editingExternalReservation.reservationId ??
             editingExternalReservation.id,
-          {
-            version: editingExternalReservation.version,
-            channelId: reservation.channelId,
-            roomId: reservation.roomId,
-            checkOutDate: reservation.checkOutDate,
-            guestCount: reservation.guestCount,
-            guestName: reservation.guestName || null,
-            guestPhone: reservation.guestPhone || null,
-            memo: reservation.memo || null,
-          },
+          updatePayload,
         );
       } else {
         await hostGuesthouseApi.createExternalReservation(guesthouseId, {
@@ -318,6 +388,7 @@ const IntegratedCalendar = () => {
       setEditingExternalReservation(null);
       setCreateRequestId(null);
       setIsAddReservationVisible(false);
+      setIsDetailVisible(false);
       setRefreshKey(value => value + 1);
       Toast.show({
         type: 'success',
@@ -342,10 +413,18 @@ const IntegratedCalendar = () => {
 
   const handleCancelExternalReservation = async reservation => {
     try {
-      await hostGuesthouseApi.cancelExternalReservation(
+      const detailResponse = await hostGuesthouseApi.getExternalReservation(
         guesthouseId,
         reservation.reservationId ?? reservation.id,
-        reservation.version,
+      );
+      const latestReservation = getApiPayload(detailResponse);
+
+      await hostGuesthouseApi.cancelExternalReservation(
+        guesthouseId,
+        latestReservation.reservationId ??
+          reservation.reservationId ??
+          reservation.id,
+        latestReservation.version,
       );
       setRefreshKey(value => value + 1);
       Toast.show({
@@ -623,64 +702,54 @@ const IntegratedCalendar = () => {
       </View>
 
       <Modal
-        visible={isDetailVisible}
+        visible={isDetailVisible || isAddReservationVisible}
         transparent
         animationType="fade"
-        onRequestClose={() => setIsDetailVisible(false)}>
+        onRequestClose={() => {
+          setIsAddReservationVisible(false);
+          setIsDetailVisible(false);
+        }}>
         <View style={styles.modalOverlay}>
           <Pressable
             style={styles.modalBackdrop}
-            onPress={() => setIsDetailVisible(false)}
-          />
-          <IntegratedReservationDayModal
-            guesthouseId={guesthouseId}
-            targetDate={selectedDate}
-            roomAvailability={selectedRoomAvailability}
-            refreshKey={refreshKey}
-            onClose={() => setIsDetailVisible(false)}
-            onAdd={selectedRoom => {
-              setEditingExternalReservation(null);
-              setCreateRequestId(createClientGeneratedId());
-              setPreferredExternalRoomId(selectedRoom?.roomId ?? null);
-              setIsDetailVisible(false);
-              setIsAddReservationVisible(true);
-            }}
-            onEditExternal={reservation => {
-              setEditingExternalReservation(reservation);
-              setPreferredExternalRoomId(reservation.roomId ?? null);
-              setIsDetailVisible(false);
-              setIsAddReservationVisible(true);
-            }}
-            onDeleteExternal={handleCancelExternalReservation}
-          />
-        </View>
-      </Modal>
-
-      <Modal
-        visible={isAddReservationVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setIsAddReservationVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <Pressable
-            style={styles.modalBackdrop}
-            onPress={() => setIsAddReservationVisible(false)}
-          />
-          <ExternalReservationForm
-            key={editingExternalReservation?.id ?? 'new-external-reservation'}
-            guesthouseId={guesthouseId}
-            checkInDate={reservationFormCheckInDate}
-            initialRoomId={preferredExternalRoomId}
-            initialReservation={editingExternalReservation}
-            bookingChannels={bookingChannels}
-            roomAvailability={reservationFormRoomAvailability}
-            onCancel={() => {
-              setPreferredExternalRoomId(null);
-              setEditingExternalReservation(null);
+            onPress={() => {
               setIsAddReservationVisible(false);
+              setIsDetailVisible(false);
             }}
-            onSave={handleSaveExternalReservation}
           />
+          {isAddReservationVisible ? (
+            <ExternalReservationForm
+              key={editingExternalReservation?.id ?? 'new-external-reservation'}
+              guesthouseId={guesthouseId}
+              checkInDate={reservationFormCheckInDate}
+              initialRoomId={preferredExternalRoomId}
+              initialReservation={editingExternalReservation}
+              bookingChannels={bookingChannels}
+              roomAvailability={reservationFormRoomAvailability}
+              onCancel={() => {
+                setPreferredExternalRoomId(null);
+                setEditingExternalReservation(null);
+                setIsAddReservationVisible(false);
+                setIsDetailVisible(false);
+              }}
+              onSave={handleSaveExternalReservation}
+            />
+          ) : (
+            <IntegratedReservationDayModal
+              guesthouseId={guesthouseId}
+              targetDate={selectedDate}
+              roomAvailability={selectedRoomAvailability}
+              refreshKey={refreshKey}
+              onClose={() => setIsDetailVisible(false)}
+              onAdd={selectedRoom => {
+                openExternalReservationForm({
+                  roomId: selectedRoom?.roomId ?? null,
+                });
+              }}
+              onEditExternal={handleOpenExternalReservationEdit}
+              onDeleteExternal={handleCancelExternalReservation}
+            />
+          )}
         </View>
       </Modal>
     </View>
