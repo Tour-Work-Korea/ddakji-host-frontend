@@ -254,7 +254,7 @@ const MyMeetList = () => {
         <TouchableOpacity
           style={styles.fab}
           onPress={() => {
-            navigation.navigate('MyMeetAdd');
+            navigation.navigate('MyMeetTypeSelect');
           }}>
           <Text style={[FONTS.fs_14_medium, styles.fabText]}>
             이벤트 추가하기

@@ -57,6 +57,7 @@ import {
   MyMeetList,
   MyMeetDetail,
   MyMeetPreview,
+  MyMeetTypeSelect,
   MyMeetAdd,
   ReservationCancelList,
   PastReservationList,
@@ -217,6 +218,10 @@ const RootNavigation = () => {
         <Stack.Screen name="MyMeetList" component={MyMeetList} />
         <Stack.Screen name="MyMeetDetail" component={MyMeetDetail} />
         <Stack.Screen name="MyMeetPreview" component={MyMeetPreview} />
+        <Stack.Screen
+          name="MyMeetTypeSelect"
+          component={MyMeetTypeSelect}
+        />
         <Stack.Screen name="MyMeetAdd" component={MyMeetAdd} />
         <Stack.Screen
           name="ReservationCancelList"
