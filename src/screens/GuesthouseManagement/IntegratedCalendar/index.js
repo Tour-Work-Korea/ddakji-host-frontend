@@ -105,17 +105,6 @@ const getRoomAvailabilityForDate = (roomInventories, dateKey) =>
 
 const getShortRoomName = roomName => {
   const name = String(roomName ?? '객실').replace(/\s/g, '');
-  const isDormitory = /도미토리|도미/.test(name);
-
-  if (/여자|여성/.test(name)) {
-    return isDormitory ? '여도미' : '여성';
-  }
-  if (/남자|남성/.test(name)) {
-    return isDormitory ? '남도미' : '남성';
-  }
-  if (isDormitory) {
-    return '도미';
-  }
   return name.slice(0, 3);
 };
 
@@ -329,7 +318,6 @@ const IntegratedCalendar = () => {
       setEditingExternalReservation(null);
       setCreateRequestId(null);
       setIsAddReservationVisible(false);
-      setIsDetailVisible(true);
       setRefreshKey(value => value + 1);
       Toast.show({
         type: 'success',
@@ -519,7 +507,7 @@ const IntegratedCalendar = () => {
                 badge => badge.value !== 'DDAKJI',
               );
               const visibleReservationBadges =
-                reservationBadges.length <= 2
+                reservationBadges.length <= 4
                   ? reservationBadges
                   : [
                       ...(ddakjiBadge ? [ddakjiBadge] : []),
