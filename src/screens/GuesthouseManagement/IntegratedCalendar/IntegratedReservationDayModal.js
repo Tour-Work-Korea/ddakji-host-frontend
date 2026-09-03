@@ -540,11 +540,14 @@ const IntegratedReservationDayModal = ({
               contentContainerStyle={styles.listContent}
               showsVerticalScrollIndicator={false}
               renderItem={({item}) => {
-                const externalSource = getExternalReservationSource(
-                  item.source,
-                  item.channelColorKey,
-                  item.sourceLabel,
-                );
+                const externalSource =
+                  item.sourceType === 'EXTERNAL'
+                    ? getExternalReservationSource(
+                        item.source,
+                        item.channelColorKey,
+                        item.sourceLabel,
+                      )
+                    : null;
                 const nights = getNights(item.checkInDate, item.checkOutDate);
 
                 return (

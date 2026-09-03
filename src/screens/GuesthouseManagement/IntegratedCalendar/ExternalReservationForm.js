@@ -70,14 +70,25 @@ const formatPhoneNumber = value => {
 const isValidPhoneNumber = value =>
   !value || /^0\d{1,2}-\d{3,4}-\d{4}$/.test(value);
 
+const toFiniteNumber = (value, fallback) => {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+};
+
 const normalizeRoom = room => ({
   roomId: room?.roomId ?? room?.id ?? null,
   roomName: room?.roomName ?? room?.name ?? '객실',
   roomType: room?.roomType ?? '',
-  baseCapacity: Number(room?.roomCapacity ?? 1),
-  minCapacity: Number(room?.roomMinCapacity ?? 1),
-  maxCapacity: Number(room?.roomMaxCapacity ?? room?.roomCapacity ?? 1),
-  capacity: Number(room?.roomMaxCapacity ?? room?.roomCapacity ?? 1),
+  baseCapacity: toFiniteNumber(room?.roomCapacity ?? room?.capacity, 1),
+  minCapacity: toFiniteNumber(room?.roomMinCapacity ?? room?.minCapacity, 1),
+  maxCapacity: toFiniteNumber(
+    room?.roomMaxCapacity ?? room?.maxCapacity ?? room?.roomCapacity,
+    1,
+  ),
+  capacity: toFiniteNumber(
+    room?.roomMaxCapacity ?? room?.maxCapacity ?? room?.roomCapacity,
+    1,
+  ),
 });
 
 const isRoomUnavailable = room =>
@@ -135,7 +146,7 @@ const ExternalReservationForm = ({
     ),
   );
   const [guestCount, setGuestCount] = useState(() =>
-    Number(initialReservation?.guestCount ?? 1),
+    toFiniteNumber(initialReservation?.guestCount, 1),
   );
   const [guestName, setGuestName] = useState(
     () => initialReservation?.guestName ?? '',
@@ -236,11 +247,17 @@ const ExternalReservationForm = ({
       ? selectedRoom.capacity
       : 99;
   const checkOutDate = addDays(checkInDate, nights);
-  const maxGuestCount = stayCapacity ?? selectedDateCapacity;
+  const maxGuestCount = Math.max(
+    1,
+    toFiniteNumber(
+      stayCapacity == null ? selectedDateCapacity : stayCapacity,
+      1,
+    ),
+  );
   const minGuestCount =
     selectedRoom?.roomType === 'DORMITORY'
       ? 1
-      : Math.max(1, Number(selectedRoom?.minCapacity ?? 1));
+      : Math.max(1, toFiniteNumber(selectedRoom?.minCapacity, 1));
   const isPhoneValid = isValidPhoneNumber(guestPhone);
   const canSave =
     Boolean(selectedRoomId) &&
@@ -276,14 +293,17 @@ const ExternalReservationForm = ({
           : payload?.inventories ?? [];
         const isDormitory = selectedRoom?.roomType === 'DORMITORY';
         const capacities = inventories.map(inventory => {
-          const serverAvailableCapacity = Number(inventory?.availableBeds ?? 0);
+          const serverAvailableCapacity = toFiniteNumber(
+            inventory?.availableBeds ?? inventory?.availableQuantity,
+            0,
+          );
           const isEditingSameRoom =
             initialReservation &&
             String(initialReservation.roomId) === String(selectedRoomId);
           const isPrivateRoomUnavailable =
             !isDormitory &&
             !isEditingSameRoom &&
-            (Number(inventory?.reservedBeds ?? 0) > 0 ||
+            (toFiniteNumber(inventory?.reservedBeds, 0) > 0 ||
               serverAvailableCapacity === 0 ||
               inventory?.isClosed === true);
 
@@ -296,14 +316,14 @@ const ExternalReservationForm = ({
           }
 
           if (!isDormitory) {
-            return selectedRoom?.capacity ?? 0;
+            return toFiniteNumber(selectedRoom?.capacity, 1);
           }
 
           return Math.max(
             0,
             serverAvailableCapacity +
               (isEditingSameRoom
-                ? Number(initialReservation.guestCount ?? 0)
+                ? toFiniteNumber(initialReservation.guestCount, 0)
                 : 0),
           );
         });
@@ -313,7 +333,7 @@ const ExternalReservationForm = ({
             : selectedDateCapacity;
 
         if (isMounted) {
-          setStayCapacity(nextCapacity);
+          setStayCapacity(toFiniteNumber(nextCapacity, selectedDateCapacity));
         }
       } catch (error) {
         if (isMounted) {
@@ -343,8 +363,9 @@ const ExternalReservationForm = ({
   ]);
 
   useEffect(() => {
+    const safeGuestCount = toFiniteNumber(guestCount, minGuestCount);
     const nextGuestCount = Math.min(
-      Math.max(guestCount, minGuestCount),
+      Math.max(safeGuestCount, minGuestCount),
       Math.max(minGuestCount, maxGuestCount),
     );
     if (guestCount !== nextGuestCount) {
