@@ -185,13 +185,14 @@ const PartyBasicsModal = ({
       !!form.partyStartTime &&
       !!form.partyEndTime &&
       (!showEventDate || !!form.eventDate) &&
-      ['SAME_DAY', 'ADVANCE'].includes(form.applicationType) &&
+      (!showApplicationPeriod ||
+        ['SAME_DAY', 'ADVANCE'].includes(form.applicationType)) &&
       Number(form.minAttendees) > 0 &&
       Number(form.maxAttendees) >= Number(form.minAttendees) &&
       ['FREE', 'PAID'].includes(form.chargeType) &&
       (form.chargeType === 'FREE' || hasValidPriceOptions)
     );
-  }, [form, showEventDate]);
+  }, [form, showApplicationPeriod, showEventDate]);
 
   const handleModalClose = () => {
     if (shouldResetOnClose) {

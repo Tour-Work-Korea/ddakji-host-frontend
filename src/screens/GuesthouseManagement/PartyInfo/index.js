@@ -18,11 +18,6 @@ import { COLORS } from '@constants/colors';
 import AlertModal from '@components/modals/AlertModal';
 import hostMeetApi from '@utils/api/hostMeetApi';
 import {
-  ensureEndedLocalDateEventSample,
-  removeLocalDateEvent,
-  updateLocalDateEvent,
-} from '@utils/localDateEventStorage';
-import {
   formatLocalDateToDotWithDay,
   formatLocalTimeToKorean12Hour,
 } from '@utils/formatDate';
@@ -35,7 +30,7 @@ import PlusIcon from '@assets/images/plus_white.svg';
 
 const MENU_TOAST_TOP_OFFSET = Platform.OS === 'ios' ? 220 : 190;
 
-const getPartyKey = party => party?.localEventId ?? party?.templateId;
+const getPartyKey = party => party?.templateId;
 
 const getPartyImageUrl = party => {
   if (party?.partyImageUrl) {
@@ -52,7 +47,7 @@ const getPartyImageUrl = party => {
 
 const getDateEventScheduleText = party => {
   const dateKey = String(
-    party?.partyStartDateTime ?? party?.eventDate ?? '',
+    party?.eventDate ?? '',
   ).split('T')[0];
   if (!dateKey) {
     return '';
@@ -69,10 +64,11 @@ const isEndedDateEvent = party => {
   if (party?.eventStatus === 'ENDED') {
     return true;
   }
+  if (party?.eventStatus === 'ACTIVE') {
+    return false;
+  }
 
-  const dateKey = String(
-    party?.partyStartDateTime ?? party?.eventDate ?? '',
-  ).split('T')[0];
+  const dateKey = String(party?.eventDate ?? '').split('T')[0];
   const endTime = party?.partyEndTime;
   if (!dateKey || !endTime) {
     return false;
@@ -128,13 +124,8 @@ const PartyInfo = ({ guesthouseId }) => {
   const [updatingTemplateIds, setUpdatingTemplateIds] = useState([]);
 
   const fetchParties = useCallback(async () => {
-    let localEvents = [];
     try {
       setLoading(true);
-      if (__DEV__) {
-        localEvents = await ensureEndedLocalDateEventSample(guesthouseId);
-      }
-
       const response = await hostMeetApi.getMyParties();
       const rawParties = response?.data;
       const allParties = Array.isArray(rawParties)
@@ -160,10 +151,10 @@ const PartyInfo = ({ guesthouseId }) => {
           }
         }),
       );
-      setParties(moveEndedEventsToBottom([...localEvents, ...resolvedParties]));
+      setParties(moveEndedEventsToBottom(resolvedParties));
     } catch (error) {
       console.log('Error fetching parties:', error);
-      setParties(moveEndedEventsToBottom(localEvents));
+      setParties([]);
     } finally {
       setLoading(false);
     }
@@ -182,34 +173,20 @@ const PartyInfo = ({ guesthouseId }) => {
   };
 
   const handleEdit = party => {
-    if (party?.isLocalTestEvent) {
-      navigation.navigate('MyMeetAdd', {
-        localEventId: party.localEventId,
-        guesthouseId,
-        scheduleType: 'DATE_EVENT',
-      });
-      return;
-    }
     navigation.navigate('MyMeetAdd', {
       templateId: party.templateId,
       guesthouseId,
+      scheduleType: party.scheduleType ?? 'DAILY',
     });
   };
 
   const handleDelete = party => {
-    setDeleteTargetId({
-      id: getPartyKey(party),
-      isLocal: Boolean(party?.isLocalTestEvent),
-    });
+    setDeleteTargetId(getPartyKey(party));
   };
 
   const handleReuse = party => {
-    if (!party?.isLocalTestEvent) {
-      return;
-    }
-
     navigation.navigate('MyMeetAdd', {
-      reuseLocalEventId: party.localEventId,
+      reuseTemplateId: party.templateId,
       guesthouseId,
       scheduleType: 'DATE_EVENT',
     });
@@ -227,11 +204,10 @@ const PartyInfo = ({ guesthouseId }) => {
     setApplyToggleTarget({
       partyId,
       nextValue,
-      isLocal: Boolean(party?.isLocalTestEvent),
     });
   };
 
-  const handleToggleApplyOpen = async (partyId, nextValue, isLocal) => {
+  const handleToggleApplyOpen = async (partyId, nextValue) => {
     if (
       partyId == null ||
       updatingTemplateIds.some(id => String(id) === String(partyId))
@@ -242,13 +218,7 @@ const PartyInfo = ({ guesthouseId }) => {
     setUpdatingTemplateIds(prev => [...prev, partyId]);
 
     try {
-      if (isLocal) {
-        await updateLocalDateEvent(guesthouseId, partyId, {
-          isApplyOpen: nextValue,
-        });
-      } else {
-        await hostMeetApi.updatePartyApplicationOpen(partyId, nextValue);
-      }
+      await hostMeetApi.updatePartyApplicationOpen(partyId, nextValue);
       setParties(prev =>
         prev.map(party =>
           String(getPartyKey(party)) === String(partyId)
@@ -286,11 +256,7 @@ const PartyInfo = ({ guesthouseId }) => {
     }
 
     try {
-      if (deleteTargetId.isLocal) {
-        await removeLocalDateEvent(guesthouseId, deleteTargetId.id);
-      } else {
-        await hostMeetApi.deleteParty(deleteTargetId.id);
-      }
+      await hostMeetApi.deleteParty(deleteTargetId);
       setDeleteTargetId(null);
       fetchParties();
     } catch (error) {
@@ -305,9 +271,9 @@ const PartyInfo = ({ guesthouseId }) => {
       return;
     }
 
-    const {partyId, nextValue, isLocal} = applyToggleTarget;
+    const {partyId, nextValue} = applyToggleTarget;
     setApplyToggleTarget(null);
-    handleToggleApplyOpen(partyId, nextValue, isLocal);
+    handleToggleApplyOpen(partyId, nextValue);
   };
 
   if (loading) {
@@ -387,14 +353,6 @@ const PartyInfo = ({ guesthouseId }) => {
                       이벤트
                     </Text>
                   </View>
-                  {item.isLocalTestEvent ? (
-                    <View style={styles.testBadge}>
-                      <Text
-                        style={[FONTS.fs_12_medium, styles.testBadgeText]}>
-                        테스트
-                      </Text>
-                    </View>
-                  ) : null}
                   {isEnded ? (
                     <View style={styles.endedBadge}>
                       <Text style={[FONTS.fs_12_semibold, styles.endedBadgeText]}>

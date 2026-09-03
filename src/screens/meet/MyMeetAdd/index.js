@@ -13,11 +13,6 @@ import styles from './MyMeetAdd.styles';
 import Header from '@components/Header';
 import { FONTS } from '@constants/fonts';
 import hostMeetApi from '@utils/api/hostMeetApi';
-import {
-  addLocalDateEvent,
-  getLocalDateEvents,
-  updateLocalDateEvent,
-} from '@utils/localDateEventStorage';
 
 import MeetEventModal from '@components/modals/HostMy/Meet/AddMeet/MeetEventModal';
 import PartyTitleIntroModal from '@components/modals/HostMy/Meet/AddMeet/PartyTitleIntroModal';
@@ -36,15 +31,13 @@ const MyMeetAdd = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const templateId = Number(route.params?.templateId);
-  const localEventId = route.params?.localEventId;
-  const reuseLocalEventId = route.params?.reuseLocalEventId;
+  const reuseTemplateId = Number(route.params?.reuseTemplateId);
   const isServerEditMode = Number.isFinite(templateId) && templateId > 0;
-  const isLocalEditMode = Boolean(localEventId);
-  const isReuseMode = Boolean(reuseLocalEventId);
-  const isEditMode = isServerEditMode || isLocalEditMode;
-  const scheduleType =
-    route.params?.scheduleType ??
-    (isLocalEditMode || isReuseMode ? 'DATE_EVENT' : 'DAILY');
+  const isReuseMode = Number.isFinite(reuseTemplateId) && reuseTemplateId > 0;
+  const isEditMode = isServerEditMode;
+  const [scheduleType, setScheduleType] = useState(
+    route.params?.scheduleType ?? (isReuseMode ? 'DATE_EVENT' : 'DAILY'),
+  );
   const isDateEvent = scheduleType === 'DATE_EVENT';
   const routeGuesthouseId = Number(route.params?.guesthouseId);
   const initialGuesthouseId = Number.isFinite(routeGuesthouseId) && routeGuesthouseId > 0
@@ -172,21 +165,18 @@ const MyMeetAdd = () => {
     const fetchTemplateDetail = async () => {
       try {
         setLoading(true);
-        const sourceLocalEventId = localEventId ?? reuseLocalEventId;
-        const data = isLocalEditMode || isReuseMode
-          ? (
-              await getLocalDateEvents(initialGuesthouseId)
-            ).find(
-              event =>
-                String(event.localEventId) === String(sourceLocalEventId),
-            )
-          : (await hostMeetApi.getPartyTemplateDetail(templateId)).data;
+        const sourceTemplateId = isReuseMode ? reuseTemplateId : templateId;
+        const data = (
+          await hostMeetApi.getPartyTemplateDetail(sourceTemplateId)
+        ).data;
 
         if (!data) {
-          throw new Error('테스트 이벤트 정보를 찾을 수 없어요.');
+          throw new Error('콘텐츠 정보를 찾을 수 없어요.');
         }
 
         if (!isMounted) return;
+
+        setScheduleType(data?.scheduleType ?? 'DAILY');
 
         const normalizedPriceOptions = Array.isArray(data?.priceOptions)
           ? data.priceOptions
@@ -234,8 +224,7 @@ const MyMeetAdd = () => {
           eventDate:
             isReuseMode
               ? null
-              : data?.partyStartDateTime?.split?.('T')?.[0] ??
-                data?.eventDate ??
+              : data?.eventDate ??
                 prev.eventDate,
           partyStartTime: data?.partyStartTime ?? prev.partyStartTime,
           partyEndTime: data?.partyEndTime ?? prev.partyEndTime,
@@ -333,11 +322,9 @@ const MyMeetAdd = () => {
   }, [
     initialGuesthouseId,
     isEditMode,
-    isLocalEditMode,
     isReuseMode,
-    localEventId,
     navigation,
-    reuseLocalEventId,
+    reuseTemplateId,
     templateId,
   ]);
 
@@ -511,7 +498,7 @@ const MyMeetAdd = () => {
     (!isDateEvent || isNonEmpty(party.eventDate)) &&
     isNonEmpty(party.partyStartTime) &&
     isNonEmpty(party.partyEndTime) &&
-    ['SAME_DAY', 'ADVANCE'].includes(party.applicationType) &&
+    (isDateEvent || ['SAME_DAY', 'ADVANCE'].includes(party.applicationType)) &&
     Number(party.minAttendees) > 0 &&
     Number(party.maxAttendees) >= Number(party.minAttendees) &&
     ['FREE', 'PAID'].includes(party.chargeType) &&
@@ -555,12 +542,11 @@ const MyMeetAdd = () => {
 
       // 기본 정보
       guesthouseId: Number(party.guesthouseId),
-      scheduleType: isDateEvent ? scheduleType : undefined,
-      partyStartDateTime: isDateEvent ? party.eventDate : undefined,
-      isApplyOpen: isDateEvent ? true : undefined,
+      scheduleType,
+      eventDate: isDateEvent ? party.eventDate : undefined,
       partyStartTime: party.partyStartTime,
       partyEndTime: party.partyEndTime,
-      applicationType: party.applicationType,
+      applicationType: isDateEvent ? undefined : party.applicationType,
       minAttendees: Number(party.minAttendees),
       maxAttendees: Number(party.maxAttendees),
       isGuest: !!party.isGuest,
@@ -684,15 +670,7 @@ const MyMeetAdd = () => {
     const payload = buildPayload();
 
     try {
-      if (isLocalEditMode) {
-        await updateLocalDateEvent(
-          party.guesthouseId,
-          localEventId,
-          payload,
-        );
-      } else if (isDateEvent && __DEV__) {
-        await addLocalDateEvent(party.guesthouseId, payload);
-      } else if (isServerEditMode) {
+      if (isServerEditMode) {
         await hostMeetApi.updateParty(templateId, payload);
       } else {
         await hostMeetApi.createParty(payload);

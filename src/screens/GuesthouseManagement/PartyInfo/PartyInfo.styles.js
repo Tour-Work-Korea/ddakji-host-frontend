@@ -100,15 +100,6 @@ export default StyleSheet.create({
   endedTypeBadgeText: {
     color: COLORS.grayscale_500,
   },
-  testBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 10,
-    backgroundColor: COLORS.grayscale_100,
-  },
-  testBadgeText: {
-    color: COLORS.grayscale_500,
-  },
   endedBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
