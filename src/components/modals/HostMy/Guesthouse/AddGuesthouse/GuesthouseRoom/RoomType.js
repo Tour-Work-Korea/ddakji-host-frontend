@@ -1,3 +1,5 @@
+import MultiNightDiscountForm from '@components/MultiNightDiscountForm';
+import {validateMultiNightDiscount} from '@utils/multiNightDiscount';
 import React from 'react';
 import {
   View,
@@ -60,6 +62,7 @@ const RoomType = ({ data, setData, onBack, onApply }) => {
   };
 
   const isDisabled =
+    !!validateMultiNightDiscount(data.multiNightDiscount) ||
     (capacityMode === 'none') ||
     ((capacityMode === 'preset' && !data.roomCapacity) ||
     (capacityMode === 'etc' && (!etcInput || isNaN(Number(etcInput))))) ||
@@ -164,6 +167,9 @@ const RoomType = ({ data, setData, onBack, onApply }) => {
         />
         <Text style={[FONTS.fs_14_regular, { marginLeft: 8 }]}>원</Text>
       </View>
+      <MultiNightDiscountForm value={data.multiNightDiscount}
+        onChange={multiNightDiscount => setData({...data, multiNightDiscount})}
+        roomType={data.roomType} />
     </ScrollView>
 
     {/* 하단 버튼 */}

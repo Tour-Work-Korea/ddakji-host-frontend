@@ -1,3 +1,4 @@
+import {markdownToPreviewText} from '@utils/markdownPreview';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -118,7 +119,14 @@ const buildLines = item => {
     return ['알림 상세를 확인해주세요.'];
   }
 
-  return String(first)
+  const preview = normalizeType(item?.type) === 'notice'
+    ? markdownToPreviewText(first)
+    : String(first);
+  if (!preview.trim()) {
+    return ['알림 상세를 확인해주세요.'];
+  }
+
+  return preview
     .split('\n')
     .map(line => line.trim())
     .filter(Boolean)

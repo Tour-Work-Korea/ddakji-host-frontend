@@ -1,5 +1,6 @@
+import Text from '@components/ScalableText';
 import React, { useCallback, useEffect, useState } from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Clipboard from '@react-native-clipboard/clipboard';
 
@@ -640,6 +641,13 @@ const MyGuesthouseReservationDetail = ({ route }) => {
             valueStyle={paymentStatusColor}
           />
           <InfoRow label="결제수단" value={reservation.paymentMethod} />
+          {reservation.roomSubtotalAmount != null && <>
+            <InfoRow label="객실료" value={`${Number(reservation.roomSubtotalAmount).toLocaleString('ko-KR')}원`} />
+            {Number(reservation.multiNightDiscountAmount) > 0 &&
+              <InfoRow label="연박 할인" value={`-${Number(reservation.multiNightDiscountAmount).toLocaleString('ko-KR')}원`} />}
+            {reservation.extraPersonTotalAmount != null &&
+              <InfoRow label="추가 인원 요금" value={`${Number(reservation.extraPersonTotalAmount).toLocaleString('ko-KR')}원`} />}
+          </>}
           <InfoRow
             label={paymentLabel}
             value={paymentAmountText}

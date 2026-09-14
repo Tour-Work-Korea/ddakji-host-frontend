@@ -1,10 +1,11 @@
+import Text from '@components/ScalableText';
+import MultiNightDiscountSummary from '@components/MultiNightDiscountSummary';
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
   Image,
   Platform,
   ScrollView,
   Switch,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -34,6 +35,7 @@ const normalizeRoom = room => ({
   roomId: room?.roomId ?? room?.id ?? null,
   name: room?.roomName ?? room?.name ?? '이름 없음',
   roomType: room?.roomType ?? '',
+  multiNightDiscount: room?.multiNightDiscount,
   roomCapacity: Number(room?.roomCapacity ?? 0),
   roomStatus: room?.roomStatus ?? 'CLOSED',
   isVisible: Boolean(room?.isVisible),
@@ -58,6 +60,7 @@ const buildRoomSubtitle = room => {
 const mapRoomDetailToEditableRoom = room => ({
   id: room?.id ?? room?.roomId ?? undefined,
   roomName: room?.roomName ?? '',
+  multiNightDiscount: room?.multiNightDiscount,
   roomCapacity: room?.roomCapacity ?? null,
   roomMaxCapacity: room?.roomMaxCapacity ?? room?.roomCapacity ?? null,
   roomDesc: room?.roomDesc ?? room?.roomDescription ?? '',
@@ -273,6 +276,7 @@ const RoomList = ({guesthouseId}) => {
           ? {
               ...room,
               name: updatedRoom?.roomName ?? room.name,
+              multiNightDiscount: updatedRoom?.multiNightDiscount,
               roomType: updatedRoom?.roomType ?? room.roomType,
               roomCapacity: Number(updatedRoom?.roomCapacity ?? room.roomCapacity ?? 0),
               roomStatus: room.roomStatus,
@@ -423,6 +427,7 @@ const RoomList = ({guesthouseId}) => {
                     <Text style={[FONTS.fs_16_medium, styles.roomName]} numberOfLines={1}>
                       {room.name}
                     </Text>
+                    <MultiNightDiscountSummary policy={room.multiNightDiscount} compact />
                     <Text style={[FONTS.fs_14_medium, styles.roomSubtitle]}>
                       {room.subtitle}
                     </Text>

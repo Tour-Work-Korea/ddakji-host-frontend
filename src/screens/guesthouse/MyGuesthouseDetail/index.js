@@ -1,3 +1,4 @@
+import MultiNightDiscountSummary from '@components/MultiNightDiscountSummary';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
@@ -136,6 +137,7 @@ const MyGuesthousePreview = ({ route }) => {
       roomMaxCapacity: r.roomMaxCapacity,
       roomDesc: r.roomDesc,
       roomPrice: r.roomPrice,
+      multiNightDiscount: r.multiNightDiscount,
       roomExtraFees: r.roomExtraFees || [],
       roomImages: (r.roomImages || []).map(ri => ({
         id: ri.id,
@@ -143,6 +145,9 @@ const MyGuesthousePreview = ({ route }) => {
         isThumbnail: !!ri.isThumbnail,
       })),
       roomType: r.roomType,
+      dormitoryGenderType: r.dormitoryGenderType,
+      femaleOnly: r.femaleOnly,
+      extraPersonPrice: r.extraPersonPrice ?? r.extraPersonFee,
     })),
 
     amenities: d.amenities || [],
@@ -358,6 +363,7 @@ const MyGuesthousePreview = ({ route }) => {
                       <Text style={[FONTS.fs_18_semibold, styles.roomPrice]}>
                         {room.roomPrice?.toLocaleString()}원
                       </Text>
+                      <MultiNightDiscountSummary policy={room.multiNightDiscount} compact />
                     </View>
 
                     {isDormitory ? (
@@ -406,6 +412,7 @@ const MyGuesthousePreview = ({ route }) => {
                               roomId: room.id,
                               roomName: room.roomName,
                               roomPrice: room.roomPrice,
+                              multiNightDiscount: room.multiNightDiscount,
                               roomDesc: room.roomDesc,
                               roomCapacity: room.roomCapacity,
                               roomType: room.roomType,
@@ -465,6 +472,7 @@ const MyGuesthousePreview = ({ route }) => {
                               roomId: room.id,
                               roomName: room.roomName,
                               roomPrice: room.roomPrice,
+                              multiNightDiscount: room.multiNightDiscount,
                               roomDesc: room.roomDesc,
                               roomCapacity: room.roomCapacity,
                               roomType: room.roomType,

@@ -1,3 +1,4 @@
+import {toMultiNightDiscountRequest} from '@utils/multiNightDiscount';
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -79,6 +80,7 @@ const GuesthouseRoomModal = ({ visible, onClose, onSelect, shouldResetOnClose })
       roomCapacity: Number(src.roomCapacity),
       roomMaxCapacity: src.roomMaxCapacity != null ? Number(src.roomMaxCapacity) : Number(src.roomCapacity),
       roomPrice: Number(src.roomPrice),
+      multiNightDiscount: toMultiNightDiscountRequest(src.multiNightDiscount),
     };
     setRooms(prev => [...prev, normalized]);
     setStep('list'); // 리스트로 돌아감
@@ -96,7 +98,7 @@ const GuesthouseRoomModal = ({ visible, onClose, onSelect, shouldResetOnClose })
     if (visible && appliedData) {
       setRooms(appliedData);
     }
-  }, [visible]);
+  }, [visible, appliedData]);
 
   // 단순 닫기 시 초기화
   const handleModalClose = () => {

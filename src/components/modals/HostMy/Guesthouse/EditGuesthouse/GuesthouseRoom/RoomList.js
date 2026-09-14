@@ -1,3 +1,4 @@
+import MultiNightDiscountSummary from '@components/MultiNightDiscountSummary';
 import React from 'react';
 import {
   View,
@@ -67,6 +68,7 @@ const RoomList = ({ rooms, onDelete, onEdit }) => {
             <Text style={[FONTS.fs_14_semibold, styles.roomSub]}>
               {item.roomPrice}원
             </Text>
+            <MultiNightDiscountSummary policy={item.multiNightDiscount} compact />
           </View>
         </View>
         <View style={styles.buttonContainer}>

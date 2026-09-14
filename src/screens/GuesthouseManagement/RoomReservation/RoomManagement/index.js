@@ -1,5 +1,6 @@
+import Text from '@components/ScalableText';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { PanResponder, Platform, ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { PanResponder, Platform, ScrollView, Switch, TouchableOpacity, View } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import Toast from 'react-native-toast-message';
 
@@ -34,6 +35,7 @@ const normalizeRoom = (room = {}) => ({
 
 const normalizeInventory = (inventory = {}, fallbackRoom = {}) => ({
   ...inventory,
+  multiNightDiscount: inventory?.multiNightDiscount ?? fallbackRoom?.multiNightDiscount,
   roomId: inventory?.roomId ?? fallbackRoom?.roomId,
   roomName: inventory?.roomName ?? fallbackRoom?.roomName ?? '이름 없음',
   name: inventory?.roomName ?? fallbackRoom?.roomName ?? '이름 없음',
