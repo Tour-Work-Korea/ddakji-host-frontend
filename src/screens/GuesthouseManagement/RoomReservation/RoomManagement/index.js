@@ -1,3 +1,4 @@
+import MultiNightDiscountSummary from '@components/MultiNightDiscountSummary';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { PanResponder, Platform, ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { Calendar } from 'react-native-calendars';
@@ -34,6 +35,7 @@ const normalizeRoom = (room = {}) => ({
 
 const normalizeInventory = (inventory = {}, fallbackRoom = {}) => ({
   ...inventory,
+  multiNightDiscount: inventory?.multiNightDiscount ?? fallbackRoom?.multiNightDiscount,
   roomId: inventory?.roomId ?? fallbackRoom?.roomId,
   roomName: inventory?.roomName ?? fallbackRoom?.roomName ?? '이름 없음',
   name: inventory?.roomName ?? fallbackRoom?.roomName ?? '이름 없음',
@@ -459,6 +461,7 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
                       ellipsizeMode="tail">
                       {room.name}
                     </Text>
+                    <MultiNightDiscountSummary policy={room.multiNightDiscount} compact />
                     <View style={styles.roomRightBox}>
                       <View
                         style={[
@@ -560,6 +563,7 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
                       ellipsizeMode="tail">
                       {room.name}
                     </Text>
+                    <MultiNightDiscountSummary policy={room.multiNightDiscount} compact />
                     <View style={styles.roomRightBox}>
                       <View
                         style={[

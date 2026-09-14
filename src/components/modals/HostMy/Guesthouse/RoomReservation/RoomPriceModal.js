@@ -1,3 +1,4 @@
+import {getMultiNightDiscountError} from '@utils/multiNightDiscount';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Keyboard,
@@ -70,6 +71,7 @@ const RoomPriceModal = ({ visible, onClose, room, guesthouseId }) => {
   const [seasons, setSeasons] = useState([]);
 
   const [datePickerConfig, setDatePickerConfig] = useState({ visible: false, targetIndex: null, targetField: null, currentDate: '' });
+  const [discountError, setDiscountError] = useState('');
   const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '', onConfirm: null });
   const manualPrice = getPriceNumber(inputPrice);
   const isManualPriceTooLow = inputPrice.length > 0 && manualPrice < MIN_ROOM_PRICE;
@@ -134,6 +136,7 @@ const RoomPriceModal = ({ visible, onClose, room, guesthouseId }) => {
   // 초기화 및 데이터 로딩
   useEffect(() => {
     if (visible && room) {
+      setDiscountError('');
       setActiveTab('calendar');
       setSelectedDates(new Set());
       setInputPrice('');
@@ -192,6 +195,7 @@ const RoomPriceModal = ({ visible, onClose, room, guesthouseId }) => {
     console.log(`[API Request] 수동 요금 적용 (payload):`, payload);
 
     try {
+      setDiscountError('');
       const res = await hostGuesthouseApi.updateRoomManualPriceOverrides(guesthouseId, room.roomId, payload);
       console.log(`[API Response] 수동 요금 적용 결과:`, res.data);
       Toast.show({ type: 'success', text1: '선택한 날짜의 요금이 변경되었습니다.', position: 'top' });
@@ -204,7 +208,9 @@ const RoomPriceModal = ({ visible, onClose, room, guesthouseId }) => {
       }
     } catch (e) {
       console.error(e);
-      Toast.show({ type: 'error', text1: '요금 변경에 실패했습니다.', position: 'top' });
+      const policyError = getMultiNightDiscountError(e);
+      setDiscountError(policyError);
+      if (!policyError) Toast.show({ type: 'error', text1: '요금 변경에 실패했습니다.', position: 'top' });
     }
   };
 
@@ -217,6 +223,7 @@ const RoomPriceModal = ({ visible, onClose, room, guesthouseId }) => {
     console.log(`[API Request] 수동 요금 해제 (payload):`, payload);
 
     try {
+      setDiscountError('');
       const res = await hostGuesthouseApi.clearRoomManualPriceOverrides(guesthouseId, room.roomId, payload);
       console.log(`[API Response] 수동 요금 해제 결과:`, res.data);
       Toast.show({ type: 'success', text1: '수동 요금 변경이 해제되었습니다.', position: 'top' });
@@ -228,7 +235,9 @@ const RoomPriceModal = ({ visible, onClose, room, guesthouseId }) => {
       }
     } catch (e) {
       console.error(e);
-      Toast.show({ type: 'error', text1: '요금 변경 해제에 실패했습니다.', position: 'top' });
+      const policyError = getMultiNightDiscountError(e);
+      setDiscountError(policyError);
+      if (!policyError) Toast.show({ type: 'error', text1: '요금 변경 해제에 실패했습니다.', position: 'top' });
     }
   };
 
@@ -312,6 +321,7 @@ const RoomPriceModal = ({ visible, onClose, room, guesthouseId }) => {
     console.log(`[API Request] 시즌 데이터 저장 (payload):`, payload);
 
     try {
+      setDiscountError('');
       const res = await hostGuesthouseApi.updateRoomPricingSeasons(guesthouseId, room.roomId, payload);
       console.log(`[API Response] 시즌 데이터 저장 결과:`, res.data);
       Toast.show({ type: 'success', text1: '시즌 요금이 서버에 반영되었습니다.', position: 'top' });
@@ -323,7 +333,9 @@ const RoomPriceModal = ({ visible, onClose, room, guesthouseId }) => {
       setActiveTab('calendar');
     } catch (e) {
       console.error(e);
-      Toast.show({ type: 'error', text1: '시즌 저장에 실패했습니다.', position: 'top' });
+      const policyError = getMultiNightDiscountError(e);
+      setDiscountError(policyError);
+      if (!policyError) Toast.show({ type: 'error', text1: '시즌 저장에 실패했습니다.', position: 'top' });
     }
   };
 
@@ -607,6 +619,7 @@ const RoomPriceModal = ({ visible, onClose, room, guesthouseId }) => {
                 </TouchableOpacity>
               </View>
 
+              {!!discountError && <Text accessibilityRole="alert" style={[FONTS.fs_12_medium, styles.priceErrorText, {paddingHorizontal: 20}]}>{discountError}</Text>}
               <View style={styles.tabRow}>
                 <TouchableOpacity
                   style={[styles.tabBtn, activeTab === 'calendar' && styles.tabBtnActive]}

@@ -1,3 +1,4 @@
+import MultiNightDiscountSummary from '@components/MultiNightDiscountSummary';
 import React, { useState } from 'react';
 import { View, Text, Image, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -20,6 +21,7 @@ const MyRoomDetail = ({ route }) => {
   const {
     roomName,
     roomPrice,
+    multiNightDiscount,
     roomDesc,
     checkIn,
     checkOut,
@@ -147,6 +149,7 @@ const MyRoomDetail = ({ route }) => {
             <Text style={[FONTS.fs_20_bold, styles.price]}>
               {roomPrice.toLocaleString()}원
             </Text>
+            <MultiNightDiscountSummary policy={multiNightDiscount} />
           </View>
 
           <Text style={[FONTS.fs_16_medium, styles.dateTitle]}>선택 날짜</Text>
