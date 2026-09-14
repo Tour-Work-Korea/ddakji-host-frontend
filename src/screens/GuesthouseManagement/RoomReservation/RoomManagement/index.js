@@ -1,5 +1,6 @@
+import Text from '@components/ScalableText';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { PanResponder, Platform, ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { PanResponder, Platform, ScrollView, Switch, TouchableOpacity, View } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import Toast from 'react-native-toast-message';
 

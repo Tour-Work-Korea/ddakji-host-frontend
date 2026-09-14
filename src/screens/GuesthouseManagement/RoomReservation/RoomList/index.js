@@ -1,3 +1,4 @@
+import Text from '@components/ScalableText';
 import MultiNightDiscountSummary from '@components/MultiNightDiscountSummary';
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
@@ -5,7 +6,6 @@ import {
   Platform,
   ScrollView,
   Switch,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';

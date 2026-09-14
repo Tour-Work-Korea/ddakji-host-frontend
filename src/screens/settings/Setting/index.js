@@ -1,5 +1,7 @@
+import useDisplaySettingsStore from '@stores/displaySettingsStore';
+import Text from '@components/ScalableText';
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { ScrollView, Switch, View, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 
@@ -19,6 +21,8 @@ import RightArrow from '@assets/images/chevron_right_gray.svg';
 
 const Settings = () => {
   const navigation = useNavigation();
+  const largeText = useDisplaySettingsStore(state => state.largeText);
+  const setLargeText = useDisplaySettingsStore(state => state.setLargeText);
   const [modalVisible, setModalVisible] = useState(false);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [isUpdatingPhoto, setIsUpdatingPhoto] = useState(false);
@@ -104,7 +108,21 @@ const Settings = () => {
     <View style={styles.background}>
       <Header title={'설정'} />
 
-      <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <View>
+          <Text style={styles.menuHeader}>글자 크기</Text>
+          <View style={styles.menuContainer}>
+            <View style={styles.menuRow}>
+              <Text style={styles.menuText}>큰 글씨</Text>
+              <Switch accessibilityLabel="큰 글씨" value={largeText} onValueChange={setLargeText}
+                trackColor={{false: COLORS.grayscale_300, true: COLORS.primary_orange}} />
+            </View>
+            <Text style={styles.fontSizeDescription}>
+              방 관리·객실 목록·예약 상세의 글씨를 크게 표시합니다.
+            </Text>
+          </View>
+        </View>
+
         <View>
           <Text style={styles.menuHeader}>개인 프로필</Text>
           <View style={styles.menuContainer}>
@@ -194,7 +212,7 @@ const Settings = () => {
           <Text style={styles.detailText}>주소: 제주시 연동 263-13 레지던스이타스3</Text>
           <Text style={styles.detailText}>대표자 : 이하늘</Text>
         </View>
-      </View>
+      </ScrollView>
       <AlertModal
         visible={modalVisible}
         title={'정말 탈퇴하시겠어요?'}
@@ -211,17 +229,28 @@ const styles = StyleSheet.create({
   background: { flex: 1, backgroundColor: COLORS.grayscale_100 },
   container: {
     paddingHorizontal: 20,
-    paddingVertical: 8,
-    gap: 40,
+    paddingTop: 8,
+    paddingBottom: 24,
+    gap: 24,
   },
   menuHeader: {
     ...FONTS.fs_18_semibold,
     marginBottom: 8,
   },
+  fontSizeDescription: {
+    ...FONTS.fs_14_medium,
+    color: COLORS.grayscale_500,
+    lineHeight: 20,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
   menuContainer: { backgroundColor: COLORS.grayscale_0, borderRadius: 8 },
   menuRow: {
     padding: 16,
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    columnGap: 12,
+    rowGap: 8,
     justifyContent: 'space-between',
     alignItems: 'center',
   },
@@ -240,11 +269,13 @@ const styles = StyleSheet.create({
     color: COLORS.grayscale_800,
   },
   versionText: {
+    flexShrink: 1,
+    textAlign: 'right',
     ...FONTS.fs_14_medium,
     color: COLORS.grayscale_500,
   },
   logoutContainer: {
-    marginTop: -40,
+    marginTop: -8,
     flexDirection: 'row',
     alignSelf: 'center',
     alignItems: 'center',
