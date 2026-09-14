@@ -144,7 +144,7 @@ export const unmapDeviceToken = async jwtToken => {
   }
 };
 
-export const markNotificationAsRead = async notification => {
+const readNotificationDetail = async notification => {
   const data = normalizeNotificationPayload(notification);
   const notificationId =
     normalizeNumber(data.notificationId) ??
@@ -152,20 +152,23 @@ export const markNotificationAsRead = async notification => {
     normalizeNumber(data.id);
 
   if (!notificationId) {
-    return false;
+    return null;
   }
 
   try {
-    await notificationApi.getDetail(notificationId);
-    return true;
+    const response = await notificationApi.getDetail(notificationId);
+    return response?.data?.data ?? response?.data ?? {};
   } catch (error) {
     console.warn(
       '[notifications] markNotificationAsRead failed:',
       error?.message,
     );
-    return false;
+    return null;
   }
 };
+
+export const markNotificationAsRead = async notification =>
+  (await readNotificationDetail(notification)) != null;
 
 const getTodayLocalDate = () => {
   const today = new Date();
@@ -252,6 +255,11 @@ export const resolveNotificationTarget = notification => {
   const notificationLocalDate = getNotificationLocalDate(data);
   const todayLocalDate = getTodayLocalDate();
 
+  // A concrete notice takes precedence over generic screen/link hints.
+  if (noticeId) {
+    return {kind: 'screen', value: 'NoticeDetail', params: {noticeId}};
+  }
+
   if (deepLink) {
     return {kind: 'link', value: deepLink};
   }
@@ -273,13 +281,6 @@ export const resolveNotificationTarget = notification => {
     };
   }
 
-  if (noticeId) {
-    return {
-      kind: 'screen',
-      value: 'NoticeDetail',
-      params: {noticeId},
-    };
-  }
 
   if (isNoticeNotification && guesthouseId) {
     return {
@@ -436,12 +437,17 @@ export const resolveNotificationTarget = notification => {
 };
 
 export const openNotificationTarget = async remoteMessage => {
-  const target = resolveNotificationTarget(remoteMessage);
   const data = normalizeNotificationPayload(remoteMessage);
   const guesthouseId = normalizeNumber(data.guesthouseId);
 
   try {
-    await markNotificationAsRead(remoteMessage);
+    const detail = await readNotificationDetail(remoteMessage);
+    const type = normalizeNotificationType(data);
+    const isNotice = type.includes('NOTICE') || type.includes('EVENT');
+    const targetData = isNotice || detail?.noticeId
+      ? {...data, noticeId: data.noticeId ?? detail?.noticeId}
+      : data;
+    const target = resolveNotificationTarget(targetData);
 
     if (guesthouseId) {
       useUserStore.getState().setSelectedGuesthouseId(guesthouseId);
