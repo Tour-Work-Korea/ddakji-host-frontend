@@ -1,4 +1,3 @@
-import MultiNightDiscountSummary from '@components/MultiNightDiscountSummary';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { PanResponder, Platform, ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { Calendar } from 'react-native-calendars';
@@ -461,7 +460,6 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
                       ellipsizeMode="tail">
                       {room.name}
                     </Text>
-                    <MultiNightDiscountSummary policy={room.multiNightDiscount} compact />
                     <View style={styles.roomRightBox}>
                       <View
                         style={[
@@ -563,7 +561,6 @@ const RoomManagement = ({ guesthouseId, initialDate }) => {
                       ellipsizeMode="tail">
                       {room.name}
                     </Text>
-                    <MultiNightDiscountSummary policy={room.multiNightDiscount} compact />
                     <View style={styles.roomRightBox}>
                       <View
                         style={[
