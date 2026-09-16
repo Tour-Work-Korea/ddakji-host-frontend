@@ -33,7 +33,12 @@ export default function useRoomDiscountKeyboard() {
 
   return {
     scrollRef,
-    contentContainerStyle: {width: '100%', ...contentContainerStyle},
+    // Match the room modal inset while keeping controls inside the scroll viewport.
+    contentContainerStyle: {
+      width: '100%',
+      ...contentContainerStyle,
+      paddingHorizontal: 20,
+    },
     onContentSizeChange: scrollToInput,
     onInputFocus: event => {
       focusedInput.current = event.nativeEvent.target;

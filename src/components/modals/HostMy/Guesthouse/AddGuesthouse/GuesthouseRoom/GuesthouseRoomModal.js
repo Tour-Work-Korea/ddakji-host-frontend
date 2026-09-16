@@ -9,9 +9,7 @@ import {
   Dimensions,
   TouchableWithoutFeedback,
   ScrollView,
-  KeyboardAvoidingView,
   Keyboard,
-  Platform,
   Pressable,
 } from 'react-native';
 
@@ -140,10 +138,7 @@ const GuesthouseRoomModal = ({ visible, onClose, onSelect, shouldResetOnClose })
     >
       <View style={{ flex: 1 }}>
       <Pressable style={styles.overlay} onPress={handleOverlayPress} />
-      <KeyboardAvoidingView
-        style={styles.modalWrap}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      <View style={styles.modalWrap}>
       <View
         style={styles.modalContainer}
       >
@@ -223,7 +218,7 @@ const GuesthouseRoomModal = ({ visible, onClose, onSelect, shouldResetOnClose })
           )}
           
         </View>
-      </KeyboardAvoidingView>
+      </View>
       </View>
     </Modal>
   );

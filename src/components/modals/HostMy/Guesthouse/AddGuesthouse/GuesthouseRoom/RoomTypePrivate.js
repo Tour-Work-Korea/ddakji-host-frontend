@@ -161,7 +161,7 @@ const RoomTypePrivate = ({ data, setData, onBack, onApply }) => {
         contentContainerStyle={discountKeyboard.contentContainerStyle}
         onContentSizeChange={discountKeyboard.onContentSizeChange}
         keyboardShouldPersistTaps="handled"
-        style={{ flex: 1, marginBottom: 120 }}>
+        style={{flex: 1, marginBottom: 120, marginHorizontal: -20}}>
         {/* 객실 타입 */}
         <Text style={[FONTS.fs_16_medium, styles.title]}>기준 인원</Text>
         <View style={styles.roomGrid}>
@@ -199,6 +199,8 @@ const RoomTypePrivate = ({ data, setData, onBack, onApply }) => {
               </Text>
             </TouchableOpacity>
             <TextInput
+              onFocus={discountKeyboard.onInputFocus}
+              onBlur={discountKeyboard.onInputBlur}
               style={styles.etcInput}
               editable={isEtc}
               keyboardType="numeric"
@@ -264,6 +266,8 @@ const RoomTypePrivate = ({ data, setData, onBack, onApply }) => {
               </Text>
             </TouchableOpacity>
             <TextInput
+              onFocus={discountKeyboard.onInputFocus}
+              onBlur={discountKeyboard.onInputBlur}
               style={styles.etcInput}
               editable={isMaxEtc}
               keyboardType="numeric"
@@ -311,6 +315,8 @@ const RoomTypePrivate = ({ data, setData, onBack, onApply }) => {
         )}
         <View style={styles.priceRow}>
           <TextInput
+              onFocus={discountKeyboard.onInputFocus}
+              onBlur={discountKeyboard.onInputBlur}
             style={styles.priceInput}
             value={data.roomPrice?.toString()}
             keyboardType="numeric"

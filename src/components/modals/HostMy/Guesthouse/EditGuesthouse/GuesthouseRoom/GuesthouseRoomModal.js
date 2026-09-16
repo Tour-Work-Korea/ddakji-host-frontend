@@ -9,9 +9,7 @@ import {
   Dimensions,
   TouchableWithoutFeedback,
   ScrollView,
-  KeyboardAvoidingView,
   Keyboard,
-  Platform,
   Alert,
   Animated,
   Pressable,
@@ -579,10 +577,7 @@ const GuesthouseRoomModal = ({
     >
       <View style={{ flex: 1 }}>
       <Pressable style={styles.overlay} onPress={handleOverlayPress} />
-      <KeyboardAvoidingView
-        style={styles.modalWrap}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      <View style={styles.modalWrap}>
         <View
           style={styles.modalContainer}
         >
@@ -681,7 +676,7 @@ const GuesthouseRoomModal = ({
             }
           </Animated.View>
         )}
-      </KeyboardAvoidingView>
+      </View>
       </View>
     </Modal>
   );
