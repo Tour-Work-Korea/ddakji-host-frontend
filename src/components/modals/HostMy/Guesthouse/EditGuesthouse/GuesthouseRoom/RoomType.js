@@ -1,3 +1,4 @@
+import useRoomDiscountKeyboard from '@hooks/useRoomDiscountKeyboard';
 import MultiNightDiscountForm from '@components/MultiNightDiscountForm';
 import {validateMultiNightDiscount} from '@utils/multiNightDiscount';
 import React from 'react';
@@ -21,6 +22,7 @@ const ROOM_SIZES = ['2', '3', '4', '5', '6', '7'];
 const MIN_PRICE = 10000;
 
 const RoomType = ({ data, setData, onBack, onApply }) => {
+  const discountKeyboard = useRoomDiscountKeyboard();
   const initialPreset =
     data?.roomCapacity != null &&
     ROOM_SIZES.includes(String(data.roomCapacity));
@@ -119,7 +121,12 @@ const RoomType = ({ data, setData, onBack, onApply }) => {
 
   return (
     <>
-    <ScrollView style={{ flex: 1, marginBottom: 120}}>
+    <ScrollView
+        ref={discountKeyboard.scrollRef}
+        contentContainerStyle={discountKeyboard.contentContainerStyle}
+        onContentSizeChange={discountKeyboard.onContentSizeChange}
+        keyboardShouldPersistTaps="handled"
+        style={{ flex: 1, marginBottom: 120}}>
       {/* 객실 타입 */}
       <Text style={[FONTS.fs_16_medium, styles.title]}>객실 타입</Text>
       <View style={styles.roomGrid}>
@@ -213,7 +220,10 @@ const RoomType = ({ data, setData, onBack, onApply }) => {
         />
         <Text style={[FONTS.fs_14_regular, { marginLeft: 8 }]}>원</Text>
       </View>
-      <MultiNightDiscountForm value={data.multiNightDiscount}
+      <MultiNightDiscountForm
+        onInputFocus={discountKeyboard.onInputFocus}
+        onInputBlur={discountKeyboard.onInputBlur}
+        value={data.multiNightDiscount}
         onChange={multiNightDiscount => setData({...data, multiNightDiscount})}
         roomType={data.roomType} />
     </ScrollView>
