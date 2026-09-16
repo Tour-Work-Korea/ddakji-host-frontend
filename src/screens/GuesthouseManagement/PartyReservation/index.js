@@ -32,6 +32,15 @@ const formatPartyDate = value => {
 const getApplicationTypeLabel = value =>
   value === 'ADVANCE' ? '사전 신청' : '당일 신청';
 
+const EventBadge = ({template}) =>
+  template?.scheduleType === 'DATE_EVENT' ? (
+    <View style={styles.dateEventBadge}>
+      <Text style={[FONTS.fs_12_semibold, styles.dateEventBadgeText]}>
+        이벤트
+      </Text>
+    </View>
+  ) : null;
+
 const getPartyStatusLabel = value => {
   switch (value) {
     case 'RECRUIT_BEFORE':
@@ -578,6 +587,7 @@ const PartyReservation = ({
                         {isSelected ? (
                           <CheckIcon width={20} height={20} />
                         ) : null}
+                        <EventBadge template={template} />
                       </TouchableOpacity>
                     );
                   })}
