@@ -16,7 +16,13 @@ import {
 import EnabledRadio from '@assets/images/radio_button_enabled.svg';
 import DisabledRadio from '@assets/images/radio_button_disabled.svg';
 
-const MultiNightDiscountForm = ({value, onChange, roomType}) => {
+const MultiNightDiscountForm = ({
+  value,
+  onChange,
+  roomType,
+  onInputFocus,
+  onInputBlur,
+}) => {
   const policy = value ?? {enabled: false};
   const update = patch => onChange({...policy, ...patch});
   const error = validateMultiNightDiscount(policy);
@@ -46,7 +52,9 @@ const MultiNightDiscountForm = ({value, onChange, roomType}) => {
   return (
     <View style={styles.section}>
       <View style={styles.heading}>
-        <Text style={[FONTS.fs_16_medium, styles.text]}>연박할인</Text>
+        <Text style={[FONTS.fs_16_medium, styles.text, styles.title]}>
+          연박할인
+        </Text>
         <View style={styles.toggle}>
           <Text style={[FONTS.fs_12_medium, styles.muted]}>
             {policy.enabled ? '적용' : '미적용'}
@@ -85,6 +93,8 @@ const MultiNightDiscountForm = ({value, onChange, roomType}) => {
           </View>
           <View style={styles.inputRow}>
             <TextInput
+              onFocus={onInputFocus}
+              onBlur={onInputBlur}
               accessibilityLabel={
                 policy.type === 'PERCENT' ? '연박 할인율' : '연박 할인 금액'
               }
@@ -126,13 +136,21 @@ const MultiNightDiscountForm = ({value, onChange, roomType}) => {
   );
 };
 const styles = StyleSheet.create({
-  section: {marginTop: 24, marginBottom: 20, gap: 12},
+  section: {width: '100%', marginTop: 24, marginBottom: 20, gap: 12},
   heading: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 12,
   },
-  toggle: {flexDirection: 'row', alignItems: 'center', gap: 8},
+  title: {flex: 1, flexShrink: 1},
+  toggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 0,
+    gap: 8,
+    paddingRight: 4,
+  },
   options: {flexDirection: 'row', flexWrap: 'wrap', gap: 12},
   choice: {flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44},
   text: {color: COLORS.grayscale_900},

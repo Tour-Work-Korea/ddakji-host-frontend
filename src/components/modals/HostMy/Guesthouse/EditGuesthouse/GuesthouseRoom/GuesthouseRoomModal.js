@@ -582,7 +582,6 @@ const GuesthouseRoomModal = ({
       <KeyboardAvoidingView
         style={styles.modalWrap}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? -240 : 0}
       >
         <View
           style={styles.modalContainer}
