@@ -10,9 +10,7 @@ import {
   TextInput,
   ScrollView,
   Image,
-  KeyboardAvoidingView,
   Keyboard,
-  Platform,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 
@@ -225,10 +223,8 @@ const GuesthouseIntroSummaryModal = ({
       animationType="slide"
       onRequestClose={handleModalClose}
     >
-      <KeyboardAvoidingView
+      <View
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? -120 : 0}
       >
       <TouchableWithoutFeedback onPress={handleOverlayPress}>
       <View style={styles.overlay}>
@@ -246,7 +242,12 @@ const GuesthouseIntroSummaryModal = ({
           </View>
 
           {/* 게하 정보 */}
-          <ScrollView style={styles.body}>
+          <ScrollView
+            style={styles.body}
+            keyboardShouldPersistTaps="handled"
+            automaticallyAdjustKeyboardInsets
+            keyboardDismissMode="interactive"
+          >
             {/* 사진 */}
             <View style={styles.titleContainer}>
               <Text style={FONTS.fs_16_medium}>배너 사진</Text>
@@ -338,7 +339,7 @@ const GuesthouseIntroSummaryModal = ({
         </TouchableWithoutFeedback>
       </View>
       </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 };

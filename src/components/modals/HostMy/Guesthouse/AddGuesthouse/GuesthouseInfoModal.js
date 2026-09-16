@@ -8,7 +8,6 @@ import {
   Dimensions,
   TextInput,
   ScrollView,
-  KeyboardAvoidingView,
   Pressable,
 } from 'react-native';
 
@@ -164,7 +163,7 @@ const GuesthouseInfoModal = ({ visible, onClose, onSelect, shouldResetOnClose })
         style={StyleSheet.absoluteFill}
         onPress={handleModalClose}
       />
-        <KeyboardAvoidingView style={{ width: '100%' }}>
+        <View style={{ width: '100%' }}>
         <View style={styles.modalContainer}>
 
           {/* 헤더 */}
@@ -181,6 +180,8 @@ const GuesthouseInfoModal = ({ visible, onClose, onSelect, shouldResetOnClose })
           <ScrollView 
             style={styles.body}
             keyboardShouldPersistTaps="handled"
+            automaticallyAdjustKeyboardInsets
+            keyboardDismissMode="interactive"
           >
             {/* 위치 */}
             <Text style={FONTS.fs_16_medium}>위치</Text>
@@ -340,7 +341,7 @@ const GuesthouseInfoModal = ({ visible, onClose, onSelect, shouldResetOnClose })
           />
 
         </View>
-        </KeyboardAvoidingView>
+        </View>
       </View>
     </Modal>
   );

@@ -126,7 +126,7 @@ const RoomType = ({ data, setData, onBack, onApply }) => {
         contentContainerStyle={discountKeyboard.contentContainerStyle}
         onContentSizeChange={discountKeyboard.onContentSizeChange}
         keyboardShouldPersistTaps="handled"
-        style={{ flex: 1, marginBottom: 120}}>
+        style={{flex: 1, marginBottom: 120, marginHorizontal: -20}}>
       {/* 객실 타입 */}
       <Text style={[FONTS.fs_16_medium, styles.title]}>객실 타입</Text>
       <View style={styles.roomGrid}>
@@ -162,6 +162,8 @@ const RoomType = ({ data, setData, onBack, onApply }) => {
             <Text style={[FONTS.fs_14_regular, styles.radioLabel, {marginHorizontal: 8}]}>기타</Text>
           </TouchableOpacity>
           <TextInput
+              onFocus={discountKeyboard.onInputFocus}
+              onBlur={discountKeyboard.onInputBlur}
             style={styles.etcInput}
             editable={isEtc}
             keyboardType="numeric"
@@ -211,6 +213,8 @@ const RoomType = ({ data, setData, onBack, onApply }) => {
       )}
       <View style={styles.priceRow}>
         <TextInput
+              onFocus={discountKeyboard.onInputFocus}
+              onBlur={discountKeyboard.onInputBlur}
           style={styles.priceInput}
           value={data.roomPrice?.toString()}
           keyboardType="numeric"
