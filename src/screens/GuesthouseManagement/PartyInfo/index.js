@@ -17,6 +17,7 @@ import { FONTS } from '@constants/fonts';
 import { COLORS } from '@constants/colors';
 import AlertModal from '@components/modals/AlertModal';
 import hostMeetApi from '@utils/api/hostMeetApi';
+import {isEndedDateEvent} from '@utils/partyEvent';
 import {
   formatLocalDateToDotWithDay,
   formatLocalTimeToKorean12Hour,
@@ -55,27 +56,6 @@ const getDateEventScheduleText = party => {
 
   const startTime = formatLocalTimeToKorean12Hour(party?.partyStartTime);
   return `${formatLocalDateToDotWithDay(dateKey)} · ${startTime}`;
-};
-
-const isEndedDateEvent = party => {
-  if (party?.scheduleType !== 'DATE_EVENT') {
-    return false;
-  }
-  if (party?.eventStatus === 'ENDED') {
-    return true;
-  }
-  if (party?.eventStatus === 'ACTIVE') {
-    return false;
-  }
-
-  const dateKey = String(party?.eventDate ?? '').split('T')[0];
-  const endTime = party?.partyEndTime;
-  if (!dateKey || !endTime) {
-    return false;
-  }
-
-  const endDateTime = new Date(`${dateKey}T${endTime}`);
-  return !Number.isNaN(endDateTime.getTime()) && endDateTime <= new Date();
 };
 
 const moveEndedEventsToBottom = parties =>
