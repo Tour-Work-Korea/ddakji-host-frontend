@@ -1,11 +1,12 @@
 import {useCallback, useEffect, useRef} from 'react';
-import {Keyboard} from 'react-native';
+import {Dimensions, Keyboard, Platform} from 'react-native';
 import useKeyboardAwareScrollView from './useKeyboardAwareScrollView';
 
 // Keep enough scroll range even when the room sheet has a fixed height.
 export default function useRoomDiscountKeyboard() {
   const {scrollRef, contentContainerStyle} = useKeyboardAwareScrollView({
-    iosOnly: false,
+    // Android already shrinks the scroll viewport with adjustResize.
+    iosOnly: true,
   });
   const focusedInput = useRef(null);
   const frame = useRef(null);
@@ -14,11 +15,28 @@ export default function useRoomDiscountKeyboard() {
     cancelAnimationFrame(frame.current);
     frame.current = requestAnimationFrame(() => {
       if (focusedInput.current != null) {
-        scrollRef.current?.scrollResponderScrollNativeHandleToKeyboard(
-          focusedInput.current,
-          24,
-          true,
-        );
+        const input = focusedInput.current;
+        const scroll = scrollRef.current;
+        const revealInput = offset => {
+          if (focusedInput.current === input) {
+            scroll?.scrollResponderScrollNativeHandleToKeyboard(
+              input,
+              offset,
+              true,
+            );
+          }
+        };
+        if (Platform.OS === 'android' && scroll?.measureInWindow) {
+          scroll.measureInWindow((x, y, width, height) => {
+            const keyboardTop =
+              Keyboard.metrics()?.screenY ?? Dimensions.get('window').height;
+            // Include the footer below the resized viewport, so the input is
+            // visible above the scroll boundary as well as above the keyboard.
+            revealInput(24 + Math.max(0, keyboardTop - (y + height)));
+          });
+        } else {
+          revealInput(24);
+        }
       }
     });
   }, [scrollRef]);
@@ -40,6 +58,7 @@ export default function useRoomDiscountKeyboard() {
       paddingHorizontal: 20,
     },
     onContentSizeChange: scrollToInput,
+    onLayout: scrollToInput,
     onInputFocus: event => {
       focusedInput.current = event.nativeEvent.target;
       scrollToInput();
