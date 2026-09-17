@@ -11,6 +11,7 @@ import {
   ScrollView,
   Keyboard,
   Pressable,
+  Platform,
 } from 'react-native';
 
 import { FONTS } from '@constants/fonts';
@@ -24,7 +25,8 @@ import RoomInfo from './RoomInfo';
 import RoomType from './RoomType';
 import RoomTypePrivate from './RoomTypePrivate';
 
-const MODAL_HEIGHT = Math.round(Dimensions.get('window').height * 0.9);
+const WINDOW_HEIGHT = Dimensions.get('window').height;
+const MODAL_HEIGHT = Math.round(WINDOW_HEIGHT * 0.9);
 
 const GuesthouseRoomModal = ({ visible, onClose, onSelect, shouldResetOnClose }) => {
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
@@ -228,12 +230,21 @@ export default GuesthouseRoomModal;
 
 const styles = StyleSheet.create({
   overlay: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: COLORS.modal_background,
     justifyContent: 'flex-end',
   },
+  modalWrap: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    // Android resizes the dialog for the IME. Anchor the top instead of
+    // bottom-aligning a fixed-height sheet inside the smaller window.
+    ...(Platform.OS === 'android' && {
+      paddingTop: WINDOW_HEIGHT - MODAL_HEIGHT,
+    }),
+  },
   modalContainer: {
-    height: MODAL_HEIGHT,
+    ...(Platform.OS === 'android' ? {flex: 1, minHeight: 0} : {height: MODAL_HEIGHT}),
     backgroundColor: COLORS.grayscale_0,
     borderRadius: 8,
     paddingHorizontal: 20,

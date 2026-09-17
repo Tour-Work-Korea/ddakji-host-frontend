@@ -13,6 +13,7 @@ import {
   Alert,
   Animated,
   Pressable,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
@@ -31,7 +32,8 @@ import RoomInfo from './RoomInfo';
 import RoomType from './RoomType';
 import RoomTypePrivate from './RoomTypePrivate';
 
-const MODAL_HEIGHT = Math.round(Dimensions.get('window').height * 0.9);
+const WINDOW_HEIGHT = Dimensions.get('window').height;
+const MODAL_HEIGHT = Math.round(WINDOW_HEIGHT * 0.9);
 
 // 숫자 안전 변환
 const toNum = (v) => {
@@ -690,9 +692,17 @@ const styles = StyleSheet.create({
     top: 0, left: 0, right: 0, bottom: 0,
     backgroundColor: COLORS.modal_background,
   },
-  modalWrap: { flex: 1, justifyContent: 'flex-end' },
+  modalWrap: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    // Android resizes the dialog for the IME. Anchor the top instead of
+    // bottom-aligning a fixed-height sheet inside the smaller window.
+    ...(Platform.OS === 'android' && {
+      paddingTop: WINDOW_HEIGHT - MODAL_HEIGHT,
+    }),
+  },
   modalContainer: {
-    height: MODAL_HEIGHT,
+    ...(Platform.OS === 'android' ? {flex: 1, minHeight: 0} : {height: MODAL_HEIGHT}),
     backgroundColor: COLORS.grayscale_0,
     borderRadius: 8,
     paddingHorizontal: 20,

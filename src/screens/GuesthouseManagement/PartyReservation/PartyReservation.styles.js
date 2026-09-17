@@ -56,6 +56,18 @@ export default StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
+  eventBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 0,
+    gap: 6,
+  },
+  endedBadge: {
+    backgroundColor: COLORS.grayscale_200,
+  },
+  endedBadgeText: {
+    color: COLORS.grayscale_600,
+  },
   dateEventBadge: {
     flexShrink: 0,
     paddingHorizontal: 8,

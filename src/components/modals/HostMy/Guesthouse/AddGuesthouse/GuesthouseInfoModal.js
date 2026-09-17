@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  Platform,
   TextInput,
   ScrollView,
   Pressable,
@@ -22,7 +23,8 @@ import useGuesthouseMetaStore from '@stores/guesthouseMetaStore';
 import XBtn from '@assets/images/x_gray.svg';
 import ClockIcon from '@assets/images/clock_gray.svg';
 
-const MODAL_HEIGHT = Math.round(Dimensions.get('window').height * 0.9);
+const WINDOW_HEIGHT = Dimensions.get('window').height;
+const MODAL_HEIGHT = Math.round(WINDOW_HEIGHT * 0.9);
 const CONTENT_CATEGORY_OPTIONS = [
   { value: 'POTLUCK', label: '포틀럭 파티' },
   { value: 'BOOK', label: '독서' },
@@ -163,7 +165,7 @@ const GuesthouseInfoModal = ({ visible, onClose, onSelect, shouldResetOnClose })
         style={StyleSheet.absoluteFill}
         onPress={handleModalClose}
       />
-        <View style={{ width: '100%' }}>
+        <View style={styles.modalWrap}>
         <View style={styles.modalContainer}>
 
           {/* 헤더 */}
@@ -354,9 +356,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.modal_background,
     justifyContent: 'flex-end',
+    ...(Platform.OS === 'android' && {
+      paddingTop: WINDOW_HEIGHT - MODAL_HEIGHT,
+    }),
+  },
+  modalWrap: {
+    width: '100%',
+    ...(Platform.OS === 'android' && {flex: 1}),
   },
   modalContainer: {
-    height: MODAL_HEIGHT,
+    ...(Platform.OS === 'android'
+      ? {flex: 1, minHeight: 0}
+      : {height: MODAL_HEIGHT}),
     backgroundColor: COLORS.grayscale_0,
     borderRadius: 8,
     paddingHorizontal: 20,

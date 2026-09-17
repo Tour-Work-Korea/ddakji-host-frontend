@@ -10,6 +10,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  Dimensions,
 } from 'react-native';
 import {Calendar} from 'react-native-calendars';
 
@@ -32,6 +33,8 @@ import MinusIcon from '@assets/images/minus_gray.svg';
 import DeleteIcon from '@assets/images/delete_gray.svg';
 import DisabledRadioButton from '@assets/images/radio_button_disabled.svg';
 import EnabledRadioButton from '@assets/images/radio_button_enabled.svg';
+
+const MODAL_TOP = Dimensions.get('window').height * 0.1;
 
 const normalize = initialValues => {
   const amount = initialValues?.amount ?? 0;
@@ -273,7 +276,7 @@ const PartyBasicsModal = ({
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleModalClose}>
       <KeyboardAvoidingView
         style={styles.overlay}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Pressable style={StyleSheet.absoluteFill} onPress={handleModalClose} />
         <View style={styles.modalContainer}>
           <View style={styles.header}>
@@ -592,9 +595,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.modal_background,
     justifyContent: 'flex-end',
+    ...(Platform.OS === 'android' && {paddingTop: MODAL_TOP}),
   },
   modalContainer: {
-    height: '90%',
+    ...(Platform.OS === 'android'
+      ? {flex: 1, minHeight: 0}
+      : {height: '90%'}),
     backgroundColor: COLORS.grayscale_0,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,

@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  Platform,
   TouchableWithoutFeedback,
   TextInput,
   ScrollView,
@@ -25,7 +26,8 @@ import AddImage from '@assets/images/add_image_gray.svg';
 import CheckIcon from '@assets/images/star_filled.svg';
 import EmptyStarIcon from '@assets/images/star_empty.svg';
 
-const MODAL_HEIGHT = Math.round(Dimensions.get('window').height * 0.9);
+const WINDOW_HEIGHT = Dimensions.get('window').height;
+const MODAL_HEIGHT = Math.round(WINDOW_HEIGHT * 0.9);
 
 const ensureOneThumbnail = (list = []) => {
   const arr = (list || []).map(i => ({
@@ -351,9 +353,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.modal_background,
     justifyContent: 'flex-end',
+    ...(Platform.OS === 'android' && {
+      paddingTop: WINDOW_HEIGHT - MODAL_HEIGHT,
+    }),
   },
   modalContainer: {
-    height: MODAL_HEIGHT,
+    ...(Platform.OS === 'android'
+      ? {flex: 1, minHeight: 0}
+      : {height: MODAL_HEIGHT}),
     backgroundColor: COLORS.grayscale_0,
     borderRadius: 8,
     paddingHorizontal: 20,
