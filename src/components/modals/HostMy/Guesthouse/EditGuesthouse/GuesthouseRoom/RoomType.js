@@ -1,3 +1,6 @@
+import useRoomDiscountKeyboard from '@hooks/useRoomDiscountKeyboard';
+import MultiNightDiscountForm from '@components/MultiNightDiscountForm';
+import {validateMultiNightDiscount} from '@utils/multiNightDiscount';
 import React from 'react';
 import {
   View,
@@ -19,6 +22,7 @@ const ROOM_SIZES = ['2', '3', '4', '5', '6', '7'];
 const MIN_PRICE = 10000;
 
 const RoomType = ({ data, setData, onBack, onApply }) => {
+  const discountKeyboard = useRoomDiscountKeyboard();
   const initialPreset =
     data?.roomCapacity != null &&
     ROOM_SIZES.includes(String(data.roomCapacity));
@@ -86,6 +90,7 @@ const RoomType = ({ data, setData, onBack, onApply }) => {
   };
 
   const isDisabled =
+    !!validateMultiNightDiscount(data.multiNightDiscount) ||
     capacityMode === 'none' ||
     (capacityMode === 'preset' && !data.roomCapacity) ||
     (capacityMode === 'etc' && (!etcInput || isNaN(Number(etcInput)))) ||
@@ -116,7 +121,12 @@ const RoomType = ({ data, setData, onBack, onApply }) => {
 
   return (
     <>
-    <ScrollView style={{ flex: 1, marginBottom: 120}}>
+    <ScrollView
+        ref={discountKeyboard.scrollRef}
+        contentContainerStyle={discountKeyboard.contentContainerStyle}
+        onContentSizeChange={discountKeyboard.onContentSizeChange}
+        keyboardShouldPersistTaps="handled"
+        style={{flex: 1, marginBottom: 120, marginHorizontal: -20}}>
       {/* 객실 타입 */}
       <Text style={[FONTS.fs_16_medium, styles.title]}>객실 타입</Text>
       <View style={styles.roomGrid}>
@@ -152,6 +162,8 @@ const RoomType = ({ data, setData, onBack, onApply }) => {
             <Text style={[FONTS.fs_14_regular, styles.radioLabel, {marginHorizontal: 8}]}>기타</Text>
           </TouchableOpacity>
           <TextInput
+              onFocus={discountKeyboard.onInputFocus}
+              onBlur={discountKeyboard.onInputBlur}
             style={styles.etcInput}
             editable={isEtc}
             keyboardType="numeric"
@@ -201,6 +213,8 @@ const RoomType = ({ data, setData, onBack, onApply }) => {
       )}
       <View style={styles.priceRow}>
         <TextInput
+              onFocus={discountKeyboard.onInputFocus}
+              onBlur={discountKeyboard.onInputBlur}
           style={styles.priceInput}
           value={data.roomPrice?.toString()}
           keyboardType="numeric"
@@ -210,6 +224,12 @@ const RoomType = ({ data, setData, onBack, onApply }) => {
         />
         <Text style={[FONTS.fs_14_regular, { marginLeft: 8 }]}>원</Text>
       </View>
+      <MultiNightDiscountForm
+        onInputFocus={discountKeyboard.onInputFocus}
+        onInputBlur={discountKeyboard.onInputBlur}
+        value={data.multiNightDiscount}
+        onChange={multiNightDiscount => setData({...data, multiNightDiscount})}
+        roomType={data.roomType} />
     </ScrollView>
 
     {/* 하단 버튼 */}

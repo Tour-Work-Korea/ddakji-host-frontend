@@ -5,7 +5,6 @@ import {
   Text,
   TouchableOpacity,
   View,
-  Dimensions,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 
@@ -17,8 +16,6 @@ import {
   formatLocalDateToDotWithDay,
 } from '@utils/formatDate';
 import styles from './ReservationCalendar.styles';
-
-const {width: screenWidth} = Dimensions.get('window');
 
 const RESERVATION_STATUS_STYLE = {
   대기: {
@@ -108,7 +105,7 @@ const normalizeReservation = (reservation = {}) => {
   };
 };
 
-const ReservationDayCard = ({guesthouseId, targetDate, onNavigate}) => {
+const ReservationDayCard = ({guesthouseId, targetDate, onNavigate, status}) => {
   const navigation = useNavigation();
 
   const [reservations, setReservations] = useState([]);
@@ -137,6 +134,7 @@ const ReservationDayCard = ({guesthouseId, targetDate, onNavigate}) => {
         const response = await hostGuesthouseApi.searchGuesthouseReservations({
           guesthouseId,
           targetDate,
+          ...(status ? {status} : {}),
           page,
           size: DEFAULT_SIZE,
         });
@@ -174,7 +172,7 @@ const ReservationDayCard = ({guesthouseId, targetDate, onNavigate}) => {
     };
 
     fetchReservations(DEFAULT_PAGE, false);
-  }, [guesthouseId, targetDate]);
+  }, [guesthouseId, status, targetDate]);
 
   const loadNextPage = async () => {
     if (isLoading || isLoadingMore || !hasNextPage || !guesthouseId) {
@@ -187,6 +185,7 @@ const ReservationDayCard = ({guesthouseId, targetDate, onNavigate}) => {
       const response = await hostGuesthouseApi.searchGuesthouseReservations({
         guesthouseId,
         targetDate,
+        ...(status ? {status} : {}),
         page: nextPage,
         size: DEFAULT_SIZE,
       });
@@ -238,10 +237,18 @@ const ReservationDayCard = ({guesthouseId, targetDate, onNavigate}) => {
             <FlatList
               data={[...reservations].sort((a, b) => {
                 const getOrder = (r) => {
-                  if (r.status === '대기') return 1;
-                  if (r.status === '확정') return 2;
-                  if (r.status === '반려') return 3;
-                  if (r.status === '취소') return 4;
+                  if (r.status === '대기') {
+                    return 1;
+                  }
+                  if (r.status === '확정') {
+                    return 2;
+                  }
+                  if (r.status === '반려') {
+                    return 3;
+                  }
+                  if (r.status === '취소') {
+                    return 4;
+                  }
                   return 5;
                 };
                 return getOrder(a) - getOrder(b);

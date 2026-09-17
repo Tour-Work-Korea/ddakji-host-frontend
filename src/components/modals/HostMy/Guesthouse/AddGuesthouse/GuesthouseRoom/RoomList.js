@@ -1,3 +1,4 @@
+import MultiNightDiscountSummary from '@components/MultiNightDiscountSummary';
 import React from 'react';
 import {
   View,
@@ -71,6 +72,7 @@ const RoomList = ({ rooms, onDelete }) => {
             <Text style={[FONTS.fs_14_semibold, styles.roomSub]}>
               {item.roomPrice}원
             </Text>
+            <MultiNightDiscountSummary policy={item.multiNightDiscount} compact />
           </View>
         </View>
         <TouchableOpacity onPress={() => onDelete?.(index)}>

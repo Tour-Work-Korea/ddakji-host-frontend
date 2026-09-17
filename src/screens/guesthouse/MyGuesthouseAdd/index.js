@@ -1,3 +1,4 @@
+import {toMultiNightDiscountRequest, getMultiNightDiscountError} from '@utils/multiNightDiscount';
 import React, { useState } from 'react';
 import {
   View,
@@ -236,6 +237,7 @@ const MyGuesthouseAdd = () => {
           roomMaxCapacity,
           roomDesc: room?.roomDesc ?? '',
           roomPrice: Number(room?.roomPrice),
+          multiNightDiscount: toMultiNightDiscountRequest(room?.multiNightDiscount),
           roomImages: Array.isArray(room?.roomImages) ? room.roomImages : [],
         };
       };
@@ -273,7 +275,7 @@ const MyGuesthouseAdd = () => {
         navigation.goBack();
       }, 1200);
     } catch (error) {
-      Alert.alert('등록 실패', error?.response?.data?.message ?? '오류가 발생했습니다.', [
+      Alert.alert('등록 실패', getMultiNightDiscountError(error) || error?.response?.data?.message || '오류가 발생했습니다.', [
         {text: '확인'},
       ]);
     }

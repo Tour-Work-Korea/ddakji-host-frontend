@@ -52,10 +52,12 @@ import {
   StoreRegisterEditForm,
   StoreRegisterComplete,
   GuesthouseManagement,
+  IntegratedCalendar,
   ReservationMethodSettings,
   MyMeetList,
   MyMeetDetail,
   MyMeetPreview,
+  MyMeetTypeSelect,
   MyMeetAdd,
   ReservationCancelList,
   PastReservationList,
@@ -183,6 +185,10 @@ const RootNavigation = () => {
           component={GuesthouseManagement}
         />
         <Stack.Screen
+          name="IntegratedCalendar"
+          component={IntegratedCalendar}
+        />
+        <Stack.Screen
           name="ReservationMethodSettings"
           component={ReservationMethodSettings}
         />
@@ -212,6 +218,10 @@ const RootNavigation = () => {
         <Stack.Screen name="MyMeetList" component={MyMeetList} />
         <Stack.Screen name="MyMeetDetail" component={MyMeetDetail} />
         <Stack.Screen name="MyMeetPreview" component={MyMeetPreview} />
+        <Stack.Screen
+          name="MyMeetTypeSelect"
+          component={MyMeetTypeSelect}
+        />
         <Stack.Screen name="MyMeetAdd" component={MyMeetAdd} />
         <Stack.Screen
           name="ReservationCancelList"

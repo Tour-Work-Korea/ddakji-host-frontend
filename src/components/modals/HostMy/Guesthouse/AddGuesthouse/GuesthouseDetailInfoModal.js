@@ -8,9 +8,7 @@ import {
   Dimensions,
   TouchableWithoutFeedback,
   ScrollView,
-  KeyboardAvoidingView,
   Keyboard,
-  Platform,
   TextInput,
 } from 'react-native';
 
@@ -84,10 +82,8 @@ const GuesthouseDetailInfoModal = ({ visible, onClose, onSelect, shouldResetOnCl
       animationType="slide"
       onRequestClose={handleModalClose}
     >
-      <KeyboardAvoidingView
+      <View
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? -220 : 0}
       >
       <TouchableWithoutFeedback onPress={handleOverlayPress}>
       <View style={styles.overlay}>
@@ -107,6 +103,8 @@ const GuesthouseDetailInfoModal = ({ visible, onClose, onSelect, shouldResetOnCl
           <ScrollView
             style={{ flex: 1 }}
             keyboardShouldPersistTaps="handled"
+            automaticallyAdjustKeyboardInsets
+            keyboardDismissMode="interactive"
           >
             {/* 상세 정보 */}
             <View style={styles.body}>
@@ -149,7 +147,7 @@ const GuesthouseDetailInfoModal = ({ visible, onClose, onSelect, shouldResetOnCl
         </TouchableWithoutFeedback>
       </View>
       </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 };

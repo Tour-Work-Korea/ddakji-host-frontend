@@ -10,9 +10,7 @@ import {
   TextInput,
   ScrollView,
   Image,
-  KeyboardAvoidingView,
   Keyboard,
-  Platform,
 } from 'react-native';
 
 import { FONTS } from '@constants/fonts';
@@ -143,10 +141,8 @@ const GuesthouseIntroSummaryModal = ({ visible, onClose, onSelect, shouldResetOn
       animationType="slide"
       onRequestClose={handleModalClose}
     >
-      <KeyboardAvoidingView
+      <View
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? -120 : 0}
       >
       <TouchableWithoutFeedback onPress={handleOverlayPress}>
       <View style={styles.overlay}>
@@ -164,7 +160,12 @@ const GuesthouseIntroSummaryModal = ({ visible, onClose, onSelect, shouldResetOn
           </View>
 
           {/* 게하 정보 */}
-          <ScrollView style={styles.body}>
+          <ScrollView
+            style={styles.body}
+            keyboardShouldPersistTaps="handled"
+            automaticallyAdjustKeyboardInsets
+            keyboardDismissMode="interactive"
+          >
             {/* 사진 */}
             <View style={styles.titleContainer}>
               <Text style={FONTS.fs_16_medium}>배너 사진</Text>
@@ -256,7 +257,7 @@ const GuesthouseIntroSummaryModal = ({ visible, onClose, onSelect, shouldResetOn
         </TouchableWithoutFeedback>
       </View>
       </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 };

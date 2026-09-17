@@ -76,7 +76,8 @@ const RoomInfo = ({ data, setData, onNext }) => {
   };
 
   const handleSelectRoomType = (type) => {
-    const next = { ...data, roomType: type };
+    if (data.roomType === type) return;
+    const next = { ...data, roomType: type, _roomTypeEdited: true };
     if (type === 'DORMITORY') {
       next.dormitoryGenderType = null;
       next.femaleOnly = false;

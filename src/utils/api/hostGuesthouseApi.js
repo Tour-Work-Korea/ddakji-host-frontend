@@ -19,7 +19,10 @@ const hostGuesthouseApi = {
 
   // 게스트하우스 환불 정책 수정
   updateGuesthouseRefundPolicies: (guesthouseId, payload) =>
-    api.put(`/host/guesthouses/${guesthouseId}/refund-policy-settings`, payload),
+    api.put(
+      `/host/guesthouses/${guesthouseId}/refund-policy-settings`,
+      payload,
+    ),
 
   // 게스트하우스 예약 정책 조회
   getGuesthouseReservationPolicy: guesthouseId =>
@@ -85,10 +88,7 @@ const hostGuesthouseApi = {
    * 규칙: 썸네일은 정확히 1개, 기존 포함 모든 이미지의 url 전체 전달
    */
   updateRoomImages: (guesthouseId, roomId, images) =>
-    api.put(
-      `/host/guesthouses/${guesthouseId}/rooms/${roomId}/images`,
-      images
-    ),
+    api.put(`/host/guesthouses/${guesthouseId}/rooms/${roomId}/images`, images),
 
   /** 객실 추가
    * body {
@@ -122,14 +122,16 @@ const hostGuesthouseApi = {
 
   // 객실 노출 순서 변경
   updateRoomDisplayOrder: (guesthouseId, roomIds) =>
-    api.patch(`/host/guesthouses/${guesthouseId}/rooms/display-order`, { roomIds }),
+    api.patch(`/host/guesthouses/${guesthouseId}/rooms/display-order`, {
+      roomIds,
+    }),
 
   // 게스트하우스 삭제
   deleteGuesthouse: guesthouseId =>
     api.delete(`/host/guesthouses/${guesthouseId}`),
 
   // 특정 게스트하우스 리뷰 목록 조회
-  getGuesthouseReviews: ({ guesthouseId, page, size, sort }) =>
+  getGuesthouseReviews: ({guesthouseId, page, size, sort}) =>
     api.get(`/${guesthouseId}/reviews`, {
       params: {
         page,
@@ -140,7 +142,7 @@ const hostGuesthouseApi = {
 
   // 리뷰에 대한 답글 작성
   postReviewReply: (reviewId, reply) =>
-    api.post(`/host/reviews/${reviewId}/replies`, { reply }),
+    api.post(`/host/reviews/${reviewId}/replies`, {reply}),
 
   // 리뷰 삭제 요청
   deleteReview: (reviewId, reason) =>
@@ -172,8 +174,8 @@ const hostGuesthouseApi = {
     api.post('/host/guesthouses/tempCreate', payload),
 
   // 게하 예약 검색
-  searchGuesthouseReservations: (formData) =>
-    api.get('/order/host/reservation/search', { params: formData }),
+  searchGuesthouseReservations: formData =>
+    api.get('/order/host/reservation/search', {params: formData}),
 
   // 게하 예약 월별 상태 그룹 조회
   getGuesthouseReservationMonthlyGroups: formData =>
@@ -183,27 +185,95 @@ const hostGuesthouseApi = {
     }),
 
   // 게하 예약 현황 조회
-  getGuesthouseReservations: (guesthouseId) =>
+  getGuesthouseReservations: guesthouseId =>
     api.get(`/order/host/reservation/${guesthouseId}`),
 
   // 게하 예약 상세 조회
-  getGuesthouseReservationDetail: (reservationId) =>
+  getGuesthouseReservationDetail: reservationId =>
     api.get(`/order/host/reservation/detail/${reservationId}`),
 
   // 게하 예약 캘린더 조회
-  getGuesthouseReservationCalendar: (formData) =>
-    api.get('/order/host/reservation/calendar', { params: formData }),
+  getGuesthouseReservationCalendar: formData =>
+    api.get('/order/host/reservation/calendar', {params: formData}),
 
   // 게하 예약 캘린더 플래그 조회
-  getGuesthouseReservationCalendarFlags: (formData) =>
-    api.get('/order/host/reservation/calendar/flags', { params: formData }),
+  getGuesthouseReservationCalendarFlags: formData =>
+    api.get('/order/host/reservation/calendar/flags', {params: formData}),
+
+  // 통합 예약 캘린더 (게딱지 + 외부 채널)
+  getIntegratedCalendar: (guesthouseId, from, to) =>
+    api.get(`/host/guesthouses/${guesthouseId}/integrated-calendar`, {
+      params: {from, to},
+    }),
+
+  getIntegratedCalendarDate: (
+    guesthouseId,
+    date,
+    {roomId, includeCancelled = false} = {},
+  ) =>
+    api.get(
+      `/host/guesthouses/${guesthouseId}/integrated-calendar/dates/${date}`,
+      {params: {roomId, includeCancelled}},
+    ),
+
+  // 외부 예약 채널
+  getBookingChannels: (guesthouseId, includeInactive = false) =>
+    api.get(`/host/guesthouses/${guesthouseId}/booking-channels`, {
+      params: {includeInactive},
+    }),
+
+  createBookingChannel: (guesthouseId, payload) =>
+    api.post(`/host/guesthouses/${guesthouseId}/booking-channels`, payload),
+
+  updateBookingChannel: (guesthouseId, channelId, payload) =>
+    api.patch(
+      `/host/guesthouses/${guesthouseId}/booking-channels/${channelId}`,
+      payload,
+    ),
+
+  // 외부 예약
+  getExternalReservations: (
+    guesthouseId,
+    {from, to, roomId, includeCancelled = false},
+  ) =>
+    api.get(`/host/guesthouses/${guesthouseId}/external-reservations`, {
+      params: {from, to, roomId, includeCancelled},
+    }),
+
+  getExternalReservation: (guesthouseId, reservationId) =>
+    api.get(
+      `/host/guesthouses/${guesthouseId}/external-reservations/${reservationId}`,
+    ),
+
+  createExternalReservation: (guesthouseId, payload) =>
+    api.post(
+      `/host/guesthouses/${guesthouseId}/external-reservations`,
+      payload,
+    ),
+
+  updateExternalReservation: (guesthouseId, reservationId, payload) =>
+    api.patch(
+      `/host/guesthouses/${guesthouseId}/external-reservations/${reservationId}`,
+      payload,
+    ),
+
+  cancelExternalReservation: (guesthouseId, reservationId, version) =>
+    api.patch(
+      `/host/guesthouses/${guesthouseId}/external-reservations/${reservationId}/status`,
+      {status: 'CANCELLED', version},
+    ),
+
+  importExternalReservations: (guesthouseId, reservations) =>
+    api.post(`/host/guesthouses/${guesthouseId}/external-reservations/import`, {
+      reservations,
+    }),
 
   // 호스트 예약 취소
   cancelGuesthouseReservationByHost: (reservationId, payload) =>
     api.post(`/order/host/reservation/${reservationId}/cancel`, payload),
 
   // 호스트 예약 확정
-  approveGuesthouseReservationByHost: (reservationId) =>
+  approveGuesthouseReservationByHost: reservationId =>
     api.post(`/order/host/reservation/${reservationId}/approve`),
 
   // 호스트 예약 반려
@@ -213,17 +283,23 @@ const hostGuesthouseApi = {
   // 특정 객실 기간별 운영 상태/예약 인원/잔여 인원 조회
   // query: { from: 'YYYY-MM-DD', toInclusive: 'YYYY-MM-DD' }
   getRoomInventoryCalendar: (guesthouseId, roomId, from, toInclusive) =>
-    api.get(`/host/guesthouses/${guesthouseId}/rooms/${roomId}/inventory/calendar`, {
-      params: {
-        from,
-        toInclusive,
+    api.get(
+      `/host/guesthouses/${guesthouseId}/rooms/${roomId}/inventory/calendar`,
+      {
+        params: {
+          from,
+          toInclusive,
+        },
       },
-    }),
+    ),
 
   // 객실 날짜별 운영 상태 변경 (단건)
   // body: { date: 'YYYY-MM-DD', isClosed: boolean }
   updateRoomStatusByDate: (guesthouseId, roomId, payload) =>
-    api.put(`/host/guesthouses/${guesthouseId}/rooms/${roomId}/status`, payload),
+    api.put(
+      `/host/guesthouses/${guesthouseId}/rooms/${roomId}/status`,
+      payload,
+    ),
 
   // 객실 날짜별 운영 상태 변경 (여러개/전체 동시)
   // body: [{ date: 'YYYY-MM-DD', isClosed: boolean }, ...]
@@ -236,55 +312,72 @@ const hostGuesthouseApi = {
 
   // 객실 체크인 안내문 수정
   updateRoomCheckinNotice: (guesthouseId, roomId, noticeText) =>
-    api.put(`/host/guesthouses/${guesthouseId}/rooms/${roomId}/checkin-notice`, {
-      noticeText,
-    }),
+    api.put(
+      `/host/guesthouses/${guesthouseId}/rooms/${roomId}/checkin-notice`,
+      {
+        noticeText,
+      },
+    ),
 
   // 도미토리 예약 가능 베드 수 변경 (단건)
   updateAvailableBeds: (guesthouseId, roomId, payload) =>
     api.patch(
       `/host/guesthouses/${guesthouseId}/rooms/${roomId}/inventory/available-beds`,
-      payload
+      payload,
     ),
 
   // 도미토리 예약 가능 베드 수 변경 (전체)
   bulkUpdateAvailableBeds: (guesthouseId, roomId, payload) =>
     api.patch(
       `/host/guesthouses/${guesthouseId}/rooms/${roomId}/inventory/available-beds/bulk`,
-      payload
+      payload,
     ),
 
   // 게하 예약 취소
-  cancelGuesthouseReservation: (reservationId) =>
+  cancelGuesthouseReservation: reservationId =>
     api.delete(`/order/reservation/${reservationId}`, {
-      data: { type: 'GUESTHOUSE' },
+      data: {type: 'GUESTHOUSE'},
     }),
 
   // 객실 요금 관리용 객실 목록 조회
-  getRoomPricingTargets: (guesthouseId) =>
+  getRoomPricingTargets: guesthouseId =>
     api.get(`/host/guesthouses/${guesthouseId}/rooms/pricing-targets`),
 
   // 객실 월별 요금 달력 조회
   getRoomPricingCalendar: (guesthouseId, roomId, yearMonth) =>
-    api.get(`/host/guesthouses/${guesthouseId}/rooms/${roomId}/pricing/calendar`, {
-      params: { yearMonth },
-    }),
+    api.get(
+      `/host/guesthouses/${guesthouseId}/rooms/${roomId}/pricing/calendar`,
+      {
+        params: {yearMonth},
+      },
+    ),
 
   // 객실 시즌 요금 목록 조회
   getRoomPricingSeasons: (guesthouseId, roomId) =>
-    api.get(`/host/guesthouses/${guesthouseId}/rooms/${roomId}/pricing/seasons`),
+    api.get(
+      `/host/guesthouses/${guesthouseId}/rooms/${roomId}/pricing/seasons`,
+    ),
 
   // 객실 시즌 요금 전체 교체 저장
   updateRoomPricingSeasons: (guesthouseId, roomId, payload) =>
-    api.put(`/host/guesthouses/${guesthouseId}/rooms/${roomId}/pricing/seasons`, payload),
+    api.put(
+      `/host/guesthouses/${guesthouseId}/rooms/${roomId}/pricing/seasons`,
+      payload,
+    ),
 
   // 객실 수동 요금 변경
   updateRoomManualPriceOverrides: (guesthouseId, roomId, payload) =>
-    api.put(`/host/guesthouses/${guesthouseId}/rooms/${roomId}/pricing/manual-overrides`, payload),
+    api.put(
+      `/host/guesthouses/${guesthouseId}/rooms/${roomId}/pricing/manual-overrides`,
+      payload,
+    ),
 
   // 객실 수동 요금 변경 해제
   clearRoomManualPriceOverrides: (guesthouseId, roomId, payload) =>
-    api.post(`/host/guesthouses/${guesthouseId}/rooms/${roomId}/pricing/manual-overrides/clear`, payload),
+    api.post(
+      `/host/guesthouses/${guesthouseId}/rooms/${roomId}/pricing/manual-overrides/clear`,
+      payload,
+    ),
 };
 
 export default hostGuesthouseApi;

@@ -1,3 +1,4 @@
+import {toMultiNightDiscountRequest, getMultiNightDiscountError} from '@utils/multiNightDiscount';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -8,9 +9,7 @@ import {
   Dimensions,
   TouchableWithoutFeedback,
   ScrollView,
-  KeyboardAvoidingView,
   Keyboard,
-  Platform,
   Alert,
   Animated,
   Pressable,
@@ -104,7 +103,7 @@ const buildRoomBasicDiff = (base, cur) => {
     if (baseFemale !== false) payload.femaleOnly = false;
   }
   if (curType === 'PRIVATE') {
-    if (baseType !== curType || baseDorm !== 'MIXED') {
+    if (baseType !== curType) {
       payload.dormitoryGenderType = 'MIXED';
     }
     if (baseType !== curType || baseFemale !== curFemale) {
@@ -132,6 +131,10 @@ const buildRoomBasicDiff = (base, cur) => {
   const curExtraPrice = toNum(cur?.extraPersonPrice ?? cur?.extraPersonFee);
   if (baseExtraPrice !== curExtraPrice && curExtraPrice != null) payload.extraPersonPrice = curExtraPrice;
 
+  const policy = toMultiNightDiscountRequest(cur?.multiNightDiscount);
+  if (JSON.stringify(toMultiNightDiscountRequest(base?.multiNightDiscount)) !== JSON.stringify(policy)) {
+    payload.multiNightDiscount = policy;
+  }
   return payload;
 };
 
@@ -149,6 +152,7 @@ const buildRoomBasicFull = (cur) => {
     ),
     roomDescription: cur?.roomDesc ?? cur?.roomDescription ?? '',
     roomPrice: toNum(cur?.roomPrice),
+    multiNightDiscount: toMultiNightDiscountRequest(cur?.multiNightDiscount),
     extraPersonPrice: toNum(cur?.extraPersonPrice ?? cur?.extraPersonFee) || 0,
   };
 
@@ -199,9 +203,11 @@ const normalizeRooms = (list = []) =>
       roomCapacity: r.roomCapacity ?? null,
       roomMaxCapacity: r.roomMaxCapacity ?? r.roomCapacity ?? null,
       roomType: normalizedRoomType,
+      _roomTypeEdited: r._roomTypeEdited === true,
       dormitoryGenderType: normalizedDormitoryGenderType,
       femaleOnly: r.femaleOnly ?? false,
       roomPrice: r.roomPrice != null ? String(r.roomPrice) : '',
+      multiNightDiscount: r.multiNightDiscount,
       extraPersonPrice: r.extraPersonPrice != null ? String(r.extraPersonPrice) : r.extraPersonFee != null ? String(r.extraPersonFee) : '',
     };
   });
@@ -259,6 +265,9 @@ const GuesthouseRoomModal = ({
     }, ms);
   };
 
+  const [saveError, setSaveError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const savingRef = useRef(false);
   const [step, setStep] = useState('list'); // 'list' | 'info' | 'typeDormitory' | 'typePrivate'
   const [rooms, setRooms] = useState([]);
   const [baselineRooms, setBaselineRooms] = useState([]);
@@ -273,6 +282,7 @@ const GuesthouseRoomModal = ({
   // 모달 열릴 때 초기화/복원
   useEffect(() => {
     if (!visible) return;
+    setSaveError('');
 
     if (appliedData && !shouldResetOnClose) {
       const n = normalizeRooms(appliedData);
@@ -399,9 +409,12 @@ const GuesthouseRoomModal = ({
       return;
     }
 
-    const requests = buildRequests(current);
-
+    if (savingRef.current) return;
+    savingRef.current = true;
+    setIsSaving(true);
+    setSaveError('');
     try {
+      const requests = buildRequests(current);
       if (requests.length === 0) {
         Toast.show({ type: 'success', text1: '수정이 등록되었습니다!', position: 'top' });
         onClose();
@@ -412,18 +425,35 @@ const GuesthouseRoomModal = ({
 
       Toast.show({ type: 'success', text1: '수정이 등록되었습니다!', position: 'top' });
 
-      setAppliedData(current);
-      setBaselineRooms(current);
-      onSelect(current);
+      const savedRooms = current.map(room => {
+        const saved = {...room};
+        delete saved._roomTypeEdited;
+        return saved;
+      });
+      setAppliedData(savedRooms);
+      setBaselineRooms(savedRooms);
+      onSelect(savedRooms);
       onClose();
     } catch (e) {
-      Toast.show({ type: 'error', text1: '수정 중 오류가 발생했어요.', position: 'top' });
-      onClose();
+      setSaveError(getMultiNightDiscountError(e) || e?.response?.data?.message || e.message || '수정 중 오류가 발생했어요. 다시 시도해 주세요.');
+    } finally {
+      savingRef.current = false;
+      setIsSaving(false);
     }
   };
 
   const handleApplyRoom = async (nextData) => {
-    const src = nextData ?? tempRoomData;
+    const draft = nextData ?? tempRoomData;
+    const original = editId != null
+      ? rooms.find(room => room.id === editId)
+      : editIndexFallback != null ? rooms[editIndexFallback] : null;
+    // Only an explicit room-type selection may change an existing room's type.
+    // Child form defaults or restored drafts must not turn a discount edit into a structural update.
+    const src = original && !draft._roomTypeEdited && draft.roomType !== original.roomType
+      ? {...draft, roomType: original.roomType,
+          dormitoryGenderType: original.dormitoryGenderType, femaleOnly: original.femaleOnly,
+          roomCapacity: original.roomCapacity, roomMaxCapacity: original.roomMaxCapacity}
+      : draft;
     const isPrivate = src.roomType === 'PRIVATE';
     const normalized = {
       ...src,
@@ -436,6 +466,7 @@ const GuesthouseRoomModal = ({
     };
 
     const nextRooms = (() => {
+      if (directCreateMode) return [normalized];
       const prev = rooms;
       if (editId != null) {
         const idx = prev.findIndex(r => r.id === editId);
@@ -456,14 +487,13 @@ const GuesthouseRoomModal = ({
 
     setRooms(nextRooms);
 
-    setEditId(null);
-    setEditIndexFallback(null);
-
     if (directEditMode || directCreateMode) {
       await persistRooms(nextRooms);
       return;
     }
 
+    setEditId(null);
+    setEditIndexFallback(null);
     setStep('list');
   };
 
@@ -502,6 +532,7 @@ const GuesthouseRoomModal = ({
 
   // 단순 닫기 시 초기화
   const handleModalClose = () => {
+    if (savingRef.current) return;
     if (shouldResetOnClose) {
       if (appliedData) {
         const n = normalizeRooms(appliedData);
@@ -546,11 +577,7 @@ const GuesthouseRoomModal = ({
     >
       <View style={{ flex: 1 }}>
       <Pressable style={styles.overlay} onPress={handleOverlayPress} />
-      <KeyboardAvoidingView
-        style={styles.modalWrap}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? -240 : 0}
-      >
+      <View style={styles.modalWrap}>
         <View
           style={styles.modalContainer}
         >
@@ -565,8 +592,10 @@ const GuesthouseRoomModal = ({
             </TouchableOpacity>
           </View>
 
+          {!!saveError && <Text accessibilityRole="alert" style={{color: COLORS.semantic_red, paddingHorizontal: 20, paddingVertical: 8}}>{saveError}</Text>}
+          {isSaving && <Text style={{paddingHorizontal: 20}}>저장 중...</Text>}
           {/* 룸 정보 */}
-          <View style={styles.body}>
+          <View style={styles.body} pointerEvents={isSaving ? 'none' : 'auto'}>
             {step === 'list' && !directEditMode && (
               <>
                 {/* {console.log('[GuesthouseRoomModal] 등록된 객실:', JSON.stringify(rooms, null, 2))} */}
@@ -616,7 +645,7 @@ const GuesthouseRoomModal = ({
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleConfirm}
-                disabled={rooms.length === 0}
+                disabled={isSaving || rooms.length === 0}
                 style={[
                   styles.submitButton,
                   rooms.length === 0 && styles.disabledButton,
@@ -647,7 +676,7 @@ const GuesthouseRoomModal = ({
             }
           </Animated.View>
         )}
-      </KeyboardAvoidingView>
+      </View>
       </View>
     </Modal>
   );

@@ -1,3 +1,6 @@
+import useRoomDiscountKeyboard from '@hooks/useRoomDiscountKeyboard';
+import MultiNightDiscountForm from '@components/MultiNightDiscountForm';
+import {validateMultiNightDiscount} from '@utils/multiNightDiscount';
 import React from 'react';
 import {
   Text,
@@ -19,6 +22,7 @@ const ROOM_SIZES = ['1', '2', '3', '4'];
 const MIN_PRICE = 10000;
 
 const RoomTypePrivate = ({ data, setData, onBack, onApply }) => {
+  const discountKeyboard = useRoomDiscountKeyboard();
   const initialPreset =
     data?.roomCapacity != null &&
     ROOM_SIZES.includes(String(data.roomCapacity));
@@ -149,6 +153,7 @@ const RoomTypePrivate = ({ data, setData, onBack, onApply }) => {
   };
 
   const isDisabled =
+    !!validateMultiNightDiscount(data.multiNightDiscount) ||
     capacityMode === 'none' ||
     (capacityMode === 'preset' && !data.roomCapacity) ||
     (capacityMode === 'etc' && (!etcInput || isNaN(Number(etcInput)))) ||
@@ -195,7 +200,12 @@ const RoomTypePrivate = ({ data, setData, onBack, onApply }) => {
 
   return (
     <>
-      <ScrollView style={{ flex: 1, marginBottom: 120 }}>
+      <ScrollView
+        ref={discountKeyboard.scrollRef}
+        contentContainerStyle={discountKeyboard.contentContainerStyle}
+        onContentSizeChange={discountKeyboard.onContentSizeChange}
+        keyboardShouldPersistTaps="handled"
+        style={{flex: 1, marginBottom: 120, marginHorizontal: -20}}>
         {/* 기준 인원 */}
         <Text style={[FONTS.fs_16_medium, styles.title]}>기준 인원</Text>
         <View style={styles.roomGrid}>
@@ -233,6 +243,8 @@ const RoomTypePrivate = ({ data, setData, onBack, onApply }) => {
               </Text>
             </TouchableOpacity>
             <TextInput
+              onFocus={discountKeyboard.onInputFocus}
+              onBlur={discountKeyboard.onInputBlur}
               style={styles.etcInput}
               editable={isEtc}
               keyboardType="numeric"
@@ -298,6 +310,8 @@ const RoomTypePrivate = ({ data, setData, onBack, onApply }) => {
               </Text>
             </TouchableOpacity>
             <TextInput
+              onFocus={discountKeyboard.onInputFocus}
+              onBlur={discountKeyboard.onInputBlur}
               style={styles.etcInput}
               editable={isMaxEtc}
               keyboardType="numeric"
@@ -345,6 +359,8 @@ const RoomTypePrivate = ({ data, setData, onBack, onApply }) => {
         )}
         <View style={styles.priceRow}>
           <TextInput
+              onFocus={discountKeyboard.onInputFocus}
+              onBlur={discountKeyboard.onInputBlur}
             style={styles.priceInput}
             value={data.roomPrice?.toString()}
             keyboardType="numeric"
@@ -355,6 +371,13 @@ const RoomTypePrivate = ({ data, setData, onBack, onApply }) => {
           <Text style={[FONTS.fs_14_regular, { marginLeft: 8 }]}>원</Text>
         </View>
 
+        <MultiNightDiscountForm
+        onInputFocus={discountKeyboard.onInputFocus}
+        onInputBlur={discountKeyboard.onInputBlur}
+        value={data.multiNightDiscount}
+        onChange={multiNightDiscount => setData({...data, multiNightDiscount})}
+        roomType={data.roomType} />
+
         {/* 인원 추가 요금 */}
         {minCapacity != null && maxCapacity != null && maxCapacity > minCapacity && (
           <>
@@ -363,6 +386,8 @@ const RoomTypePrivate = ({ data, setData, onBack, onApply }) => {
             </Text>
             <View style={styles.priceRow}>
               <TextInput
+              onFocus={discountKeyboard.onInputFocus}
+              onBlur={discountKeyboard.onInputBlur}
                 style={styles.priceInput}
                 value={data.extraPersonPrice?.toString()}
                 keyboardType="numeric"

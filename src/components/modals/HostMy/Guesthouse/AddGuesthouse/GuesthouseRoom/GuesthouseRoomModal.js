@@ -1,3 +1,4 @@
+import {toMultiNightDiscountRequest} from '@utils/multiNightDiscount';
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -8,9 +9,7 @@ import {
   Dimensions,
   TouchableWithoutFeedback,
   ScrollView,
-  KeyboardAvoidingView,
   Keyboard,
-  Platform,
   Pressable,
 } from 'react-native';
 
@@ -79,6 +78,7 @@ const GuesthouseRoomModal = ({ visible, onClose, onSelect, shouldResetOnClose })
       roomCapacity: Number(src.roomCapacity),
       roomMaxCapacity: src.roomMaxCapacity != null ? Number(src.roomMaxCapacity) : Number(src.roomCapacity),
       roomPrice: Number(src.roomPrice),
+      multiNightDiscount: toMultiNightDiscountRequest(src.multiNightDiscount),
     };
     setRooms(prev => [...prev, normalized]);
     setStep('list'); // 리스트로 돌아감
@@ -96,7 +96,7 @@ const GuesthouseRoomModal = ({ visible, onClose, onSelect, shouldResetOnClose })
     if (visible && appliedData) {
       setRooms(appliedData);
     }
-  }, [visible]);
+  }, [visible, appliedData]);
 
   // 단순 닫기 시 초기화
   const handleModalClose = () => {
@@ -138,10 +138,7 @@ const GuesthouseRoomModal = ({ visible, onClose, onSelect, shouldResetOnClose })
     >
       <View style={{ flex: 1 }}>
       <Pressable style={styles.overlay} onPress={handleOverlayPress} />
-      <KeyboardAvoidingView
-        style={styles.modalWrap}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      <View style={styles.modalWrap}>
       <View
         style={styles.modalContainer}
       >
@@ -221,7 +218,7 @@ const GuesthouseRoomModal = ({ visible, onClose, onSelect, shouldResetOnClose })
           )}
           
         </View>
-      </KeyboardAvoidingView>
+      </View>
       </View>
     </Modal>
   );

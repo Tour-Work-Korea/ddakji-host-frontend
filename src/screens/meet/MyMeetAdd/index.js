@@ -31,12 +31,19 @@ const MyMeetAdd = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const templateId = Number(route.params?.templateId);
-  const isEditMode = Number.isFinite(templateId) && templateId > 0;
+  const reuseTemplateId = Number(route.params?.reuseTemplateId);
+  const isServerEditMode = Number.isFinite(templateId) && templateId > 0;
+  const isReuseMode = Number.isFinite(reuseTemplateId) && reuseTemplateId > 0;
+  const isEditMode = isServerEditMode;
+  const [scheduleType, setScheduleType] = useState(
+    route.params?.scheduleType ?? (isReuseMode ? 'DATE_EVENT' : 'DAILY'),
+  );
+  const isDateEvent = scheduleType === 'DATE_EVENT';
   const routeGuesthouseId = Number(route.params?.guesthouseId);
   const initialGuesthouseId = Number.isFinite(routeGuesthouseId) && routeGuesthouseId > 0
     ? routeGuesthouseId
     : null;
-  const [loading, setLoading] = useState(isEditMode);
+  const [loading, setLoading] = useState(isEditMode || isReuseMode);
 
   const [party, setParty] = useState({
     // 파티 제목 및 소개
@@ -47,6 +54,7 @@ const MyMeetAdd = () => {
 
     // 기본 정보
     guesthouseId: initialGuesthouseId,
+    eventDate: null,
     partyStartTime: '19:00:00',
     partyEndTime: '22:00:00',
     applicationType: 'SAME_DAY',
@@ -126,7 +134,7 @@ const MyMeetAdd = () => {
   };
 
   useEffect(() => {
-    if (!isEditMode) return;
+    if (!isEditMode && !isReuseMode) return;
 
     let isMounted = true;
 
@@ -157,9 +165,18 @@ const MyMeetAdd = () => {
     const fetchTemplateDetail = async () => {
       try {
         setLoading(true);
-        const { data } = await hostMeetApi.getPartyTemplateDetail(templateId);
+        const sourceTemplateId = isReuseMode ? reuseTemplateId : templateId;
+        const data = (
+          await hostMeetApi.getPartyTemplateDetail(sourceTemplateId)
+        ).data;
+
+        if (!data) {
+          throw new Error('콘텐츠 정보를 찾을 수 없어요.');
+        }
 
         if (!isMounted) return;
+
+        setScheduleType(data?.scheduleType ?? 'DAILY');
 
         const normalizedPriceOptions = Array.isArray(data?.priceOptions)
           ? data.priceOptions
@@ -204,6 +221,11 @@ const MyMeetAdd = () => {
             Number(data?.guesthouseId) > 0
               ? Number(data.guesthouseId)
               : prev.guesthouseId,
+          eventDate:
+            isReuseMode
+              ? null
+              : data?.eventDate ??
+                prev.eventDate,
           partyStartTime: data?.partyStartTime ?? prev.partyStartTime,
           partyEndTime: data?.partyEndTime ?? prev.partyEndTime,
           applicationType: ['SAME_DAY', 'ADVANCE'].includes(
@@ -297,7 +319,14 @@ const MyMeetAdd = () => {
     return () => {
       isMounted = false;
     };
-  }, [isEditMode, navigation, templateId]);
+  }, [
+    initialGuesthouseId,
+    isEditMode,
+    isReuseMode,
+    navigation,
+    reuseTemplateId,
+    templateId,
+  ]);
 
   const onSelectTitleIntro = payload => {
     if (!payload) return;
@@ -336,6 +365,7 @@ const MyMeetAdd = () => {
       return {
         ...prev,
         guesthouseId: payload.guesthouseId ?? prev.guesthouseId,
+        eventDate: payload.eventDate ?? prev.eventDate,
         partyStartTime: payload.partyStartTime ?? prev.partyStartTime,
         partyEndTime: payload.partyEndTime ?? prev.partyEndTime,
         applicationType: payload.applicationType ?? prev.applicationType,
@@ -465,9 +495,10 @@ const MyMeetAdd = () => {
     );
   const isBasicDone =
     Number(party.guesthouseId) > 0 &&
+    (!isDateEvent || isNonEmpty(party.eventDate)) &&
     isNonEmpty(party.partyStartTime) &&
     isNonEmpty(party.partyEndTime) &&
-    ['SAME_DAY', 'ADVANCE'].includes(party.applicationType) &&
+    (isDateEvent || ['SAME_DAY', 'ADVANCE'].includes(party.applicationType)) &&
     Number(party.minAttendees) > 0 &&
     Number(party.maxAttendees) >= Number(party.minAttendees) &&
     ['FREE', 'PAID'].includes(party.chargeType) &&
@@ -511,9 +542,11 @@ const MyMeetAdd = () => {
 
       // 기본 정보
       guesthouseId: Number(party.guesthouseId),
+      scheduleType,
+      eventDate: isDateEvent ? party.eventDate : undefined,
       partyStartTime: party.partyStartTime,
       partyEndTime: party.partyEndTime,
-      applicationType: party.applicationType,
+      applicationType: isDateEvent ? undefined : party.applicationType,
       minAttendees: Number(party.minAttendees),
       maxAttendees: Number(party.maxAttendees),
       isGuest: !!party.isGuest,
@@ -607,7 +640,10 @@ const MyMeetAdd = () => {
     snackTags: party.snackTagList,
     snackInfo: party.snacks || party.extraInfo,
     rules: party.rules,
-    partyStartDateTime: dayjs().format('YYYY-MM-DD'),
+    partyStartDateTime:
+      isDateEvent && party.eventDate
+        ? party.eventDate
+        : dayjs().format('YYYY-MM-DD'),
     partyStartTime: party.partyStartTime,
     partyEndTime: party.partyEndTime,
     meetingPlace: party.meetingPlace,
@@ -634,7 +670,7 @@ const MyMeetAdd = () => {
     const payload = buildPayload();
 
     try {
-      if (isEditMode) {
+      if (isServerEditMode) {
         await hostMeetApi.updateParty(templateId, payload);
       } else {
         await hostMeetApi.createParty(payload);
@@ -645,7 +681,11 @@ const MyMeetAdd = () => {
         position: 'top',
         visibilityTime: 1200,
       });
-      navigation.goBack();
+      if (!isEditMode && !isReuseMode && navigation.canGoBack()) {
+        navigation.pop(2);
+      } else {
+        navigation.goBack();
+      }
     } catch (err) {
       Toast.show({
         type: 'error',
@@ -715,7 +755,9 @@ const MyMeetAdd = () => {
 
           {renderSectionRow({
             title: '기본 정보',
-            description: '시간 · 참여 인원 등',
+            description: isDateEvent
+              ? '날짜 · 시간 · 참여 인원 등'
+              : '시간 · 참여 인원 등',
             required: true,
             done: isBasicDone,
             onPress: () => setBasicModalVisible(true),
@@ -827,11 +869,14 @@ const MyMeetAdd = () => {
 
       <PartyBasicsModal
         visible={basicModalVisible}
+        showEventDate={isDateEvent}
+        showApplicationPeriod={!isDateEvent}
         shouldResetOnClose={basicModalReset}
         onClose={() => setBasicModalVisible(false)}
         onSelect={onSelectBasic}
         initialValues={{
           guesthouseId: party.guesthouseId,
+          eventDate: party.eventDate,
           partyStartTime: party.partyStartTime,
           partyEndTime: party.partyEndTime,
           applicationType: party.applicationType,

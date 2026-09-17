@@ -9,7 +9,6 @@ import {
   TouchableWithoutFeedback,
   TextInput,
   ScrollView,
-  KeyboardAvoidingView,
   Keyboard,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
@@ -348,7 +347,7 @@ const GuesthouseInfoModal = ({
       animationType="slide"
       onRequestClose={handleModalClose}
     >
-      <KeyboardAvoidingView
+      <View
         style={{ flex: 1 }}
       >
       <TouchableWithoutFeedback onPress={handleOverlayPress}>
@@ -367,7 +366,12 @@ const GuesthouseInfoModal = ({
           </View>
 
           {/* 게하 정보 */}
-          <ScrollView style={styles.body}>
+          <ScrollView
+            style={styles.body}
+            keyboardShouldPersistTaps="handled"
+            automaticallyAdjustKeyboardInsets
+            keyboardDismissMode="interactive"
+          >
             {/* 이름 */}
             <Text style={FONTS.fs_16_medium}>게스트하우스 이름</Text>
             <View style={styles.radioRow}>
@@ -539,7 +543,7 @@ const GuesthouseInfoModal = ({
         </TouchableWithoutFeedback>
       </View>
       </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 };

@@ -46,6 +46,7 @@ export { default as StoreRegisterEditForm } from './onboarding/StoreRegister/Sto
 export { default as StoreRegisterList } from './onboarding/StoreRegister/StoreRegisterList';
 export { default as StoreRegisterComplete } from './onboarding/StoreRegister/StoreRegisterComplete';
 export { default as GuesthouseManagement } from './GuesthouseManagement';
+export { default as IntegratedCalendar } from './GuesthouseManagement/IntegratedCalendar';
 export { default as ReservationMethodSettings } from './GuesthouseManagement/Home/ReservationMethodSettings';
 
 export { default as GuesthousePost } from './guesthouse/GuesthousePost';
@@ -75,6 +76,7 @@ export { default as ResumeDetail } from './recruitment/ResumeDetail';
 export { default as MyMeetList } from './meet/MyMeetList';
 export { default as MyMeetDetail } from './meet/MyMeetDetail';
 export { default as MyMeetPreview } from './meet/MyMeetPreview';
+export { default as MyMeetTypeSelect } from './meet/MyMeetTypeSelect';
 export { default as MyMeetAdd } from './meet/MyMeetAdd';
 export { default as ReservationCancelList } from './meet/ReservationCancelList';
 export { default as PastReservationList } from './meet/PastReservationList';

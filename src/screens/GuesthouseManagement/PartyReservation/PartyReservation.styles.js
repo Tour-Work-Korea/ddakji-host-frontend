@@ -56,6 +56,16 @@ export default StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
+  dateEventBadge: {
+    flexShrink: 0,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+    backgroundColor: COLORS.secondary_blue,
+  },
+  dateEventBadgeText: {
+    color: COLORS.primary_blue,
+  },
   selectedPartyTitle: {
     flex: 1,
     minWidth: 0,
