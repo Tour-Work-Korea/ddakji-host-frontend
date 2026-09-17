@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  Platform,
   TouchableWithoutFeedback,
   ScrollView,
   Keyboard,
@@ -23,7 +24,8 @@ import PreviewIcon from '@assets/images/show_password.svg';
 import BackIcon from '@assets/images/chevron_left_gray.svg';
 import CheckWhite from '@assets/images/check_white.svg';
 
-const MODAL_HEIGHT = Math.round(Dimensions.get('window').height * 0.9);
+const WINDOW_HEIGHT = Dimensions.get('window').height;
+const MODAL_HEIGHT = Math.round(WINDOW_HEIGHT * 0.9);
 const TITLE_MAX = 100;
 const DESC_MAX = 5000;
 const MAX_SECTIONS = 10;
@@ -59,6 +61,8 @@ const MeetUsageRulesModal = ({
 }) => {
   const {keyboardHeight} = useKeyboardAwareScrollView({iosOnly: false});
   const isKeyboardVisible = keyboardHeight > 0;
+  // Android's dialog already resizes above the keyboard.
+  const keyboardInset = Platform.OS === 'ios' ? keyboardHeight : 0;
   const [preview, setPreview] = useState(false);
 
   const [sections, setSections] = useState([]);
@@ -189,7 +193,7 @@ const MeetUsageRulesModal = ({
                   <ScrollView
                     style={styles.body}
                     contentContainerStyle={{
-                      paddingBottom: keyboardHeight + 96,
+                      paddingBottom: keyboardInset + 96,
                     }}
                     keyboardShouldPersistTaps="handled">
                     {/* 상단 설명 + 추가 버튼 */}
@@ -273,7 +277,7 @@ const MeetUsageRulesModal = ({
                   <ScrollView
                     style={styles.previewBody}
                     contentContainerStyle={{
-                      paddingBottom: keyboardHeight + 96,
+                      paddingBottom: keyboardInset + 96,
                     }}>
                     <View>
                       {sections.map((s, idx) => (
@@ -305,7 +309,7 @@ const MeetUsageRulesModal = ({
                 <View
                   style={[
                     styles.footer,
-                    {bottom: keyboardHeight > 0 ? keyboardHeight + 12 : 24},
+                    {bottom: keyboardInset > 0 ? keyboardInset + 12 : 24},
                   ]}>
                   <PillSubmitButton disabled={!allValid} onPress={handleConfirm} />
                 </View>
@@ -324,9 +328,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.modal_background,
     justifyContent: 'flex-end',
+    ...(Platform.OS === 'android' && {
+      paddingTop: WINDOW_HEIGHT - MODAL_HEIGHT,
+    }),
   },
   modalContainer: {
-    height: MODAL_HEIGHT,
+    ...(Platform.OS === 'android'
+      ? {flex: 1, minHeight: 0}
+      : {height: MODAL_HEIGHT}),
     backgroundColor: COLORS.grayscale_0,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,

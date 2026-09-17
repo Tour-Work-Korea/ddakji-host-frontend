@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  Platform,
   TextInput,
   ScrollView,
   Pressable,
@@ -20,7 +21,8 @@ import useKeyboardAwareScrollView from '@hooks/useKeyboardAwareScrollView';
 import CheckWhite from '@assets/images/check_white.svg';
 import XBtn from '@assets/images/x_gray.svg';
 
-const MODAL_HEIGHT = Math.round(Dimensions.get('window').height * 0.9);
+const WINDOW_HEIGHT = Dimensions.get('window').height;
+const MODAL_HEIGHT = Math.round(WINDOW_HEIGHT * 0.9);
 const TEXT_MAX = 500;
 
 const PARKING_TAGS = [
@@ -72,6 +74,8 @@ const PartyDirectionsModal = ({
 }) => {
   const {keyboardHeight} = useKeyboardAwareScrollView({iosOnly: false});
   const isKeyboardVisible = keyboardHeight > 0;
+  // Android's dialog already resizes above the keyboard.
+  const keyboardInset = Platform.OS === 'ios' ? keyboardHeight : 0;
   const [form, setForm] = useState(normalize(initialValues));
   const [appliedData, setAppliedData] = useState(null);
 
@@ -122,7 +126,7 @@ const PartyDirectionsModal = ({
             <ScrollView
               style={styles.body}
               contentContainerStyle={{
-                paddingBottom: keyboardHeight + 96,
+                paddingBottom: keyboardInset + 96,
               }}
               keyboardShouldPersistTaps="handled">
               <View style={styles.sectionTopRow}>
@@ -220,7 +224,7 @@ const PartyDirectionsModal = ({
             <View
               style={[
                 styles.footer,
-                {bottom: keyboardHeight > 0 ? keyboardHeight + 12 : 24},
+                {bottom: keyboardInset > 0 ? keyboardInset + 12 : 24},
               ]}>
               <PillSubmitButton disabled={isDisabled} onPress={handleConfirm} />
             </View>
@@ -239,9 +243,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.modal_background,
     justifyContent: 'flex-end',
+    ...(Platform.OS === 'android' && {
+      paddingTop: WINDOW_HEIGHT - MODAL_HEIGHT,
+    }),
   },
   modalContainer: {
-    height: MODAL_HEIGHT,
+    ...(Platform.OS === 'android'
+      ? {flex: 1, minHeight: 0}
+      : {height: MODAL_HEIGHT}),
     backgroundColor: COLORS.grayscale_0,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
