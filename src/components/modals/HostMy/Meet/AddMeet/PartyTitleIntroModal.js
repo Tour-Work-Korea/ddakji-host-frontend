@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  Platform,
   TextInput,
   ScrollView,
   Image,
@@ -27,7 +28,8 @@ import XBtn from '@assets/images/x_gray.svg';
 import DisabledRadioButton from '@assets/images/radio_button_disabled.svg';
 import EnabledRadioButton from '@assets/images/radio_button_enabled.svg';
 
-const MODAL_HEIGHT = Math.round(Dimensions.get('window').height * 0.9);
+const WINDOW_HEIGHT = Dimensions.get('window').height;
+const MODAL_HEIGHT = Math.round(WINDOW_HEIGHT * 0.9);
 const MAX_IMAGES = 10;
 const TITLE_MAX = 50;
 const TAG_MAX = 200;
@@ -98,6 +100,8 @@ const PartyTitleIntroModal = ({
 }) => {
   const {keyboardHeight} = useKeyboardAwareScrollView({iosOnly: false});
   const isKeyboardVisible = keyboardHeight > 0;
+  // Android's dialog already resizes above the keyboard.
+  const keyboardInset = Platform.OS === 'ios' ? keyboardHeight : 0;
   const [form, setForm] = useState(
     normalize({
       partyTitle: initialPartyTitle,
@@ -235,7 +239,7 @@ const PartyTitleIntroModal = ({
             <ScrollView
               style={styles.body}
               contentContainerStyle={{
-                paddingBottom: keyboardHeight + 96,
+                paddingBottom: keyboardInset + 96,
               }}
               keyboardShouldPersistTaps="handled">
               <Text style={[FONTS.fs_16_medium, styles.label, {marginBottom: 8}]}>콘텐츠 제목</Text>
@@ -336,7 +340,7 @@ const PartyTitleIntroModal = ({
             <View
               style={[
                 styles.footer,
-                {bottom: keyboardHeight > 0 ? keyboardHeight + 12 : 24},
+                {bottom: keyboardInset > 0 ? keyboardInset + 12 : 24},
               ]}>
               <PillSubmitButton disabled={isDisabled} onPress={handleConfirm} />
             </View>
@@ -355,9 +359,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.modal_background,
     justifyContent: 'flex-end',
+    ...(Platform.OS === 'android' && {
+      paddingTop: WINDOW_HEIGHT - MODAL_HEIGHT,
+    }),
   },
   modalContainer: {
-    height: MODAL_HEIGHT,
+    ...(Platform.OS === 'android'
+      ? {flex: 1, minHeight: 0}
+      : {height: MODAL_HEIGHT}),
     backgroundColor: COLORS.grayscale_0,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,

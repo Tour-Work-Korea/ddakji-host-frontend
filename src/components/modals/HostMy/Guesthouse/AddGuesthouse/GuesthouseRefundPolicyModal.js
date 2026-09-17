@@ -25,7 +25,8 @@ import XBtn from '@assets/images/x_gray.svg';
 import PlusOrange from '@assets/images/plus_orange.svg';
 import DeleteGray from '@assets/images/delete_gray.svg';
 
-const MODAL_HEIGHT = Math.round(Dimensions.get('window').height * 0.9);
+const WINDOW_HEIGHT = Dimensions.get('window').height;
+const MODAL_HEIGHT = Math.round(WINDOW_HEIGHT * 0.9);
 const DEFAULT_POLICY_DAYS = [1, 2, 3, 4, 5, 6, 7];
 
 const DEFAULT_POLICY_RATE_MAP = {
@@ -232,7 +233,7 @@ const GuesthouseRefundPolicyModal = ({
           style={StyleSheet.absoluteFill}
           onPress={handleOverlayPress}
         />
-        <View style={[styles.modalContainer, { paddingBottom: isKeyboardVisible ? keyboardHeight + 10 : 40 }]}>
+        <View style={[styles.modalContainer, { paddingBottom: Platform.OS === 'ios' && isKeyboardVisible ? keyboardHeight + 10 : 40 }]}>
             <View style={styles.header}>
               <Text style={[FONTS.fs_20_semibold, styles.modalTitle]}>
                 취소 및 환불규정
@@ -448,9 +449,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.modal_background,
     justifyContent: 'flex-end',
+    ...(Platform.OS === 'android' && {
+      paddingTop: WINDOW_HEIGHT - MODAL_HEIGHT,
+    }),
   },
   modalContainer: {
-    height: MODAL_HEIGHT,
+    ...(Platform.OS === 'android'
+      ? {flex: 1, minHeight: 0}
+      : {height: MODAL_HEIGHT}),
     backgroundColor: COLORS.grayscale_0,
     borderRadius: 8,
     paddingHorizontal: 20,

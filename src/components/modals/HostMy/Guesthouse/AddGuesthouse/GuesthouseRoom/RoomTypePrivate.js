@@ -160,6 +160,7 @@ const RoomTypePrivate = ({ data, setData, onBack, onApply }) => {
         ref={discountKeyboard.scrollRef}
         contentContainerStyle={discountKeyboard.contentContainerStyle}
         onContentSizeChange={discountKeyboard.onContentSizeChange}
+        onLayout={discountKeyboard.onLayout}
         keyboardShouldPersistTaps="handled"
         style={{flex: 1, marginBottom: 120, marginHorizontal: -20}}>
         {/* 객실 타입 */}

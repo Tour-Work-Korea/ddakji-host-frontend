@@ -12,6 +12,7 @@ import {
 import {COLORS} from '@constants/colors';
 import {FONTS} from '@constants/fonts';
 import hostMeetApi from '@utils/api/hostMeetApi';
+import {getManageablePartyTemplates, isEndedDateEvent} from '@utils/partyEvent';
 import CheckIcon from '@assets/images/check_orange.svg';
 import ChevronRightIcon from '@assets/images/chevron_right_orange.svg';
 import ReservationCheck from './ReservationCheck';
@@ -34,10 +35,19 @@ const getApplicationTypeLabel = value =>
 
 const EventBadge = ({template}) =>
   template?.scheduleType === 'DATE_EVENT' ? (
-    <View style={styles.dateEventBadge}>
-      <Text style={[FONTS.fs_12_semibold, styles.dateEventBadgeText]}>
-        이벤트
-      </Text>
+    <View style={styles.eventBadgeRow}>
+      <View style={styles.dateEventBadge}>
+        <Text style={[FONTS.fs_12_semibold, styles.dateEventBadgeText]}>
+          이벤트
+        </Text>
+      </View>
+      {isEndedDateEvent(template) ? (
+        <View style={[styles.dateEventBadge, styles.endedBadge]}>
+          <Text style={[FONTS.fs_12_semibold, styles.endedBadgeText]}>
+            종료
+          </Text>
+        </View>
+      ) : null}
     </View>
   ) : null;
 
@@ -134,10 +144,7 @@ const PartyReservation = ({
           return;
         }
 
-        const manageableTemplates = resolvedTemplates.filter(
-          template =>
-            (template?.isApplyOpen ?? template?.isApply) === true,
-        );
+        const manageableTemplates = getManageablePartyTemplates(resolvedTemplates);
 
         setPartyTemplates(manageableTemplates);
         setSelectedTemplateId(prev => {
@@ -481,7 +488,7 @@ const PartyReservation = ({
       ) : !selectedTemplate ? (
         <View style={styles.emptyContainer}>
           <Text style={[FONTS.fs_16_semibold, styles.emptyTitle]}>
-            신청을 받는 콘텐츠가 없습니다
+            관리할 콘텐츠가 없습니다
           </Text>
           <Text style={[FONTS.fs_14_regular, styles.emptyDescription]}>
             콘텐츠 정보에서 참여 신청을 켜면{'\n'}신청 현황과 날짜별 설정을
@@ -552,7 +559,7 @@ const PartyReservation = ({
                     관리할 콘텐츠 선택
                   </Text>
                   <Text style={[FONTS.fs_12_medium, styles.modalDescription]}>
-                    신청을 받고 있는 콘텐츠만 표시돼요
+                    신청 중인 콘텐츠와 종료된 이벤트를 확인할 수 있어요
                   </Text>
                 </View>
 
