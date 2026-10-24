@@ -321,7 +321,7 @@ const RecruitmentForm = ({route}) => {
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.outContainer}>
-          <Header title={isEditMode ? '알바공고 수정' : '알바공고 등록'} />
+          <Header title={isEditMode ? '스탭공고 수정' : '스탭공고 등록'} />
           <ScrollView contentContainerStyle={styles.scrollContainer}>
             <TouchableOpacity
               style={styles.sectionBox}

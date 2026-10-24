@@ -34,9 +34,9 @@ const tabs = [
   HOME_TAB,
   INFO_TAB,
   ROOM_RESERVATION_TAB,
+  STAFF_TAB,
   PARTY_INFO_TAB,
   PARTY_RESERVATION_TAB,
-  STAFF_TAB,
 ];
 
 const RESERVATION_POLICY_TO_METHOD = {
@@ -430,7 +430,11 @@ const GuesthouseManagement = () => {
               key={tab}
               activeOpacity={isDisabled ? 1 : 0.8}
               disabled={isDisabled}
-              style={[styles.tabItem, activeTab === tab && styles.tabItemActive]}
+              style={[
+                styles.tabItem,
+                (tab === HOME_TAB || tab === STAFF_TAB) && styles.tabItemCompact,
+                activeTab === tab && styles.tabItemActive,
+              ]}
               onPress={() => setActiveTab(tab)}>
               <Text
                 style={[

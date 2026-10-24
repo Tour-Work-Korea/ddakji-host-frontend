@@ -43,7 +43,7 @@ export default function DetailInfoSection({
                 color: COLORS.grayscale_900,
                 ...FONTS.fs_16_medium,
               }}>
-              알바공고 상세정보를 자유롭게 작성해주세요
+              스탭공고 상세정보를 자유롭게 작성해주세요
             </Text>
             <Text style={detailStyle.lengthTextAll}>
               <Text style={detailStyle.lengthText}>
