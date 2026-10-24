@@ -89,7 +89,7 @@ const RoomGuideMessageEditor = ({route, navigation}) => {
                 ⚠️
               </Text>
               <Text style={[FONTS.fs_12_medium, styles.descriptionText]}>
-                예약 고객에게 체크인 전날 카카오 알림톡이 발송됩니다.{'\n'}
+                예약 고객에게 체크인 당일 오전 10시에 카카오 알림톡이 발송됩니다.{'\n'}
                 고객에게 전달할 안내 내용을 작성해주세요.
               </Text>
             </View>

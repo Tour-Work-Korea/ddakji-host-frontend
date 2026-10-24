@@ -96,6 +96,10 @@ export default StyleSheet.create({
     borderBottomColor: 'transparent',
     alignItems: 'center',
   },
+  tabItemCompact: {
+    minWidth: 60,
+    paddingHorizontal: 10,
+  },
   tabItemActive: {
     borderBottomColor: COLORS.primary_blue,
   },

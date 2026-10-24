@@ -654,30 +654,36 @@ const RoomPriceModal = ({ visible, onClose, room, guesthouseId }) => {
                   </View>
 
                   {/* Calendar */}
-                  <Calendar
-                    {...CALENDAR_COMMON_PROPS}
-                    onMonthChange={handleMonthChange}
-                    dayComponent={renderDay}
-                    renderHeader={renderHeader}
-                    theme={{
-                      ...CALENDAR_THEME,
-                      'stylesheet.calendar.header': {
-                        dayTextAtIndex0: { color: COLORS.grayscale_400 },
-                        dayTextAtIndex1: { color: COLORS.grayscale_400 },
-                        dayTextAtIndex2: { color: COLORS.grayscale_400 },
-                        dayTextAtIndex3: { color: COLORS.grayscale_400 },
-                        dayTextAtIndex4: { color: COLORS.grayscale_400 },
-                        dayTextAtIndex5: { color: COLORS.grayscale_400 },
-                        dayTextAtIndex6: { color: COLORS.grayscale_400 },
-                      },
-                    }}
-                    renderArrow={(direction) => (
-                      direction === 'left'
-                        ? <ChevronLeft width={20} height={20} color={COLORS.grayscale_400} />
-                        : <ChevronRight width={20} height={20} color={COLORS.grayscale_400} />
-                    )}
-                    style={styles.calendarStyle}
-                  />
+                  <ScrollView
+                    style={styles.calendarViewport}
+                    keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode="on-drag"
+                    showsVerticalScrollIndicator={false}>
+                    <Calendar
+                      {...CALENDAR_COMMON_PROPS}
+                      onMonthChange={handleMonthChange}
+                      dayComponent={renderDay}
+                      renderHeader={renderHeader}
+                      theme={{
+                        ...CALENDAR_THEME,
+                        'stylesheet.calendar.header': {
+                          dayTextAtIndex0: { color: COLORS.grayscale_400 },
+                          dayTextAtIndex1: { color: COLORS.grayscale_400 },
+                          dayTextAtIndex2: { color: COLORS.grayscale_400 },
+                          dayTextAtIndex3: { color: COLORS.grayscale_400 },
+                          dayTextAtIndex4: { color: COLORS.grayscale_400 },
+                          dayTextAtIndex5: { color: COLORS.grayscale_400 },
+                          dayTextAtIndex6: { color: COLORS.grayscale_400 },
+                        },
+                      }}
+                      renderArrow={(direction) => (
+                        direction === 'left'
+                          ? <ChevronLeft width={20} height={20} color={COLORS.grayscale_400} />
+                          : <ChevronRight width={20} height={20} color={COLORS.grayscale_400} />
+                      )}
+                      style={styles.calendarStyle}
+                    />
+                  </ScrollView>
 
                   {/* Bottom Action Bar for Setting Price */}
                   {selectedDates.size > 0 && (
@@ -918,6 +924,12 @@ const styles = StyleSheet.create({
   applyAllBtnDisabled: {
     backgroundColor: COLORS.grayscale_300,
   },
+  calendarViewport: {
+    flex: 1,
+    minHeight: 0,
+    overflow: 'hidden',
+    zIndex: 0,
+  },
   calendarStyle: {
     paddingHorizontal: 10,
     paddingBottom: 20,
@@ -970,10 +982,8 @@ const styles = StyleSheet.create({
     lineHeight: 12,
   },
   bottomBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    flexShrink: 0,
+    zIndex: 1,
     backgroundColor: COLORS.grayscale_0,
     borderTopWidth: 1,
     borderTopColor: COLORS.grayscale_200,
