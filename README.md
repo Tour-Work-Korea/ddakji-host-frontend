@@ -6,6 +6,21 @@ This is a new [**React Native**](https://reactnative.dev) project, bootstrapped 
 
 ## Step 1: Start Metro
 
+Use the Node.js version pinned in `.nvmrc` (24.22.1, including the
+CVE-2026-111497 security fix). Android and iOS CI read this same file.
+
+```sh
+nvm install
+nvm use
+```
+
+After switching Node.js versions on macOS, refresh Xcode's local Node path
+from the project root so it does not keep using an older installation:
+
+```sh
+printf 'export NODE_BINARY="%s"\n' "$(command -v node)" > ios/.xcode.env.local
+```
+
 First, you will need to run **Metro**, the JavaScript build tool for React Native.
 
 To start the Metro dev server, run the following command from the root of your React Native project:
